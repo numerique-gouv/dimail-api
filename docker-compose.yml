@@ -1,0 +1,27 @@
+version: "3.9"
+services:
+  mariadb:
+    image: mariadb:11.2
+    restart: on-failure
+    environment:
+      MARIADB_USER: api_user
+      MARIADB_PASSWORD: coincoin
+      MARIADB_DATABASE: api
+      MARIADB_ROOT_PASSWORD: toto
+    volumes:
+      - ms-data:/var/lib/mysql
+    ports:
+      - 3306:3306
+
+  oxtest:
+    build:
+      context: ./oxtest
+    restart: always
+    stop_grace_period: 1s
+    depends_on:
+      - mariadb
+    ports:
+      - 2222:22
+
+volumes:
+  ms-data: {}
