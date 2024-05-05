@@ -24,6 +24,8 @@ def ensure_db(log) -> Generator:
     conn.execute(text("drop database if exists test2;"))
     conn.execute(text("create database test;"))
     conn.execute(text("create database test2;"))
+    conn.execute(text("grant ALL on test.* to test@'%' identified by 'toto';"))
+    conn.execute(text("grant ALL on test2.* to test@'%' identified by 'toto';"))
     yield 
     conn.execute(text("drop database if exists test;"))
     conn.execute(text("drop database if exists test2;"))
