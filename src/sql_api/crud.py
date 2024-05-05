@@ -11,7 +11,11 @@ def get_api_user(db: Session, user_name: str):
     return db.execute(select(models.ApiUser).where(models.ApiUser.name == user_name)).first()
     return db.query(models.ApiUser).filter(models.ApiUser.name == user_name).first()
 
+def get_api_domains(db: Session):
+    return db.query(models.ApiDomain).all()
+
 def get_api_domain(db: Session, domain_name: str):
+    return db.get(models.ApiDomain, domain_name)
     return db.query(models.ApiDomain).filter(models.ApiDomain.name == domain_name).first()
 
 def create_api_user(db: Session, user: schemas.ApiUser):
@@ -37,6 +41,14 @@ def create_api_domain(db: Session, domain: schemas.ApiDomain):
     db.commit()
     db.refresh(db_domain)
     return db_domain
+
+def get_api_allows(db: Session, user: str, domain: str):
+    query = db.query(models.ApiAllowed)
+    if user != '':
+        query = query.filter_by(user = user)
+    if domain != '':
+        query = query.filter_by(domain = domain)
+    return query.all()
 
 def get_api_allowed(db: Session, user: str, domain: str):
     return db.query(models.ApiAllowed).filter_by(domain = domain, user = user).first()

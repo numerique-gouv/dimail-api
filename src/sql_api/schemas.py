@@ -9,7 +9,6 @@ class Feature(StrEnum):
 class ApiUser(BaseModel):
   name: str
   is_admin: bool
-  domains: list['ApiAllowed'] = []
   class ConfigDict:
     from_attribute = True
 
