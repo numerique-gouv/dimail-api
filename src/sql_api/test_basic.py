@@ -1,20 +1,20 @@
 import src.sql_api.crud
 
-def test_create_user(db):
-    src.sql_api.crud.create_api_user(db, src.sql_api.schemas.ApiUser(name="toto", is_admin=False))
+def test_create_user(db_api):
+    src.sql_api.crud.create_api_user(db_api, src.sql_api.schemas.ApiUser(name="toto", is_admin=False))
 
-def test_delete_user(db, log):
+def test_delete_user(db_api, log):
     log.debug("Here is a debug log")
     # First, we create a user
-    src.sql_api.crud.create_api_user(db, src.sql_api.schemas.ApiUser(name="toto", is_admin=False))
+    src.sql_api.crud.create_api_user(db_api, src.sql_api.schemas.ApiUser(name="toto", is_admin=False))
     # Then, we retrieve the user
-    user = src.sql_api.crud.get_api_user(db, "toto")
+    user = src.sql_api.crud.get_api_user(db_api, "toto")
     assert user == src.sql_api.models.ApiUser(name="toto", is_admin=False)
     # Delete returns the user as it was before deletion, so, unchanged
-    user = src.sql_api.crud.delete_api_user(db, "toto")
+    user = src.sql_api.crud.delete_api_user(db_api, "toto")
     assert user == src.sql_api.models.ApiUser(name="toto", is_admin=False)
     # When trying to fetch it again, we fail
-    user = src.sql_api.crud.get_api_user(db, "toto")
+    user = src.sql_api.crud.get_api_user(db_api, "toto")
     assert user == None
     
 
