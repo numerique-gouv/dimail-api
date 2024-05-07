@@ -113,6 +113,18 @@ def db_api(alembic_run, ensure_db_api, log) -> Generator:
     session.close()
     log.info("TEARDOWN api orm session")
 
+@pytest.fixture(scope="function")
+def db_api_maker(alembic_run, ensure_db_api, log) -> Generator:
+    log.info("SETUP api orm session")
+    test_db = create_engine(ensure_db_api)
+    Maker = sessionmaker(
+        autocommit=False, autoflush=False, autobegin=True, bind=test_db
+    )
+    session = Maker()
+    yield lambda : session
+    session.close()
+    log.info("TEARDOWN api orm session")
+
 
 @pytest.fixture(scope="function")
 def db_dovecot(alembic_run, ensure_db_dovecot, log) -> Generator:
