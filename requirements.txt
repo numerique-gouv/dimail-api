@@ -4,6 +4,7 @@ alembic==1.13.1
 SQLAlchemy==2.0.29
 PyMySQL==1.1.0
 pytest==8.2.0
+dynaconf==3.2.5
 flake8==6.0.0
 black==24.3.0
 isort==5.12.0
