@@ -1,9 +1,9 @@
-from pydantic import BaseModel
+import pydantic
 
-import src.sql_api
+from .. import sql_api
 
 
-class Creds(BaseModel):
+class Creds(pydantic.BaseModel):
     domains: list[str] = []
     is_admin: bool = False
 
@@ -20,8 +20,8 @@ user_name = "toto2"
 
 async def get_creds():
     print(f"Getting creds for user {user_name}")
-    db = next(src.sql_api.get_api_db())
-    user = src.sql_api.get_api_user(db, user_name)
+    db = next(sql_api.get_api_db())
+    user = sql_api.get_api_user(db, user_name)
     if user is None:
         print(f"User not found")
         return Creds()

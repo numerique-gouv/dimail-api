@@ -1,12 +1,14 @@
 import fastapi
 
-import src.admin_routes
-import src.routes
+from . import admin_routes
+from . import routes
 
-import src.config
-import src.sql_api
+from . import config
+from . import sql_api
+from . import sql_dovecot
 
-src.sql_api.init_api_db(src.config.settings.api_db_url)
+sql_api.init_api_db(config.settings.api_db_url)
+sql_dovecot.init_dovecot_db(config.settings.imap_db_url)
 
 app = fastapi.FastAPI(
     responses={
@@ -15,8 +17,8 @@ app = fastapi.FastAPI(
     },
 )
 
-app.include_router(src.admin_routes.users)
-app.include_router(src.admin_routes.domains)
-app.include_router(src.admin_routes.allows)
+app.include_router(admin_routes.users)
+app.include_router(admin_routes.domains)
+app.include_router(admin_routes.allows)
 
-app.include_router(src.routes.oxusers)
+app.include_router(routes.mailboxes)

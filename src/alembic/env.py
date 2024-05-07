@@ -41,8 +41,15 @@ db_names = config.get_main_option("databases", "")
 #       'engine1':mymodel.metadata1,
 #       'engine2':mymodel.metadata2
 # }
-from sql_api.models import Api
-from sql_dovecot.models import Dovecot
+import os
+import sys
+if os.path.exists("sql_api"):
+    if '..' not in sys.path and os.path.exists("../src"):
+        sys.path.insert(0, '..')
+# We need to import those as src.something, so that their own "from .. import stuff" works
+# properly.
+from src.sql_api.models import Api
+from src.sql_dovecot.models import Dovecot
 
 target_metadata = {"api": Api.metadata, "dovecot": Dovecot.metadata}
 

@@ -2,6 +2,7 @@ from .crud import (
     allow_domain_for_user,
     create_api_domain,
     create_api_user,
+    delete_api_user,
     get_api_allowed,
     get_api_allows,
     get_api_domain,

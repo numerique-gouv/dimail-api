@@ -1,3 +1,4 @@
+import os
 import logging
 from typing import Generator
 
@@ -61,14 +62,14 @@ def ensure_db_dovecot(root_db, alembic_config, log) -> Generator:
     drop_db("test2", root_db)
     log.info("TEARDOWN dovecot database (drop)")
 
-
 @pytest.fixture(scope="session")
 def alembic_config(log) -> Generator:
     log.info("SETUP alembic config")
+    if not os.path.exists("alembic.ini"):
+        raise Exception("Je veux tourner dans src, avec mon fichier alembic.ini")
     cfg = alembic.config.Config("alembic.ini")
     cfg.set_main_option("databases", "")
     cfg.set_main_option("init_logger", "False")
-    cfg.set_main_option("script_location", "alembic")
     # cfg.set_section_option("api", "sqlalchemy.url", 'mysql+pymysql://test:toto@localhost:3306/test')
     # cfg.set_section_option("dovecot", "sqlalchemy.url", 'mysql+pymysql://test:toto@localhost:3306/test2')
     yield cfg

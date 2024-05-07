@@ -1,16 +1,16 @@
-from fastapi import APIRouter
+import fastapi
 
-users = APIRouter(
+users = fastapi.APIRouter(
     prefix="/admin/users",
     tags=["admin users"],
 )
 
-domains = APIRouter(
+domains = fastapi.APIRouter(
     prefix="/admin/domains",
     tags=["admin domains"],
 )
 
-allows = APIRouter(prefix="/admin/allows", tags=["admin allows"])
+allows = fastapi.APIRouter(prefix="/admin/allows", tags=["admin allows"])
 
 from .get_allows import get_allows
 from .get_domains import get_domains

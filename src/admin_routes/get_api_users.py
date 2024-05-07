@@ -1,13 +1,12 @@
-from fastapi import Depends
+import fastapi
 
-from sql_api import crud, database, schemas
-
+from .. import sql_api
 from . import ox
 
 
 @ox.get("/api/users")
 async def get_api_users(
-    db=Depends(database.get_api_db),
-) -> list[schemas.ApiUser]:
-    users = crud.get_api_users(db)
+    db=fastapi.Depends(sql_api.get_api_db),
+) -> list[sql_api.WApiUser]:
+    users = sql_api.get_api_users(db)
     return users

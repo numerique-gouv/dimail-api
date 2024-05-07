@@ -1,11 +1,15 @@
 import sqlalchemy
 import sqlalchemy.orm
 
+from .. import config
+
 url: str
 engine: sqlalchemy.Engine
 maker: sqlalchemy.orm.sessionmaker | None = None
 
 Api = sqlalchemy.orm.declarative_base()
+
+test = config.settings.api_db_url
 
 def init_api_db(config: str):
     global url
