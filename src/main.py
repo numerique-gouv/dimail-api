@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+
 import src.admin_routes
 import src.routes
 

@@ -1,9 +1,8 @@
 import logging
-from logging.config import fileConfig
 import re
+from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 
@@ -15,7 +14,10 @@ config = context.config
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
-if config.config_file_name is not None and config.get_main_option("init_logger") != "False":
+if (
+    config.config_file_name is not None
+    and config.get_main_option("init_logger") != "False"
+):
     fileConfig(config.config_file_name)
 logger = logging.getLogger("alembic.env")
 # This will catch (and silence) and log from all of alembic, unless ERROR and above
@@ -41,10 +43,8 @@ db_names = config.get_main_option("databases", "")
 # }
 from sql_api.models import Api
 from sql_dovecot.models import Dovecot
-target_metadata = {
-  'api': Api.metadata,
-  'dovecot': Dovecot.metadata
-}
+
+target_metadata = {"api": Api.metadata, "dovecot": Dovecot.metadata}
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
