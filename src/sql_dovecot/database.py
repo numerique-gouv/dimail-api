@@ -1,11 +1,26 @@
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+import sqlalchemy
+import sqlalchemy.orm
 
-IMAP_DB = "mysql+pymysql://dovecot:toto@localhost:3306/toto"
+url: str
+engine: sqlalchemy.Engine
+maker: sqlalchemy.orm.sessionmaker | None = None
 
-engine = create_engine(IMAP_DB)
+Dovecot = sqlalchemy.orm.declarative_base()
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+def init_dovecot_db(config: str):
+    global url
+    global engine
+    global maker
+    url = config
+    engine = sqlalchemy.create_engine(url)
+    maker = sqlalchemy.orm.sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-Dovecot = declarative_base()
+def get_dovecot_db():
+    global maker
+    if maker is None:
+        raise Exception("We need to init the database")
+    db = maker()
+    try:
+        yield db
+    finally:
+        db.close()
