@@ -12,6 +12,4 @@ from .crud import (
 )
 from .database import get_api_db, init_api_db
 from .get_creds import Creds, get_creds, set_current_user_name
-from .models import DBAllowed
-from .models import DBDomain
-from .models import DBUser
+from .models import DBAllowed, DBDomain, DBUser

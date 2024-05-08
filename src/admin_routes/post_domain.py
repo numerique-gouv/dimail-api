@@ -9,7 +9,6 @@ async def post_domain(
     domain: web_models.WDomain,
     db=fastapi.Depends(sql_api.get_api_db),
 ) -> web_models.WDomain:
-
     domain_db = sql_api.get_api_domain(db, domain.name)
 
     if domain_db is not None:

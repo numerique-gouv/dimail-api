@@ -3,6 +3,7 @@ import sqlalchemy.orm as orm
 
 from .database import Api
 
+
 class DBUser(Api):
     __tablename__ = "users"
     name = sa.Column(sa.String(32), primary_key=True)
@@ -41,7 +42,9 @@ class DBAllowed(Api):
     __tablename__ = "allowed"
     user = sa.Column(sa.String(32), sa.ForeignKey("users.name"), primary_key=True)
     domain = sa.Column(
-        sa.String(200, collation="ascii_bin"), sa.ForeignKey("domains.name"), primary_key=True
+        sa.String(200, collation="ascii_bin"),
+        sa.ForeignKey("domains.name"),
+        primary_key=True,
     )
 
     def __repr__(self):

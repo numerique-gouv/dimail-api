@@ -1,5 +1,5 @@
-from .. import sql_api
-from .. import web_models
+from .. import sql_api, web_models
+
 
 def test_create_user(db_api):
     sql_api.create_api_user(db_api, web_models.WUser(name="toto", is_admin=False))

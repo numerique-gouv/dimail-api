@@ -12,6 +12,5 @@ async def get_allows(
     domain: str = "",
     db=fastapi.Depends(sql_api.get_api_db),
 ) -> list[web_models.WAllowed]:
-
     allows = sql_api.get_api_allows(db, user, domain)
     return allows

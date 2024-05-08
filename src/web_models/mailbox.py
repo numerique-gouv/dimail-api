@@ -7,9 +7,11 @@ class MailboxType(enum.StrEnum):
     Alias = "alias"
     Mailbox = "mailbox"
 
+
 class MailboxStatus(enum.StrEnum):
     OK = "ok"
     Broken = "broken"
+
 
 class Mailbox(pydantic.BaseModel):
     type: MailboxType

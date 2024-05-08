@@ -2,7 +2,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .. import web_models
-
 from . import models
 
 
@@ -24,9 +23,7 @@ def get_api_domains(db: Session):
 
 def get_api_domain(db: Session, domain_name: str):
     return db.get(models.DBDomain, domain_name)
-    return (
-        db.query(models.DBDomain).filter(models.DBDomain.name == domain_name).first()
-    )
+    return db.query(models.DBDomain).filter(models.DBDomain.name == domain_name).first()
 
 
 def create_api_user(db: Session, user: web_models.WUser):

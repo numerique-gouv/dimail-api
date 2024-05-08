@@ -7,9 +7,18 @@ from .. import sql_api, web_models
 from . import get_creds, mailboxes
 
 example_users = [
-    web_models.Mailbox(type="mailbox", status="broken", email="those users are faked in code", uuid=uuid.uuid4()),
-    web_models.Mailbox(type="mailbox", status="broken", email="toto@example.com", uuid=uuid.uuid4()),
-    web_models.Mailbox(type="mailbox", status="broken", email="titi@example.com", uuid=uuid.uuid4()),
+    web_models.Mailbox(
+        type="mailbox",
+        status="broken",
+        email="those users are faked in code",
+        uuid=uuid.uuid4(),
+    ),
+    web_models.Mailbox(
+        type="mailbox", status="broken", email="toto@example.com", uuid=uuid.uuid4()
+    ),
+    web_models.Mailbox(
+        type="mailbox", status="broken", email="titi@example.com", uuid=uuid.uuid4()
+    ),
 ]
 
 
