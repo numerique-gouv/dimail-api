@@ -1,15 +1,14 @@
-from enum import StrEnum
+import enum
+import pydantic
 
-from pydantic import BaseModel
 
-
-class Feature(StrEnum):
+class Feature(enum.StrEnum):
     Webmail = "webmail"
     Mailbox = "mailbox"
     Alias = "alias"
 
 
-class ApiUser(BaseModel):
+class ApiUser(pydantic.BaseModel):
     name: str
     is_admin: bool
 
@@ -17,7 +16,7 @@ class ApiUser(BaseModel):
         from_attribute = True
 
 
-class ApiDomain(BaseModel):
+class ApiDomain(pydantic.BaseModel):
     name: str
     features: list[Feature]
     mailbox_domain: str | None = None
@@ -29,7 +28,7 @@ class ApiDomain(BaseModel):
         from_attribute = True
 
 
-class ApiAllowed(BaseModel):
+class ApiAllowed(pydantic.BaseModel):
     user: str
     domain: str
 

@@ -18,5 +18,5 @@ def test_something(db_api_maker, log):
     assert response.status_code == 200
     assert response.json() == [{"name": "testing", "is_admin": False}]
     response = client.post("/admin/users", json={"name": "testing", "is_admin": False})
-    assert response.status_code == 200
-    assert response.json() == ["plop"]
+    assert response.status_code == 409
+    assert response.json() == {"detail": "User already exists"}

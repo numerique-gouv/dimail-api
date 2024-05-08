@@ -1,9 +1,11 @@
 import uuid
 
 import fastapi
+import typing
 
-from .. import creds
-from . import Mailbox, mailboxes
+from .. import sql_api
+from . import get_creds, mailboxes
+from .mailbox import Mailbox
 
 example_users = [
     Mailbox(type="mailbox", email="those users are faked in code", uuid=uuid.uuid4()),
@@ -23,7 +25,7 @@ example_users = [
     },
 )
 async def get_mailboxes(
-    perms: creds.Creds = fastapi.Depends(creds.get_creds),
+    perms: typing.Annotated[sql_api.Creds, fastapi.Depends(get_creds)],
     domain: str = "all",
     #  page_size: int = 20,
     #  page_number: int = 0,

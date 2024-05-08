@@ -3,7 +3,7 @@ import fastapi.testclient
 from .. import main
 from .. import sql_api
 from .. import sql_dovecot
-from .. import creds
+from .. import routes
 
 client = fastapi.testclient.TestClient(main.app)
 
@@ -11,28 +11,27 @@ client = fastapi.testclient.TestClient(main.app)
 def my_user(db_api_maker, log):
     main.app.dependency_overrides[sql_api.get_api_db] = db_api_maker
 
-    client.post("/admin/users", json={"name": "bidibule", "is_admin": False})
-    client.post("/admin/domains", json={"name": "tutu.net", "features": ["webmail", "mailbox"]})
-    client.post("/admin/allows", json={"user": "bidibule", "domain": "tutu.net"})
+    user = "bidibule"
+    domain = "tutu.net"
 
-def test_something(db_dovecot_maker, my_user, log):
+    client.post("/admin/users", json={"name": user, "is_admin": False})
+    client.post("/admin/domains", json={"name": domain, "features": ["webmail", "mailbox"]})
+    client.post("/admin/allows", json={"user": user, "domain": domain})
+
+    yield {"user": user, "domains": [domain]}
+
+@pytest.fixture(scope="function")
+def get_creds(db_api_maker, log):
+    yield lambda: sql_api.get_creds(db_api_maker())
+
+def test_something(db_dovecot_maker, get_creds, my_user, log):
     main.app.dependency_overrides[sql_dovecot.get_dovecot_db] = db_dovecot_maker
+    main.app.dependency_overrides[routes.get_creds] = get_creds
 
-    creds.user_name = "bidibule"
+    sql_api.set_current_user_name(my_user["user"])
 
-    response = client.get('/mailboxes/toto@tutunet')
+    response = client.get('/mailboxes/toto@tutu.net')
     assert response.status_code == 404
-    assert response.json() == {"detail": "Not Found"}
+    assert response.json() == {"detail": "Mailbox not found"}
 
-#     response = client.get('/admin/users')
-#     assert response.status_code == 200
-#     assert response.json() == []
-#     response = client.post('/admin/users', json={"name": "testing", "is_admin": False})
-#     assert response.status_code == 200
-#     assert response.json() == {"name": "testing", "is_admin": False}
-#     response = client.get('/admin/users')
-#     assert response.status_code == 200
-#     assert response.json() == [{"name": "testing", "is_admin": False}]
-#     response = client.post('/admin/users', json={"name": "testing", "is_admin": False})
-#     assert response.status_code == 200
-#     assert response.json() == ["plop"]
+

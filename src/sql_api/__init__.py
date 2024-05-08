@@ -11,6 +11,7 @@ from .crud import (
     get_api_users,
 )
 from .database import get_api_db, init_api_db
+from .get_creds import Creds, get_creds, set_current_user_name
 from .models import ApiAllowed as DBApiAllowed
 from .models import ApiDomain as DBApiDomain
 from .models import ApiUser as DBApiUser

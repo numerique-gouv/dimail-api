@@ -6,8 +6,9 @@ import uuid
 import fastapi
 import sqlalchemy
 
-from .. import creds, sql_dovecot
-from . import mailboxes
+from .. import sql_api
+from .. import sql_dovecot
+from . import get_creds, mailboxes
 from .mailbox import Mailbox
 
 mail_re = re.compile("^(?P<username>[^@]+)@(?P<domain>[^@]+)$")
@@ -25,7 +26,7 @@ uuid_re = re.compile("^[0-9a-f-]{32,36}$")
 )
 async def get_mailbox(
     mailbox_id: str,
-    perms: typing.Annotated[creds.Creds, fastapi.Depends(creds.get_creds)],
+    perms: typing.Annotated[sql_api.Creds, fastapi.Depends(get_creds)],
     db: typing.Annotated[typing.Any, fastapi.Depends(sql_dovecot.get_dovecot_db)],
 ) -> Mailbox:
     log = logging.getLogger(__name__)
