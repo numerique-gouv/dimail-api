@@ -18,9 +18,8 @@ class Creds(pydantic.BaseModel):
 user_name = "toto2"
 
 
-async def get_creds():
+async def get_creds(db):
     print(f"Getting creds for user {user_name}")
-    db = next(sql_api.get_api_db())
     user = sql_api.get_api_user(db, user_name)
     if user is None:
         print(f"User not found")

@@ -2,7 +2,7 @@ from dynaconf import Dynaconf
 
 settings = Dynaconf(
     envvar_prefix="DIMAIL",
-    settings_files=['settings.toml', '.secrets.toml'],
+    settings_files=["settings.toml", ".secrets.toml"],
     ignore_unknown_envvars=True,
 )
 

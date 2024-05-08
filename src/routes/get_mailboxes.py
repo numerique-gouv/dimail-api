@@ -1,9 +1,9 @@
 import uuid
+
 import fastapi
 
 from .. import creds
-
-from . import mailboxes, Mailbox
+from . import Mailbox, mailboxes
 
 example_users = [
     Mailbox(type="mailbox", email="those users are faked in code", uuid=uuid.uuid4()),

@@ -1,5 +1,5 @@
-import os
 import logging
+import os
 from typing import Generator
 
 import pytest
@@ -62,6 +62,7 @@ def ensure_db_dovecot(root_db, alembic_config, log) -> Generator:
     drop_db("test2", root_db)
     log.info("TEARDOWN dovecot database (drop)")
 
+
 @pytest.fixture(scope="session")
 def alembic_config(log) -> Generator:
     log.info("SETUP alembic config")
@@ -113,6 +114,7 @@ def db_api(alembic_run, ensure_db_api, log) -> Generator:
     session.close()
     log.info("TEARDOWN api orm session")
 
+
 @pytest.fixture(scope="function")
 def db_api_maker(alembic_run, ensure_db_api, log) -> Generator:
     log.info("SETUP api orm session")
@@ -121,7 +123,7 @@ def db_api_maker(alembic_run, ensure_db_api, log) -> Generator:
         autocommit=False, autoflush=False, autobegin=True, bind=test_db
     )
     session = Maker()
-    yield lambda : session
+    yield lambda: session
     session.close()
     log.info("TEARDOWN api orm session")
 
@@ -135,5 +137,18 @@ def db_dovecot(alembic_run, ensure_db_dovecot, log) -> Generator:
     )
     session = Maker()
     yield session
+    session.close()
+    log.info("TEARDOWN dovecot orm session")
+
+
+@pytest.fixture(scope="function")
+def db_dovecot_maker(alembic_run, ensure_db_dovecot, log) -> Generator:
+    log.info("SETUP dovecot orm session")
+    test_db = create_engine(ensure_db_dovecot)
+    Maker = sessionmaker(
+        autocommit=False, autoflush=False, autobegin=True, bind=test_db
+    )
+    session = Maker()
+    yield lambda: session
     session.close()
     log.info("TEARDOWN dovecot orm session")

@@ -43,10 +43,11 @@ db_names = config.get_main_option("databases", "")
 # }
 import os
 import sys
+
 if os.path.exists("sql_api"):
-    if '..' not in sys.path and os.path.exists("../src"):
-        sys.path.insert(0, '..')
-# We need to import those as src.something, so that their own "from .. import stuff" works
+    if ".." not in sys.path and os.path.exists("../src"):
+        sys.path.insert(0, "..")
+# We need to import those as src.something, so that their own "from .. import stuff" works
 # properly.
 from src.sql_api.models import Api
 from src.sql_dovecot.models import Dovecot

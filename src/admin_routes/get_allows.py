@@ -1,8 +1,8 @@
 from typing import Optional
+
 import fastapi
 
 from .. import sql_api
-
 from . import allows
 
 

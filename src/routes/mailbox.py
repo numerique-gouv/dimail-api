@@ -1,9 +1,12 @@
 import enum
+
 import pydantic
+
 
 class MailboxType(enum.StrEnum):
     Alias = "alias"
     Mailbox = "mailbox"
+
 
 class Mailbox(pydantic.BaseModel):
     type: MailboxType

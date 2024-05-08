@@ -10,8 +10,7 @@ from .crud import (
     get_api_user,
     get_api_users,
 )
-from .database import get_api_db
-from .database import init_api_db
+from .database import get_api_db, init_api_db
 from .models import ApiAllowed as DBApiAllowed
 from .models import ApiDomain as DBApiDomain
 from .models import ApiUser as DBApiUser
