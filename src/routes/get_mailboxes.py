@@ -1,7 +1,7 @@
+import typing
 import uuid
 
 import fastapi
-import typing
 
 from .. import sql_api
 from . import get_creds, mailboxes

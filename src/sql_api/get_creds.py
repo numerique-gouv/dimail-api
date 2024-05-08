@@ -2,6 +2,7 @@ import pydantic
 
 from .crud import get_api_user
 
+
 class Creds(pydantic.BaseModel):
     domains: list[str] = []
     is_admin: bool = False
@@ -16,9 +17,11 @@ class Creds(pydantic.BaseModel):
 
 user_name = "toto2"
 
+
 def set_current_user_name(name: str):
     global user_name
     user_name = name
+
 
 def get_creds(db) -> Creds:
     print(f"Getting creds for user {user_name}")

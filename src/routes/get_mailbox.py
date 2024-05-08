@@ -6,8 +6,7 @@ import uuid
 import fastapi
 import sqlalchemy
 
-from .. import sql_api
-from .. import sql_dovecot
+from .. import sql_api, sql_dovecot
 from . import get_creds, mailboxes
 from .mailbox import Mailbox
 
