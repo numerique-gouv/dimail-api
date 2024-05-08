@@ -9,7 +9,7 @@ class Feature(enum.StrEnum):
     Alias = "alias"
 
 
-class ApiUser(pydantic.BaseModel):
+class WUser(pydantic.BaseModel):
     name: str
     is_admin: bool
 
@@ -17,7 +17,7 @@ class ApiUser(pydantic.BaseModel):
         from_attribute = True
 
 
-class ApiDomain(pydantic.BaseModel):
+class WDomain(pydantic.BaseModel):
     name: str
     features: list[Feature]
     mailbox_domain: str | None = None
@@ -29,7 +29,7 @@ class ApiDomain(pydantic.BaseModel):
         from_attribute = True
 
 
-class ApiAllowed(pydantic.BaseModel):
+class WAllowed(pydantic.BaseModel):
     user: str
     domain: str
 

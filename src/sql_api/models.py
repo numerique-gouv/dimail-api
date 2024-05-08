@@ -1,23 +1,14 @@
-from sqlalchemy import JSON, Boolean, Column, ForeignKey, Integer, String
-from sqlalchemy.orm import Mapped, relationship
+import sqlalchemy as sa
+import sqlalchemy.orm as orm
 
 from .database import Api
 
-# allowed = Table(
-#  'allowed',
-#  Base.metadata,
-#  Column("user", String(32), ForeignKey("users.name"), primary_key=True),
-#  Column("domain", String(200), ForeignKey("domains.name"), primary_key=True)
-# )
-
-
-class ApiUser(Api):
+class DBUser(Api):
     __tablename__ = "users"
-    name = Column(String(32), primary_key=True)
-    is_admin = Column(Boolean, default=False)
-    fullname = Column(String(64), nullable=True)
-    # domains = relationship("ApiAllowed")
-    domains: Mapped[list["ApiDomain"]] = relationship(
+    name = sa.Column(sa.String(32), primary_key=True)
+    is_admin = sa.Column(sa.Boolean, default=False)
+    fullname = sa.Column(sa.String(64), nullable=True)
+    domains: orm.Mapped[list["DBDomain"]] = orm.relationship(
         secondary="allowed", back_populates="users"
     )
 
@@ -33,25 +24,25 @@ class ApiUser(Api):
         return False
 
 
-class ApiDomain(Api):
+class DBDomain(Api):
     __tablename__ = "domains"
-    name = Column(String(200, collation="ascii_bin"), primary_key=True)
-    features = Column(JSON(), nullable=False)
-    webmail_domain = Column(String(200, collation="ascii_bin"), nullable=True)
-    mailbox_domain = Column(String(200, collation="ascii_bin"), nullable=True)
-    imap_domains = Column(JSON(), nullable=True)
-    smtp_domains = Column(JSON(), nullable=True)
-    users: Mapped[list["ApiUser"]] = relationship(
+    name = sa.Column(sa.String(200, collation="ascii_bin"), primary_key=True)
+    features = sa.Column(sa.JSON(), nullable=False)
+    webmail_domain = sa.Column(sa.String(200, collation="ascii_bin"), nullable=True)
+    mailbox_domain = sa.Column(sa.String(200, collation="ascii_bin"), nullable=True)
+    imap_domains = sa.Column(sa.JSON(), nullable=True)
+    smtp_domains = sa.Column(sa.JSON(), nullable=True)
+    users: orm.Mapped[list["DBUser"]] = orm.relationship(
         secondary="allowed", back_populates="domains"
     )
 
 
-class ApiAllowed(Api):
+class DBAllowed(Api):
     __tablename__ = "allowed"
-    user = Column(String(32), ForeignKey("users.name"), primary_key=True)
-    domain = Column(
-        String(200, collation="ascii_bin"), ForeignKey("domains.name"), primary_key=True
+    user = sa.Column(sa.String(32), sa.ForeignKey("users.name"), primary_key=True)
+    domain = sa.Column(
+        sa.String(200, collation="ascii_bin"), sa.ForeignKey("domains.name"), primary_key=True
     )
 
     def __repr__(self):
-        return 'ApiAllowed("%s","%s")' % (self.user, self.domain)
+        return 'sql_api.DBAllowed("%s","%s")' % (self.user, self.domain)

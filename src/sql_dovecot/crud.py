@@ -4,4 +4,4 @@ from . import models
 
 
 def get_dovecot_user(db: sqlalchemy.orm.Session, username: str, domain: str):
-    return db.get(models.DovecotUser, {"username": username, "domain": domain})
+    return db.get(models.ImapUser, {"username": username, "domain": domain})

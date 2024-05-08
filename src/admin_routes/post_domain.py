@@ -1,14 +1,15 @@
 import fastapi
 
-from .. import sql_api
+from .. import sql_api, web_models
 from . import domains
 
 
 @domains.post("/")
 async def post_domain(
-    domain: sql_api.WApiDomain,
+    domain: web_models.WDomain,
     db=fastapi.Depends(sql_api.get_api_db),
-) -> sql_api.WApiDomain:
+) -> web_models.WDomain:
+
     domain_db = sql_api.get_api_domain(db, domain.name)
 
     if domain_db is not None:

@@ -3,14 +3,13 @@ import uuid
 
 import fastapi
 
-from .. import sql_api
+from .. import sql_api, web_models
 from . import get_creds, mailboxes
-from .mailbox import Mailbox
 
 example_users = [
-    Mailbox(type="mailbox", email="those users are faked in code", uuid=uuid.uuid4()),
-    Mailbox(type="mailbox", email="toto@example.com", uuid=uuid.uuid4()),
-    Mailbox(type="mailbox", email="titi@example.com", uuid=uuid.uuid4()),
+    web_models.Mailbox(type="mailbox", status="broken", email="those users are faked in code", uuid=uuid.uuid4()),
+    web_models.Mailbox(type="mailbox", status="broken", email="toto@example.com", uuid=uuid.uuid4()),
+    web_models.Mailbox(type="mailbox", status="broken", email="titi@example.com", uuid=uuid.uuid4()),
 ]
 
 
@@ -29,7 +28,7 @@ async def get_mailboxes(
     domain: str = "all",
     #  page_size: int = 20,
     #  page_number: int = 0,
-) -> list[Mailbox]:
+) -> list[web_models.Mailbox]:
     print(f"Searching users in domain {domain}\n")
     if domain == "all":
         if "example.com" not in perms.domains:

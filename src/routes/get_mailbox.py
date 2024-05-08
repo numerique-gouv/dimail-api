@@ -6,9 +6,8 @@ import uuid
 import fastapi
 import sqlalchemy
 
-from .. import sql_api, sql_dovecot
+from .. import sql_api, sql_dovecot, web_models
 from . import get_creds, mailboxes
-from .mailbox import Mailbox
 
 mail_re = re.compile("^(?P<username>[^@]+)@(?P<domain>[^@]+)$")
 uuid_re = re.compile("^[0-9a-f-]{32,36}$")
@@ -27,7 +26,7 @@ async def get_mailbox(
     mailbox_id: str,
     perms: typing.Annotated[sql_api.Creds, fastapi.Depends(get_creds)],
     db: typing.Annotated[typing.Any, fastapi.Depends(sql_dovecot.get_dovecot_db)],
-) -> Mailbox:
+) -> web_models.Mailbox:
     log = logging.getLogger(__name__)
     log.setLevel(logging.INFO)
 
@@ -79,7 +78,7 @@ async def get_mailbox(
         raise fastapi.HTTPException(status_code=404, detail="Mailbox not found")
 
     log.info("On a trouve l'adresse.")
-    return Mailbox(
+    return web_models.Mailbox(
         type="mailbox",
         status="broken (only imap)",
         email=imap.username + "@" + imap.domain,

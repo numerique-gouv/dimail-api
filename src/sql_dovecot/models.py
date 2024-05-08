@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 from .database import Dovecot
 
 
-class DovecotUser(Dovecot):
+class ImapUser(Dovecot):
     __tablename__ = "users"
     username = Column(
         String(128, collation="ascii_bin"), nullable=False, primary_key=True

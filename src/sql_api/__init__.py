@@ -12,10 +12,6 @@ from .crud import (
 )
 from .database import get_api_db, init_api_db
 from .get_creds import Creds, get_creds, set_current_user_name
-from .models import ApiAllowed as DBApiAllowed
-from .models import ApiDomain as DBApiDomain
-from .models import ApiUser as DBApiUser
-from .schemas import ApiAllowed as WApiAllowed
-from .schemas import ApiDomain as WApiDomain
-from .schemas import ApiUser as WApiUser
-from .schemas import Feature as Feature
+from .models import DBAllowed
+from .models import DBDomain
+from .models import DBUser

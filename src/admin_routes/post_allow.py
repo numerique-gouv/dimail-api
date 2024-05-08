@@ -1,14 +1,15 @@
 import fastapi
 
-from .. import sql_api
+from .. import sql_api, web_models
 from . import allows
 
 
 @allows.post("/")
 async def post_allow(
-    allow: sql_api.WApiAllowed,
+    allow: web_models.WAllowed,
     db=fastapi.Depends(sql_api.get_api_db),
-) -> sql_api.WApiAllowed:
+) -> web_models.WAllowed:
+
     user_db = sql_api.get_api_user(db, allow.user)
     if user_db is None:
         raise fastapi.HTTPException(status_code=404, detail="User not found")
