@@ -15,14 +15,13 @@ RUN apt-get install -y temurin-8-jdk open-xchange open-xchange-admin open-xchang
 RUN apt-get install -y openssh-server openssh-client
 
 WORKDIR /etc/ssh
-COPY ./ssh_host_ecdsa_key ./ssh_host_ecdsa_key.pub .
-COPY ./ssh_host_ed25519_key ./ssh_host_ed25519_key.pub .
-COPY ./ssh_host_rsa_key ./ssh_host_rsa_key.pub
+COPY --chmod=400 ./ssh_host_ecdsa_key ./ssh_host_ecdsa_key.pub .
+COPY --chmod=400 ./ssh_host_ed25519_key ./ssh_host_ed25519_key.pub .
+COPY --chmod=400 ./ssh_host_rsa_key ./ssh_host_rsa_key.pub
 
 WORKDIR /root
 COPY ./authorized_keys ./.ssh/authorized_keys
-COPY ./setup.sh .
-RUN chmod a+x setup.sh
+COPY --chmod=0755 ./setup.sh ./purge.sh .
 
 RUN mkdir /run/sshd
 

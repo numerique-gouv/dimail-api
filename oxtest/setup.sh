@@ -79,7 +79,8 @@ if [ "$nb_dbpool" = "0" ]; then
 		--adminuser master_user \
 		--adminpass master_pass \
 		--name ox_test_database \
-		--dbpasswd toto \
+		--dbuser ox \
+		--dbpasswd oxtoto \
 		--hostname mariadb \
 		--master true
 	echo Done
