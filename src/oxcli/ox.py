@@ -31,6 +31,27 @@ class OxContext(pydantic.BaseModel):
         return cls(cid=cid, name=name, domains=domains, cluster=cluster)
 
 
+class OxUser(pydantic.BaseModel):
+    uid: int
+    username: str
+    givenName: str
+    surName: str
+    displayName: str
+    email: str
+    ctx: OxContext
+
+    @classmethod
+    def read_from_csv(cls, ctx: OxContext, line: dict):
+        uid = line["Id"]
+        username = line["Name"]
+        email = line["PrimaryEmail"]
+        givenName = line["Given_name"]
+        surName = line["Sur_name"]
+        displayName = line["Display_name"]
+        return cls(uid=uid, username=username, email=email, givenName=givenName,
+            surName=surName, displayName=displayName, ctx=ctx)
+
+
 log = logging.getLogger("oxcli")
 
 
@@ -39,10 +60,22 @@ def _purge(self: OxCluster) -> None:
     self.run_for_item(["/root/purge.sh"])
     log.info("Ox server is empty")
 
+import re
+clean_text = re.compile("^[a-zA-Z0-9/.=_-]+$")
+def __cmd(args: list[str]) -> str:
+    clean = []
+    for item in args:
+        if clean_text.match(item) is not None:
+            clean.append(item)
+            continue
+        text = "'"+item.replace("'", "\\'")+"'"
+        clean.append(text)
+    full = " ".join(clean)
+    return full
 
 def _run_for_csv(self: OxCluster, command: list[str]) -> list[dict]:
     file = subprocess.Popen(
-        ["/usr/bin/ssh", self.ssh_url, " ".join(command)],
+        ["/usr/bin/ssh", self.ssh_url, __cmd(command)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
@@ -64,7 +97,7 @@ def _run_for_csv(self: OxCluster, command: list[str]) -> list[dict]:
 
 def _run_for_item(self: OxCluster, command: list[str]) -> str:
     file = subprocess.Popen(
-        ["/usr/bin/ssh", self.ssh_url, " ".join(command)],
+        ["/usr/bin/ssh", self.ssh_url, __cmd(command)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
@@ -133,7 +166,7 @@ def _create_context(
         "--language=fr_FR",
         "--username", self.admin_username,
         "--password", self.admin_password,
-        "--displayname", "'Context Admin'",
+        "--displayname", "Context Admin",
         "--givenname", "Admin",
         "--surname", "Context",
         "--email",
@@ -170,8 +203,133 @@ def __add_mapping(
         "--contextid", f"{self.cid}",
         "--addmapping", domain
     ])
-    self = self.cluster.get_context(self.cid)
-    return self
+    return self.cluster.get_context(self.cid)
+
+def _username_exists(
+    self: OxContext,
+    username: str
+) -> bool:
+    res = self.cluster.run_for_item([
+        "/opt/open-xchange/sbin/existsuser",
+        "-A", self.cluster.admin_username,
+        "-P", self.cluster.admin_password,
+        "-c", self.cid,
+        "--username", username
+    ])
+    if "does not exist" in res:
+        return False
+    return True
+
+def _displayname_exists(
+    self: OxContext,
+    username: str
+) -> bool:
+    res = self.cluster.run_for_item([
+        "/opt/open-xchange/sbin/existsuser",
+        "-A", self.cluster.admin_username,
+        "-P", self.cluster.admin_password,
+        "-c", self.cid,
+        "--username", display_name
+    ])
+    if "does not exists" in res:
+        return False
+    return True
+
+def _create_user(
+    self: OxContext,
+    surName: str,
+    givenName: str,
+    displayName: str | None = None,
+    email: str | None = None,
+    username: str | None = None,
+    domain: str | None = None
+) -> OxUser:
+    if email is None and username is not None and domain is not None:
+        email = username + "@" + domain
+    elif username is None and domain is None and email is not None:
+        (username, domain) = email.split("@")
+    else:
+        raise Exception("Please provide either the 'email' or both 'username' and 'domain'")
+    if displayName is None and givenName is not None and surName is not None:
+        displayName = " ".join([givenName, surName])
+    if displayName is None:
+        raise Exception("displayName is mandatory")
+
+    data = self.cluster.run_for_item([
+        "/opt/open-xchange/sbin/createuser",
+        "-A", self.cluster.admin_username,
+        "-P", self.cluster.admin_password,
+        "-c", f"{self.cid}",
+        "--username", username,
+        "--password", "useless",
+        "--givenname", givenName,
+        "--surname", surName,
+        "--displayname", displayName,
+        "--email", email,
+        "--language", "fr_FR",
+        "--timezone", "Europe/Paris"
+    ])
+    user = self.get_user_by_name(username)
+    if user is None:
+        raise Exception("I did create the user with success (relative...), but fail to get it")
+    return user
+    
+
+def _list_users(
+    self: OxContext
+) -> list[OxUser]:
+    data = self.cluster.run_for_csv([
+        "/opt/open-xchange/sbin/listuser",
+        "-A", self.cluster.admin_username,
+        "-P", self.cluster.admin_password,
+        "-c", f"{self.cid}",
+        "--csv"
+    ])
+    res = []
+    for line in data:
+        user = OxUser.read_from_csv(self, line)
+        res.append(user)
+    return res
+
+def _search_user(
+    self: OxContext,
+    username: str
+) -> list[OxUser]:
+    data = self.cluster.run_for_csv([
+        "/opt/open-xchange/sbin/listuser",
+        "-A", self.cluster.admin_username,
+        "-P", self.cluster.admin_password,
+        "-c", f"{self.cid}",
+        "-s", username,
+        "--csv"
+    ])
+    res = []
+    for line in data:
+        user = OxUser.read_from_csv(self, line)
+        res.append(user)
+    return res
+
+
+def _get_user_by_name(
+    self: OxContext,
+    username: str
+) -> OxUser | None:
+    all = self.search_user(username)
+    for user in all:
+        if user.username == username:
+            return user
+    return None
+
+def _get_user_by_email(
+    self: OxContext,
+    email: str
+) -> OxUser | None:
+    all = self.list_users()
+    for user in all:
+        if user.email == email:
+            return user
+    return None
+
 
 OxCluster.purge        = _purge
 OxCluster.run_for_csv  = _run_for_csv
@@ -183,3 +341,9 @@ OxCluster.create_context = _create_context
 OxCluster.add_mapping    = _add_mapping
  
 OxContext.add_mapping = __add_mapping
+OxContext.create_user = _create_user
+OxContext.list_users  = _list_users
+OxContext.search_user = _search_user
+
+OxContext.get_user_by_name  = _get_user_by_name
+OxContext.get_user_by_email = _get_user_by_email
