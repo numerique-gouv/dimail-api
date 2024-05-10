@@ -4,10 +4,15 @@ from .. import oxcli
 def test_ox():
     ox_cluster = oxcli.OxCluster()
 
-    oxcli.purge(ox_cluster)
+    ox_cluster.purge()
 
-    res = oxcli.list_contexts(ox_cluster)
-    res = oxcli.create_context(ox_cluster, 1, "testing", "example.com")
+    res = ox_cluster.list_contexts()
+    res = ox_cluster.create_context(1, "testing", "example.com")
     assert res == oxcli.OxContext(
-        cid=1, name="testing", domains=["example.com"], lmappings="example.com"
+        cid=1, name="testing", domains=["example.com"], cluster=ox_cluster
+    )
+
+    res = ox_cluster.add_mapping(1, "tutu.net")
+    assert res == oxcli.OxContext(
+        cid=1, name="testing", domains=["example.com", "tutu.net"], cluster=ox_cluster
     )

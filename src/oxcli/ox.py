@@ -16,10 +16,11 @@ class OxCluster(pydantic.BaseModel):
 class OxContext(pydantic.BaseModel):
     cid: int
     name: str
-    domains: list[str]
+    domains: set[str]
+    cluster: OxCluster
 
     @classmethod
-    def read_from_csv(cls, line: dict):
+    def read_from_csv(cls, cluster: OxCluster, line: dict):
         maps = line["lmappings"].split(",")
         cid = line["id"]
         name = line["name"]
@@ -27,21 +28,21 @@ class OxContext(pydantic.BaseModel):
         for key in maps:
             if key != cid and key != name:
                 domains.append(key)
-        return cls(cid=cid, name=name, domains=domains)
+        return cls(cid=cid, name=name, domains=domains, cluster=cluster)
 
 
 log = logging.getLogger("oxcli")
 
 
-def purge(ox_cluster: OxCluster) -> None:
+def _purge(self: OxCluster) -> None:
     log.info("Purge everything from the cluster")
-    run_for_item(ox_cluster, "/root/purge.sh")
+    self.run_for_item(["/root/purge.sh"])
     log.info("Ox server is empty")
 
 
-def run_for_csv(ox_cluster: OxCluster, command) -> list[dict]:
+def _run_for_csv(self: OxCluster, command: list[str]) -> list[dict]:
     file = subprocess.Popen(
-        ["/usr/bin/ssh", ox_cluster.ssh_url, command],
+        ["/usr/bin/ssh", self.ssh_url, " ".join(command)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
@@ -61,9 +62,9 @@ def run_for_csv(ox_cluster: OxCluster, command) -> list[dict]:
     return data
 
 
-def run_for_item(ox_cluster: OxCluster, command) -> str:
+def _run_for_item(self: OxCluster, command: list[str]) -> str:
     file = subprocess.Popen(
-        ["/usr/bin/ssh", ox_cluster.ssh_url, command],
+        ["/usr/bin/ssh", self.ssh_url, " ".join(command)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
@@ -79,60 +80,106 @@ def run_for_item(ox_cluster: OxCluster, command) -> str:
     return file.stdout.read()
 
 
-def list_contexts(ox_cluster: OxCluster) -> [OxContext]:
-    data = run_for_csv(
-        ox_cluster,
-        f"/opt/open-xchange/sbin/listcontext -A {ox_cluster.master_username} -P {ox_cluster.master_password} --csv",
-    )
+def _list_contexts(self: OxCluster) -> [OxContext]:
+    data = self.run_for_csv([
+        "/opt/open-xchange/sbin/listcontext",
+        "-A", self.master_username,
+        "-P", self.master_password,
+        "--csv"
+    ])
     res = []
     for line in data:
-        res.append(OxContext.read_from_csv(line))
+        ctx = OxContext.read_from_csv(self, line)
+        res.append(ctx)
 
     return res
 
 
-def create_context(
-    ox_cluster: OxCluster, cid: int | None, name: str, domain: str
+def _get_context(
+    self: OxCluster, cid: int
+) -> OxContext | None:
+    all = self.list_contexts()
+    for ctx in all:
+        if ctx.cid == cid:
+            return ctx
+    return None
+
+
+def _create_context(
+    self: OxCluster, cid: int | None, name: str, domain: str
 ) -> OxContext:
-    all = list_contexts(ox_cluster)
+    all = self.list_contexts()
     max_id = 0
     for ctx in all:
         if cid is not None and ctx.cid == cid:
             raise Exception(f"Context id {cid} already exists")
         if ctx.name == name:
-            raise Exception(f"Context name {cid} already exists")
+            raise Exception(f"Context name {name} already exists")
         if domain in ctx.domains:
             raise Exception(f"Domain already {domain} mapped to context {ctx.ctx}")
         if ctx.cid > max_id:
             max_id = ctx.cid
     if cid is None:
         cid = max_id
-    data = run_for_item(
-        ox_cluster,
-        " ".join(
-            [
-                "/opt/open-xchange/sbin/createcontext",
-                "-A", ox_cluster.master_username,
-                "-P", ox_cluster.master_password,
-                "--contextid", f"{cid}",
-                "--contextname", name,
-                "--addmapping", domain,
-                "--quota", "1024",
-                "--access-combination-name=groupware_standard",
-                "--language=fr_FR",
-                "--username", ox_cluster.admin_username,
-                "--password", ox_cluster.admin_password,
-                "--displayname", "'Context Admin'",
-                "--givenname", "Admin",
-                "--surname", "Context",
-                "--email",
-                f"oxadmin@{domain}",
-            ]
-        ),
-    )
-    all = list_contexts(ox_cluster)
-    for ctx in all:
-        if ctx.cid == cid:
-            log.info(f"Created context {cid}")
-            return ctx
-    raise Exception("Created the context, but failed to list it...")
+    data = self.run_for_item([
+        "/opt/open-xchange/sbin/createcontext",
+        "-A", self.master_username,
+        "-P", self.master_password,
+        "--contextid", f"{cid}",
+        "--contextname", name,
+        "--addmapping", domain,
+        "--quota", "1024",
+        "--access-combination-name=groupware_standard",
+        "--language=fr_FR",
+        "--username", self.admin_username,
+        "--password", self.admin_password,
+        "--displayname", "'Context Admin'",
+        "--givenname", "Admin",
+        "--surname", "Context",
+        "--email",
+        f"oxadmin@{domain}",
+    ])
+    ctx = self.get_context(cid)
+    if ctx is None:
+        raise Exception("Created the context, but failed to list it...")
+    return ctx
+
+def _add_mapping(
+    self: OxCluster, cid: int, domain: str
+) -> OxContext:
+    ctx = self.get_context(cid)
+    if ctx is None:
+        raise Exception("Context not found")
+    return ctx.add_mapping(domain)
+    data = self.run_for_item([
+        "/opt/open-xchange/sbin/changecontext",
+        "-A", self.master_username,
+        "-P", self.master_password,
+        "--contextid", f"{cid}",
+        "--addmapping", domain
+    ])
+    return self.get_context(cid)
+
+def __add_mapping(
+    self: OxContext, domain: str
+) -> OxContext:
+    data = self.cluster.run_for_item([
+        "/opt/open-xchange/sbin/changecontext",
+        "-A", self.cluster.master_username,
+        "-P", self.cluster.master_password,
+        "--contextid", f"{self.cid}",
+        "--addmapping", domain
+    ])
+    self = self.cluster.get_context(self.cid)
+    return self
+
+OxCluster.purge        = _purge
+OxCluster.run_for_csv  = _run_for_csv
+OxCluster.run_for_item = _run_for_item
+
+OxCluster.list_contexts  = _list_contexts
+OxCluster.get_context    = _get_context
+OxCluster.create_context = _create_context
+OxCluster.add_mapping    = _add_mapping
+ 
+OxContext.add_mapping = __add_mapping
