@@ -10,21 +10,25 @@ services:
       MARIADB_DATABASE: api
       MARIADB_ROOT_PASSWORD: toto
     ports:
-      - 3306:3306
+      - "3306:3306"
+    cap_add:
+      - NET_RAW
     healthcheck:
-      test: ["CMD", "/usr/local/bin/healthcheck.sh", "--connect"]
+      test: ["CMD", "/usr/local/bin/healthcheck.sh",  "--connect"]
       interval: 3s
       timeout: 1s
       retries: 10
       start_period: 0s
+
   oxtest:
     build:
       context: ./oxtest
     restart: always
     stop_grace_period: 1s
+    cap_add:
+      - NET_RAW
     depends_on:
       mariadb:
         condition: service_healthy
     ports:
-      - 2222:22
-
+      - "2222:22"
