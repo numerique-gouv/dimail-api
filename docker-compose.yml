@@ -9,6 +9,8 @@ services:
       MARIADB_PASSWORD: coincoin
       MARIADB_DATABASE: api
       MARIADB_ROOT_PASSWORD: toto
+    volumes:
+      - ./oxtest/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "3306:3306"
     cap_add:
