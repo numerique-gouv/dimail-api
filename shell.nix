@@ -35,7 +35,7 @@ let
   pkgs.mkShell {
     nativeBuildInputs = with pkgs.buildPackages; [
       pycharm
-      (pkgs.python3.withPackages (ps: with ps; [
+      (pkgs.python312.withPackages (ps: with ps; [
         ps.fastapi
         ps.pytest
         ps.sqlalchemy

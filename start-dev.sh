@@ -7,6 +7,6 @@ alembic upgrade head
 cd ..
 uvicorn src.main:app --reload
 cd src/
-alembic downgrade head
+# alembic downgrade head
 cd ..
-$DOCKER compose down
+# $DOCKER compose down
