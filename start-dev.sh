@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # vérifie que python est bien activé
-if ! command -v alembic > /dev/null 2>&1 || ! command -v uvicorn > /dev/null 2>&1; then
+if [ -z "${VIRTUAL_ENV}" ]; then
   echo "l'environnement python n'est pas configuré ou est désactivé (voir le README)"
   exit 1
 fi
