@@ -1,10 +1,10 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 # vérifie que python est bien activé
-#if [ -z "${VIRTUAL_ENV}" ]; then
-#  echo "l'environnement python n'est pas configuré ou est désactivé (voir le README)"
-#  exit 1
-#fi
+if ! command -v alembic > /dev/null 2>&1 || ! command -v uvicorn > /dev/null 2>&1; then
+  echo "l'environnement python n'est pas configuré ou est désactivé (voir le README)"
+  exit 1
+fi
 
 # défini le runtime de container
 DOCKER=docker
