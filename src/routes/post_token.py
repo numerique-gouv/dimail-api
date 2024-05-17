@@ -1,13 +1,12 @@
+import datetime
+import typing
+
 import fastapi.security
-import typing, datetime
 import jwt
 from fastapi import Depends, FastAPI, HTTPException, status
-from .. import config
-from .. import web_models
 from sqlalchemy.orm import Session
 
-from .. import (
-    sql_api)
+from .. import config, sql_api, web_models
 from . import token
 
 
@@ -19,7 +18,9 @@ def PermissionDeniedException():
     )
 
 
-def authenticate_user(db: Session, user_name: str, password: str) -> sql_api.DBUser | bool:
+def authenticate_user(
+    db: Session, user_name: str, password: str
+) -> sql_api.DBUser | bool:
     db_user = sql_api.get_api_user(db, user_name)
     if db_user is None:
         raise PermissionDeniedException()
@@ -34,9 +35,13 @@ def create_access_token(data: dict, expires_delta: datetime.timedelta | None = N
     if expires_delta:
         expire = datetime.datetime.now(datetime.timezone.utc) + expires_delta
     else:
-        expire = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=15)
+        expire = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
+            minutes=15
+        )
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, config.settings['JWT_SECRET'], algorithm='HS256')
+    encoded_jwt = jwt.encode(
+        to_encode, config.settings["JWT_SECRET"], algorithm="HS256"
+    )
     return encoded_jwt
 
 
@@ -48,8 +53,8 @@ def get_api_db():
 # TODO: post -> get + basic auth
 @token.post("/")
 async def login_for_access_token(
-        form_data: typing.Annotated[fastapi.security.OAuth2PasswordRequestForm, Depends()],
-        db: typing.Annotated[typing.Any, fastapi.Depends(get_api_db)],
+    form_data: typing.Annotated[fastapi.security.OAuth2PasswordRequestForm, Depends()],
+    db: typing.Annotated[typing.Any, fastapi.Depends(get_api_db)],
 ) -> web_models.WToken:
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:

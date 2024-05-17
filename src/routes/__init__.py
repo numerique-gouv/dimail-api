@@ -5,6 +5,7 @@ from .. import sql_api
 mailboxes = APIRouter(prefix="/mailboxes", tags=["mailboxes"])
 token = APIRouter(prefix="/token", tags=["token"])
 
+
 async def get_creds():
     api_db = next(sql_api.get_api_db())
     yield sql_api.get_creds(api_db)

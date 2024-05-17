@@ -19,14 +19,16 @@ uuid_re = re.compile("^[0-9a-f-]{32,36}$")
         200: {"description": "Get a mailbox from his e_mail"},
         403: {"description": "Permission denied"},
         404: {"description": "Mailbox not found"},
-        422: {"description": "Email address is not well formed"}
+        422: {"description": "Email address is not well formed"},
     },
     description="The expected mailbox_id can be the e-mail address of the uuid of a mailbox",
 )
 async def get_mailbox(
     mailbox_id: str,
     perms: typing.Annotated[sql_api.Creds, fastapi.Depends(get_creds)],
-    dovecot_db: typing.Annotated[typing.Any, fastapi.Depends(sql_dovecot.get_dovecot_db)],
+    dovecot_db: typing.Annotated[
+        typing.Any, fastapi.Depends(sql_dovecot.get_dovecot_db)
+    ],
     # alias_db: typing.Annotated[typing.Any, fastapi.Depends(sql_alias.get_alias_db)],
 ) -> web_models.Mailbox:
     log = logging.getLogger(__name__)

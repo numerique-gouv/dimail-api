@@ -1,6 +1,7 @@
+import uuid
+
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
-import uuid
 
 from .database import Api
 

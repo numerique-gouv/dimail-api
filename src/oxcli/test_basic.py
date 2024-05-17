@@ -1,5 +1,6 @@
 from .. import oxcli
 
+
 def test_ox():
     ox_cluster = oxcli.OxCluster()
 
@@ -21,7 +22,10 @@ def test_ox():
     # or via the context
     ctx = ctx.add_mapping("tutu.net")
     assert ctx == oxcli.OxContext(
-        cid=1, name="testing", domains=["example.com", "toto.com", "tutu.net"], cluster=ox_cluster
+        cid=1,
+        name="testing",
+        domains=["example.com", "toto.com", "tutu.net"],
+        cluster=ox_cluster,
     )
 
     # At the beginning, we have the admin user
@@ -32,11 +36,11 @@ def test_ox():
         surName="Context",
         displayName="Context Admin",
         email="oxadmin@example.com",
-        ctx=ctx
+        ctx=ctx,
     )
 
     res = ctx.list_users()
-    assert res == [ admin_user ]
+    assert res == [admin_user]
 
     # User can be created via the context...
     want_user = oxcli.OxUser(
@@ -46,7 +50,8 @@ def test_ox():
         surName="Sur",
         displayName="Given Sur",
         email="toto@tutu.net",
-        ctx=ctx)
+        ctx=ctx,
+    )
     got_user = ctx.create_user(
         givenName="Given",
         surName="Sur",
@@ -63,7 +68,7 @@ def test_ox():
     assert len(res) == 2
 
     got_user = ctx.search_user("toto")
-    assert got_user == [ want_user ]
+    assert got_user == [want_user]
 
     got_user = ctx.search_user("titi")
     assert got_user == []
@@ -79,4 +84,3 @@ def test_ox():
 
     got_user = ctx.get_user_by_name("titi")
     assert got_user is None
-    
