@@ -1,4 +1,5 @@
 import enum
+import uuid
 
 import pydantic
 
@@ -16,15 +17,18 @@ class WToken(pydantic.BaseModel):
     class ConfigDict:
         from_attribute = True
 
-
 class WUser(pydantic.BaseModel):
     name: str
     is_admin: bool
-    password: str | None = None
+    uuid: uuid.UUID
 
     class ConfigDict:
         from_attribute = True
 
+class CreateUser(pydantic.BaseModel):
+    name: str
+    password: str
+    is_admin: bool
 
 class WDomain(pydantic.BaseModel):
     name: str
