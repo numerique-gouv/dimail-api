@@ -5,6 +5,11 @@ users = fastapi.APIRouter(
     tags=["admin users"],
 )
 
+usertoken = fastapi.APIRouter(
+    prefix="/admin/usertoken",
+    tags=["admin usertoken"],
+)
+
 domains = fastapi.APIRouter(
     prefix="/admin/domains",
     tags=["admin domains"],
@@ -19,3 +24,4 @@ from .get_users import get_users
 from .post_allow import post_allow
 from .post_domain import post_domain
 from .post_user import post_user
+from .get_usertoken import get_usertoken

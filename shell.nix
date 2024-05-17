@@ -46,6 +46,7 @@ let
         ps.isort
         ps.alembic
         ps.httpx
+        ps.pyjwt
         dynaconf
       ]))
     ];

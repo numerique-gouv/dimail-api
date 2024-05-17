@@ -1,5 +1,4 @@
 import enum
-
 import pydantic
 
 
@@ -16,6 +15,12 @@ class WUser(pydantic.BaseModel):
     class ConfigDict:
         from_attribute = True
 
+class WUserToken(pydantic.BaseModel):
+    name: str
+    token: str
+
+    class ConfigDict:
+        from_attribute = True
 
 class WDomain(pydantic.BaseModel):
     name: str
