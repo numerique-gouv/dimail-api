@@ -1,4 +1,3 @@
-from passlib.hash import argon2
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -27,17 +26,12 @@ def get_api_domain(db: Session, domain_name: str):
     return db.query(models.DBDomain).filter(models.DBDomain.name == domain_name).first()
 
 
-def verify_password(plain_password, hashed_password):
-    return argon2.verify(plain_password, hashed_password)
-
-
-def make_password_hash(password):
-    return argon2.hash(password)
-
-
-def create_api_user(db: Session, user: web_models.WUser):
-    db_user = models.DBUser(**user.model_dump(exclude="password"))
-    db_user.hashed_password = make_password_hash(user.password)
+def create_api_user(db: Session, name: str, password: str, is_admin: bool):
+    db_user = models.DBUser(
+        name = name,
+        is_admin = is_admin,
+    )
+    db_user.set_password(password)
     try:
         db.add(db_user)
         db.commit()
