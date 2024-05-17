@@ -47,6 +47,10 @@ let
         ps.alembic
         ps.httpx
         ps.pyjwt
+        ps.argon2_cffi
+        ps.passlib
+        ps.josepy
+        ps.python-multipart
         dynaconf
       ]))
     ];

@@ -9,6 +9,7 @@ from .crud import (
     get_api_domains,
     get_api_user,
     get_api_users,
+    verify_password,
 )
 from .database import get_api_db, init_api_db
 from .get_creds import Creds, get_creds, set_current_user_name

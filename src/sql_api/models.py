@@ -1,12 +1,16 @@
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
+import uuid
 
 from .database import Api
 
 
 class DBUser(Api):
     __tablename__ = "users"
+    __table_args__ = (sa.UniqueConstraint("uuid", name="uuid_is_unique"),)
     name = sa.Column(sa.String(32), primary_key=True)
+    uuid = sa.Column(sa.String(64), default=uuid.uuid4)
+    hashed_password = sa.Column(sa.String(128), nullable=True)
     is_admin = sa.Column(sa.Boolean, default=False)
     fullname = sa.Column(sa.String(64), nullable=True)
     domains: orm.Mapped[list["DBDomain"]] = orm.relationship(
