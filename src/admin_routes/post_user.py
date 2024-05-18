@@ -14,4 +14,6 @@ async def post_user(
     if user_db is not None:
         raise fastapi.HTTPException(status_code=409, detail="User already exists")
 
-    return sql_api.create_api_user(db, name=user.name, password=user.password, is_admin=user.is_admin)
+    return sql_api.create_api_user(
+        db, name=user.name, password=user.password, is_admin=user.is_admin
+    )

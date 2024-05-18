@@ -18,9 +18,7 @@ def PermissionDeniedException():
     )
 
 
-def authenticate_user(
-    db: orm.Session, user_name: str, password: str
-) -> sql_api.DBUser:
+def authenticate_user(db: orm.Session, user_name: str, password: str) -> sql_api.DBUser:
     db_user = sql_api.get_api_user(db, user_name)
     if db_user is None:
         raise PermissionDeniedException()
@@ -30,14 +28,14 @@ def authenticate_user(
     return db_user
 
 
-
 # TODO: post -> get + basic auth
 @token.post("/")
 async def login_for_access_token(
-    form_data: typing.Annotated[fastapi.security.OAuth2PasswordRequestForm, fastapi.Depends()],
+    form_data: typing.Annotated[
+        fastapi.security.OAuth2PasswordRequestForm, fastapi.Depends()
+    ],
     db: typing.Annotated[typing.Any, fastapi.Depends(sql_api.get_api_db)],
 ) -> web_models.WToken:
     user = authenticate_user(db, form_data.username, form_data.password)
     token = user.create_token()
     return web_models.WToken(access_token=token, token_type="bearer")
-

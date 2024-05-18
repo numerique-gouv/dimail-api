@@ -28,8 +28,8 @@ def get_api_domain(db: Session, domain_name: str):
 
 def create_api_user(db: Session, name: str, password: str, is_admin: bool):
     db_user = models.DBUser(
-        name = name,
-        is_admin = is_admin,
+        name=name,
+        is_admin=is_admin,
     )
     db_user.set_password(password)
     try:
