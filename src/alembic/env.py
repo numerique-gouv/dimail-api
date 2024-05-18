@@ -1,12 +1,13 @@
-import os
-import sys
 import logging
+import os
 import re
+import sys
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
+
 # We need to import those as src.something, so that their own "from .. import stuff" works
 # properly.
 if os.path.exists("sql_api"):

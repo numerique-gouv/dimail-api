@@ -1,6 +1,5 @@
-from sqlalchemy import JSON, Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy import Column, Integer, String
 from sqlalchemy.dialects import mysql
-from sqlalchemy.orm import relationship
 
 from .database import Dovecot
 

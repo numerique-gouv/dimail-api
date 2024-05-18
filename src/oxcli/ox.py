@@ -202,7 +202,9 @@ def _create_context(
     )
     ctx = self.get_context(cid)
     if ctx is None:
-        raise Exception("Created the context, but failed to list it, and with a message that is longer...")
+        raise Exception(
+            "Created the context, but failed to list it, and with a message that is longer..."
+        )
     return ctx
 
 

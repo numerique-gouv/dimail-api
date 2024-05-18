@@ -4,7 +4,6 @@ import typing
 import uuid
 
 import fastapi
-import sqlalchemy
 
 from .. import sql_api, sql_dovecot, web_models
 from . import get_creds, mailboxes
@@ -67,7 +66,7 @@ async def get_mailbox(
 
     if domain is None:
         log.error(
-            f"Comment ca le domaine n'est pas defini alors que ca match la regexp ?"
+            "Comment ca le domaine n'est pas defini alors que ca match la regexp ?"
         )
         raise fastapi.HTTPException(status_code=422, detail="Invalid email address")
 
@@ -75,7 +74,7 @@ async def get_mailbox(
         log.info(f"Permission denied on domain {domain} for curent user")
         raise fastapi.HTTPException(status_code=403, detail="Permission denied")
 
-    imap = sql_dovecot.get_dovecot_user(dovecot_db, infos["username"], infos["domain"])
+    imap = sql_dovecot.get_dovecot_user(dovecot_db, username, domain)
     if imap is None:
         log.info("La base dovecot ne contient pas cette adresse.")
         raise fastapi.HTTPException(status_code=404, detail="Mailbox not found")

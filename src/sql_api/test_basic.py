@@ -1,4 +1,4 @@
-from .. import sql_api, web_models
+from .. import sql_api
 
 
 def test_create_user(db_api):
@@ -17,7 +17,7 @@ def test_delete_user(db_api, log):
     assert user == sql_api.DBUser(name="toto", is_admin=False)
     # When trying to fetch it again, we fail
     user = sql_api.get_api_user(db_api, "toto")
-    assert user == None
+    assert user is None
 
 
 def test_useless():

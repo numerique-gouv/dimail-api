@@ -27,7 +27,7 @@ def get_creds(db) -> Creds:
     print(f"Getting creds for user {user_name}")
     user = get_api_user(db, user_name)
     if user is None:
-        print(f"User not found")
+        print(f"User {user_name} not found")
         return Creds()
     if user.is_admin:
         print(f"The user {user_name} is an admin")

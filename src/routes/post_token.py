@@ -1,12 +1,10 @@
-import datetime
 import typing
 
 import fastapi
 import fastapi.security
-import jwt
 import sqlalchemy.orm as orm
 
-from .. import config, sql_api, web_models
+from .. import sql_api, web_models
 from . import token
 
 
