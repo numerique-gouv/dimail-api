@@ -13,11 +13,31 @@ def my_user(db_api_maker, log):
     user = "bidibule"
     domain = "tutu.net"
 
-    client.post("/admin/users", json={"name": user, "is_admin": False})
-    client.post(
-        "/admin/domains", json={"name": domain, "features": ["webmail", "mailbox"]}
+    res = client.post(
+        "/admin/users",
+        json={
+            "name": user,
+            "password": "toto",
+            "is_admin": False
+        }
     )
-    client.post("/admin/allows", json={"user": user, "domain": domain})
+    assert res.status_code == 200
+    res = client.post(
+        "/admin/domains",
+        json={
+            "name": domain,
+            "features": ["webmail", "mailbox"]
+        }
+    )
+    assert res.status_code == 200
+    client.post(
+        "/admin/allows",
+        json={
+            "user": user,
+            "domain": domain
+        }
+    )
+    assert res.status_code == 200
 
     yield {"user": user, "domains": [domain]}
 
