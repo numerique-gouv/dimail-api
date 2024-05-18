@@ -143,10 +143,10 @@ def run_migrations_online() -> None:
 
         for rec in engines.values():
             rec["transaction"].commit()
-    except:
+    except Exception as e:
         for rec in engines.values():
             rec["transaction"].rollback()
-        raise
+        raise e
     finally:
         for rec in engines.values():
             rec["connection"].close()
