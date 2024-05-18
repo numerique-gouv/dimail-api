@@ -1,4 +1,7 @@
 import fastapi
+import logging
+
+from .. import sql_api
 
 users = fastapi.APIRouter(
     prefix="/admin/users",
@@ -10,7 +13,21 @@ domains = fastapi.APIRouter(
     tags=["admin domains"],
 )
 
-allows = fastapi.APIRouter(prefix="/admin/allows", tags=["admin allows"])
+allows = fastapi.APIRouter(
+    prefix="/admin/allows",
+    tags=["admin allows"]
+)
+
+def depends_api_db():
+    log = logging.getLogger(__name__)
+    maker = sql_api.get_maker()
+    db = maker()
+    # En cas d'erreur, on va lever une exception (404, 403, etc), or il faudra
+    # quand meme fermer la connexion a la base de données
+    try:
+        yield db
+    finally:
+        db.close()
 
 from .get_allows import get_allows
 from .get_domains import get_domains

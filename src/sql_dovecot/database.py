@@ -1,14 +1,17 @@
 import typing
 
 import sqlalchemy
-import sqlalchemy.orm
+import sqlalchemy.orm as orm
 
 url: str
 engine: sqlalchemy.Engine
-maker: sqlalchemy.orm.sessionmaker | None = None
+maker: orm.sessionmaker | None = None
+db: orm.Session
 
 Dovecot = sqlalchemy.orm.declarative_base()
 
+def close_db(db):
+    db.close()
 
 def init_dovecot_db(config: str):
     global url
@@ -18,13 +21,19 @@ def init_dovecot_db(config: str):
     engine = sqlalchemy.create_engine(url)
     maker = sqlalchemy.orm.sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-
-def get_dovecot_db() -> typing.Generator:
+def get_maker() -> orm.sessionmaker:
     global maker
     if maker is None:
-        raise Exception("We need to init the database")
-    db = maker()
-    try:
-        yield db
-    finally:
-        db.close()
+        raise Exception("Please init the database by giving me an url...")
+    return maker
+
+def get_dovecot_db() -> orm.Session:
+    global db
+    global maker
+    if db is None:
+        if maker is None:
+            raise Exception("Please init the database by giving me an url...")
+        db = maker()
+        atexit.register(lambda: close_db(db))
+    return db
+

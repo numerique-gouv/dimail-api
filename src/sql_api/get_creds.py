@@ -15,25 +15,25 @@ class Creds(pydantic.BaseModel):
         return False
 
 
-user_name = "toto2"
+Xuser_name = "toto2"
 
 
 def set_current_user_name(name: str):
-    global user_name
-    user_name = name
+    global Xuser_name
+    Xuser_name = name
 
 
-def get_creds(db) -> Creds:
-    print(f"Getting creds for user {user_name}")
+def get_creds(db, log, user_name: str) -> Creds:
+    log.info(f"Getting creds for user {user_name} into db {db}")
     user = get_api_user(db, user_name)
     if user is None:
-        print(f"User {user_name} not found")
+        log.info(f"User {user_name} not found")
         return Creds()
     if user.is_admin:
-        print(f"The user {user_name} is an admin")
+        log.info(f"The user {user_name} is an admin")
         return Creds(is_admin=True)
     domains = user.domains
     creds = Creds(domains=[])
     creds.domains = [dom.name for dom in domains]
-    print(f"Non-admin user {user_name}, {creds}")
+    log.info(f"Non-admin user {user_name}, {creds}")
     return creds

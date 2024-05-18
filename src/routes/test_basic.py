@@ -7,9 +7,7 @@ client = fastapi.testclient.TestClient(main.app)
 
 
 @pytest.fixture(scope="function")
-def my_user(db_api_maker, log):
-    main.app.dependency_overrides[sql_api.get_api_db] = db_api_maker
-
+def my_user(db_api, log):
     user = "bidibule"
     domain = "tutu.net"
 
@@ -31,19 +29,12 @@ def my_user(db_api_maker, log):
     yield {"user": user, "domains": [domain], "token": token}
 
 
-@pytest.fixture(scope="function")
-def get_creds(db_api_maker, log):
-    yield lambda: sql_api.get_creds(db_api_maker())
 
-
-def test_something(db_dovecot_maker, get_creds, my_user, log):
-    main.app.dependency_overrides[sql_dovecot.get_dovecot_db] = db_dovecot_maker
-    main.app.dependency_overrides[routes.get_creds] = get_creds
-
+def test_something(db_api, db_dovecot, my_user, log):
     token = my_user["token"]
     log.info(f"Using token {token}")
     sql_api.set_current_user_name(my_user["user"])
 
-    response = client.get("/mailboxes/toto@tutu.net")
+    response = client.get("/mailboxes/toto@tutu.net", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 404
     assert response.json() == {"detail": "Mailbox not found"}

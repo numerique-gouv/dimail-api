@@ -1,13 +1,12 @@
 # import fastapi
 import fastapi.testclient
 
-from .. import main, sql_api
+from .. import main, admin_routes
 
 client = fastapi.testclient.TestClient(main.app)
 
 
-def test_something(db_api_maker, log):
-    main.app.dependency_overrides[sql_api.get_api_db] = db_api_maker
+def test_something(db_api, log):
     response = client.get("/admin/users")
     assert response.status_code == 200
     assert response.json() == []

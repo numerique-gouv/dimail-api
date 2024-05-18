@@ -5,7 +5,7 @@ import fastapi.security
 import sqlalchemy.orm as orm
 
 from .. import sql_api, web_models
-from . import token
+from . import depends_api_db, token
 
 
 def PermissionDeniedException():
@@ -40,7 +40,7 @@ async def login_for_access_token(
 #        fastapi.security.OAuth2PasswordRequestForm,
 #        fastapi.Depends()
 #    ],
-    db: typing.Annotated[typing.Any, fastapi.Depends(sql_api.get_api_db)],
+    db: typing.Annotated[typing.Any, fastapi.Depends(depends_api_db)],
 ) -> web_models.WToken:
     user = authenticate_user(db, credentials.username, credentials.password)
     token = user.create_token()

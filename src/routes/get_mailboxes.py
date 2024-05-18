@@ -4,7 +4,7 @@ import uuid
 import fastapi
 
 from .. import sql_api, web_models
-from . import get_creds, mailboxes
+from . import mailboxes
 
 example_users = [
     web_models.Mailbox(
@@ -33,7 +33,7 @@ example_users = [
     },
 )
 async def get_mailboxes(
-    perms: typing.Annotated[sql_api.Creds, fastapi.Depends(get_creds)],
+#    perms: typing.Annotated[sql_api.Creds, fastapi.Depends(get_creds)],
     domain: str = "all",
     #  page_size: int = 20,
     #  page_number: int = 0,

@@ -1,15 +1,29 @@
 from fastapi import APIRouter
 
-from .. import sql_api
+from .. import sql_api, sql_dovecot
 
 mailboxes = APIRouter(prefix="/mailboxes", tags=["mailboxes"])
 token = APIRouter(prefix="/token", tags=["token"])
 
+def depends_api_db():
+    maker = sql_api.get_maker()
+    db = maker()
+    # En cas d'erreur, on va lever une exception (404, 403, etc), or il faudra
+    # quand meme fermer la connexion a la base de données
+    try:
+        yield db
+    finally:
+        db.close()
 
-async def get_creds():
-    api_db = next(sql_api.get_api_db())
-    yield sql_api.get_creds(api_db)
-
+def depends_dovecot_db():
+    maker = sql_dovecot.get_maker()
+    db = maker()
+    # En cas d'erreur, on va lever une exception (404, 403, etc), or il faudra
+    # quand meme fermer la connexion a la base de données
+    try:
+        yield db
+    finally:
+        db.close()
 
 from .get_mailbox import get_mailbox
 from .get_mailboxes import get_mailboxes

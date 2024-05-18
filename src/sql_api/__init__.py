@@ -10,6 +10,6 @@ from .crud import (
     get_api_user,
     get_api_users,
 )
-from .database import get_api_db, init_api_db
+from .database import get_api_db, init_api_db, get_maker
 from .get_creds import Creds, get_creds, set_current_user_name
 from .models import DBAllowed, DBDomain, DBUser

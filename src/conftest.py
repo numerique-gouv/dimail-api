@@ -1,18 +1,20 @@
 import logging
 import os
-from typing import Generator
+import typing
 
 import pytest
-import sqlalchemy
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
+import sqlalchemy as sa
+import sqlalchemy.orm as orm
 
 import alembic.command
 import alembic.config
 
+from . import sql_api
+from . import sql_dovecot
+
 
 @pytest.fixture(scope="session", name="log")
-def fix_logger(scope="session") -> Generator:
+def fix_logger(scope="session") -> typing.Generator:
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
     logger.info("SETUP logger")
@@ -21,28 +23,28 @@ def fix_logger(scope="session") -> Generator:
 
 
 @pytest.fixture(scope="session")
-def root_db(log) -> Generator:
+def root_db(log) -> typing.Generator:
     log.info("CONNECTING as mysql root")
-    root_db = create_engine("mysql+pymysql://root:toto@localhost:3306/mysql")
+    root_db = sa.create_engine("mysql+pymysql://root:toto@localhost:3306/mysql")
     conn = root_db.connect()
     yield conn
     conn.close()
     log.info("CLOSING root mysql connection")
 
 
-def make_db(name: str, conn: sqlalchemy.Engine) -> str:
-    conn.execute(text(f"drop database if exists {name};"))
-    conn.execute(text(f"create database {name};"))
-    conn.execute(text(f"grant ALL on {name}.* to test@'%' identified by 'toto';"))
+def make_db(name: str, conn: sa.Engine) -> str:
+    conn.execute(sa.text(f"drop database if exists {name};"))
+    conn.execute(sa.text(f"create database {name};"))
+    conn.execute(sa.text(f"grant ALL on {name}.* to test@'%' identified by 'toto';"))
     return f"mysql+pymysql://test:toto@localhost:3306/{name}"
 
 
-def drop_db(name: str, conn: sqlalchemy.Engine):
-    conn.execute(text(f"drop database if exists {name}"))
+def drop_db(name: str, conn: sa.Engine):
+    conn.execute(sa.text(f"drop database if exists {name};"))
 
 
 @pytest.fixture(scope="session")
-def ensure_db_api(root_db, alembic_config, log) -> Generator:
+def ensure_db_api(root_db, alembic_config, log) -> typing.Generator:
     log.info("SETUP api database (drop and create)")
     url = make_db("test", root_db)
     before = set_alembic_url(alembic_config, "api", url, log)
@@ -53,7 +55,7 @@ def ensure_db_api(root_db, alembic_config, log) -> Generator:
 
 
 @pytest.fixture(scope="session")
-def ensure_db_dovecot(root_db, alembic_config, log) -> Generator:
+def ensure_db_dovecot(root_db, alembic_config, log) -> typing.Generator:
     log.info("SETUP dovecot database (drop and create)")
     url = make_db("test2", root_db)
     before = set_alembic_url(alembic_config, "dovecot", url, log)
@@ -64,7 +66,7 @@ def ensure_db_dovecot(root_db, alembic_config, log) -> Generator:
 
 
 @pytest.fixture(scope="session")
-def alembic_config(log) -> Generator:
+def alembic_config(log) -> typing.Generator:
     log.info("SETUP alembic config")
     if not os.path.exists("alembic.ini"):
         raise Exception("Je veux tourner dans src, avec mon fichier alembic.ini")
@@ -90,7 +92,7 @@ def set_alembic_url(alembic_config, db_name: str, db_url: str, log):
 
 
 @pytest.fixture(scope="function")
-def alembic_run(alembic_config, log) -> Generator:
+def alembic_run(alembic_config, log) -> typing.Generator:
     log.info("SETUP with alembic (upgrade)")
     bases = alembic_config.get_main_option("databases")
     log.info(f" - Here are the databases : {bases}")
@@ -103,52 +105,14 @@ def alembic_run(alembic_config, log) -> Generator:
 
 
 @pytest.fixture(scope="function")
-def db_api(alembic_run, ensure_db_api, log) -> Generator:
-    log.info("SETUP api orm session")
-    test_db = create_engine(ensure_db_api)
-    Maker = sessionmaker(
-        autocommit=False, autoflush=False, autobegin=True, bind=test_db
-    )
-    session = Maker()
-    yield session
-    session.close()
-    log.info("TEARDOWN api orm session")
-
+def db_api(alembic_run, ensure_db_api, log) -> typing.Generator:
+    log.info("SETUP sql_api to use the testing db")
+    sql_api.init_api_db(ensure_db_api)
+    yield
 
 @pytest.fixture(scope="function")
-def db_api_maker(alembic_run, ensure_db_api, log) -> Generator:
-    log.info("SETUP api orm session")
-    test_db = create_engine(ensure_db_api)
-    Maker = sessionmaker(
-        autocommit=False, autoflush=False, autobegin=True, bind=test_db
-    )
-    session = Maker()
-    yield lambda: session
-    session.close()
-    log.info("TEARDOWN api orm session")
+def db_dovecot(alembic_run, ensure_db_dovecot, log) -> typing.Generator:
+    log.info("SETUP sql_dovecot to use the testing db")
+    sql_dovecot.init_dovecot_db(ensure_db_dovecot)
+    yield 
 
-
-@pytest.fixture(scope="function")
-def db_dovecot(alembic_run, ensure_db_dovecot, log) -> Generator:
-    log.info("SETUP dovecot orm session")
-    test_db = create_engine(ensure_db_dovecot)
-    Maker = sessionmaker(
-        autocommit=False, autoflush=False, autobegin=True, bind=test_db
-    )
-    session = Maker()
-    yield session
-    session.close()
-    log.info("TEARDOWN dovecot orm session")
-
-
-@pytest.fixture(scope="function")
-def db_dovecot_maker(alembic_run, ensure_db_dovecot, log) -> Generator:
-    log.info("SETUP dovecot orm session")
-    test_db = create_engine(ensure_db_dovecot)
-    Maker = sessionmaker(
-        autocommit=False, autoflush=False, autobegin=True, bind=test_db
-    )
-    session = Maker()
-    yield lambda: session
-    session.close()
-    log.info("TEARDOWN dovecot orm session")
