@@ -14,17 +14,21 @@ def my_user(db_api_maker, log):
     domain = "tutu.net"
 
     res = client.post(
-        "/admin/users", json={"name": user, "password": "toto", "is_admin": False}
+        "/admin/users/", json={"name": user, "password": "toto", "is_admin": False}
     )
     assert res.status_code == 200
     res = client.post(
-        "/admin/domains", json={"name": domain, "features": ["webmail", "mailbox"]}
+        "/admin/domains/", json={"name": domain, "features": ["webmail", "mailbox"]}
     )
     assert res.status_code == 200
-    client.post("/admin/allows", json={"user": user, "domain": domain})
+    res = client.post("/admin/allows/", json={"user": user, "domain": domain})
     assert res.status_code == 200
 
-    yield {"user": user, "domains": [domain]}
+    res = client.get("/token/", auth=(user, "toto"))
+    assert res.status_code == 200
+    token = res.json()["access_token"]
+
+    yield {"user": user, "domains": [domain], "token": token}
 
 
 @pytest.fixture(scope="function")
@@ -36,6 +40,8 @@ def test_something(db_dovecot_maker, get_creds, my_user, log):
     main.app.dependency_overrides[sql_dovecot.get_dovecot_db] = db_dovecot_maker
     main.app.dependency_overrides[routes.get_creds] = get_creds
 
+    token = my_user["token"]
+    log.info(f"Using token {token}")
     sql_api.set_current_user_name(my_user["user"])
 
     response = client.get("/mailboxes/toto@tutu.net")
