@@ -1,5 +1,3 @@
-from typing import Optional
-
 import fastapi
 
 from .. import sql_api, web_models
