@@ -1,82 +1,16 @@
-import datetime
 import logging
 import re
 import typing
 import uuid
 
 import fastapi
-import fastapi.security
-import jwt
 
 from .. import config, sql_api, sql_dovecot, web_models
-from . import depends_dovecot_db, mailboxes
+from . import depends_dovecot_db, depends_jwt, mailboxes
 
 mail_re = re.compile("^(?P<username>[^@]+)@(?P<domain>[^@]+)$")
 uuid_re = re.compile("^[0-9a-f-]{32,36}$")
 
-
-class JWTBearer(fastapi.security.HTTPBearer):
-    def __init__(self, auto_error: bool = True):
-        log = logging.getLogger(__name__)
-        log.info("We are building the JWTBearer")
-        super(JWTBearer, self).__init__(auto_error=auto_error)
-
-    async def __call__(self, request: fastapi.Request):
-        log = logging.getLogger(__name__)
-        log.setLevel(logging.INFO)
-        log.info("We are in da place")
-        credentials: fastapi.security.HTTPAuthorizationCredentials
-        try:
-            credentials = await super(JWTBearer, self).__call__(request)
-        except Exception as e:
-            log.error("Failed super, so failed auth.")
-            raise e
-        if not credentials:
-            log.info("There are no creds, fuck up")
-            raise fastapi.HTTPException(
-                status_code=403, detail="Invalid authorization code."
-            )
-        if not credentials.scheme == "Bearer":
-            log.info("Creds are not Bearer, get out")
-            raise fastapi.HTTPException(
-                status_code=403, detail="Invalid authentication scheme."
-            )
-        token = self.verify_jwt(log, credentials.credentials)
-        username = token["sub"]
-        log.info(f"Greetings user {username}")
-        maker = sql_api.get_maker()
-        db = maker()
-        try:
-            log.info("Getting the user in db")
-            user = sql_api.get_api_user(db, username)
-        except Exception as e:
-            log.error(f"Failed to get user: {e}")
-            db.close()
-            raise
-        log.info(f"Got the user in db: {user}")
-        creds = sql_api.get_creds(db, log, username)
-        db.close()
-        log.info(f"Got the creds: {creds}")
-        yield creds
-
-    def verify_jwt(self, log, jwtoken: str) -> dict:
-        secret = config.settings["JWT_SECRET"]
-        log.info(f"Secret is {secret}")
-        algo = "HS256"
-        log.info("Trying to decode the tokeni...")
-        try:
-            token = jwt.decode(jwtoken, secret, algo)
-            log.info(f"Decoded token as {token}")
-            now = datetime.datetime.now(datetime.timezone.utc).timestamp()
-            exp = token["exp"]
-            if exp < now:
-                log.info(f"Token is expired now={now}, exp={exp}")
-                raise fastapi.HTTPException(status_code=403, detail="Expired token")
-            log.info("Token is valid")
-            return token
-        except Exception as e:
-            log.info("Failed to decode token")
-            raise e
 
 
 @mailboxes.get(
@@ -91,8 +25,7 @@ class JWTBearer(fastapi.security.HTTPBearer):
 )
 async def get_mailbox(
     mailbox_id: str,
-    # perms: typing.Annotated[sql_api.Creds, fastapi.Depends(get_creds)],
-    perms: typing.Annotated[sql_api.Creds, fastapi.Depends(JWTBearer())],
+    perms: typing.Annotated[sql_api.Creds, fastapi.Depends(depends_jwt())],
     db: typing.Annotated[typing.Any, fastapi.Depends(depends_dovecot_db)],
     # alias_db: typing.Annotated[typing.Any, fastapi.Depends(sql_alias.get_alias_db)],
 ) -> web_models.Mailbox:
