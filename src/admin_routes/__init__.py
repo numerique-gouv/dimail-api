@@ -1,6 +1,7 @@
-import logging
+import typing
 
 import fastapi
+import sqlalchemy.orm as orm
 
 from .. import sql_api
 
@@ -18,7 +19,8 @@ allows = fastapi.APIRouter(prefix="/admin/allows", tags=["admin allows"])
 
 
 def depends_api_db():
-    log = logging.getLogger(__name__)
+    """Dependency for fastapi that creates an orm session and yields it. Ensures
+    the session is closed at the end."""
     maker = sql_api.get_maker()
     db = maker()
     # En cas d'erreur, on va lever une exception (404, 403, etc), or il faudra
@@ -28,6 +30,7 @@ def depends_api_db():
     finally:
         db.close()
 
+DependsApiDb=typing.Annotated[orm.Session, fastapi.Depends(depends_api_db)]
 
 from .get_allows import get_allows
 from .get_domains import get_domains

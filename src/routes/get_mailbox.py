@@ -1,12 +1,11 @@
 import logging
 import re
-import typing
 import uuid
 
 import fastapi
 
-from .. import sql_api, sql_dovecot, web_models
-from . import depends_dovecot_db, depends_jwt, mailboxes
+from .. import sql_dovecot, web_models
+from . import DependsDovecotDb, DependsAuthToken, mailboxes
 
 mail_re = re.compile("^(?P<username>[^@]+)@(?P<domain>[^@]+)$")
 uuid_re = re.compile("^[0-9a-f-]{32,36}$")
@@ -24,8 +23,8 @@ uuid_re = re.compile("^[0-9a-f-]{32,36}$")
 )
 async def get_mailbox(
     mailbox_id: str,
-    perms: typing.Annotated[sql_api.Creds, fastapi.Depends(depends_jwt())],
-    db: typing.Annotated[typing.Any, fastapi.Depends(depends_dovecot_db)],
+    perms: DependsAuthToken,
+    db: DependsDovecotDb,
     # alias_db: typing.Annotated[typing.Any, fastapi.Depends(sql_alias.get_alias_db)],
 ) -> web_models.Mailbox:
     log = logging.getLogger(__name__)

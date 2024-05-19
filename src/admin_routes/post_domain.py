@@ -1,13 +1,13 @@
 import fastapi
 
 from .. import sql_api, web_models
-from . import depends_api_db, domains
+from . import DependsApiDb, domains
 
 
 @domains.post("/")
 async def post_domain(
+    db: DependsApiDb,
     domain: web_models.WDomain,
-    db=fastapi.Depends(depends_api_db),
 ) -> web_models.WDomain:
     domain_db = sql_api.get_api_domain(db, domain.name)
 

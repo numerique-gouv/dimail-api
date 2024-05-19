@@ -3,8 +3,8 @@ import uuid
 
 import fastapi
 
-from .. import sql_api, web_models
-from . import depends_jwt, mailboxes
+from .. import web_models
+from . import DependsAuthToken, mailboxes
 
 example_users = [
     web_models.Mailbox(
@@ -33,7 +33,7 @@ example_users = [
     },
 )
 async def get_mailboxes(
-    perms: typing.Annotated[sql_api.Creds, fastapi.Depends(depends_jwt())],
+    perms: DependsAuthToken,
     domain: str = "all",
     #  page_size: int = 20,
     #  page_number: int = 0,
