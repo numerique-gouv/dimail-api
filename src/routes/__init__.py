@@ -41,6 +41,7 @@ class depends_jwt(fastapi.security.HTTPBearer):
     """Dependency for fastapi. Checks the authorization header is correct, controls
     the JWT provided by the user, controls the signature, decode it, fetch from the
     API database the credentials for this user, and yields an sql_api.Creds object."""
+
     def __init__(self, auto_error: bool = True):
         log = logging.getLogger(__name__)
         log.info("We are building the JWTBearer")
