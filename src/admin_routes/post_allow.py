@@ -1,7 +1,7 @@
 import fastapi
 
 from .. import sql_api, web_models
-from . import allows, DependsApiDb
+from . import DependsApiDb, allows
 
 
 @allows.post("/")

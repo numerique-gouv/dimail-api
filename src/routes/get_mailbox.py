@@ -5,7 +5,7 @@ import uuid
 import fastapi
 
 from .. import sql_dovecot, web_models
-from . import DependsDovecotDb, DependsAuthToken, mailboxes
+from . import DependsAuthToken, DependsDovecotDb, mailboxes
 
 mail_re = re.compile("^(?P<username>[^@]+)@(?P<domain>[^@]+)$")
 uuid_re = re.compile("^[0-9a-f-]{32,36}$")

@@ -25,7 +25,9 @@ def depends_api_db():
     finally:
         db.close()
 
-DependsApiDb=typing.Annotated[orm.Session, fastapi.Depends(depends_api_db)]
+
+DependsApiDb = typing.Annotated[orm.Session, fastapi.Depends(depends_api_db)]
+
 
 def depends_dovecot_db():
     """Dependency for fastapi that creates an orm session and yields it. Ensures
@@ -39,7 +41,9 @@ def depends_dovecot_db():
     finally:
         db.close()
 
-DependsDovecotDb=typing.Annotated[typing.Any, fastapi.Depends(depends_dovecot_db)]
+
+DependsDovecotDb = typing.Annotated[typing.Any, fastapi.Depends(depends_dovecot_db)]
+
 
 class depends_jwt(fastapi.security.HTTPBearer):
     """Dependency for fastapi. Checks the authorization header is correct, controls
@@ -105,7 +109,8 @@ class depends_jwt(fastapi.security.HTTPBearer):
             log.info("Failed to decode token")
             raise e
 
-DependsAuthToken=typing.Annotated[sql_api.Creds, fastapi.Depends(depends_jwt())]
+
+DependsAuthToken = typing.Annotated[sql_api.Creds, fastapi.Depends(depends_jwt())]
 
 from .get_mailbox import get_mailbox
 from .get_mailboxes import get_mailboxes

@@ -30,7 +30,8 @@ def depends_api_db():
     finally:
         db.close()
 
-DependsApiDb=typing.Annotated[orm.Session, fastapi.Depends(depends_api_db)]
+
+DependsApiDb = typing.Annotated[orm.Session, fastapi.Depends(depends_api_db)]
 
 from .get_allows import get_allows
 from .get_domains import get_domains

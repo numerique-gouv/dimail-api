@@ -1,5 +1,3 @@
-import fastapi
-
 from .. import sql_api, web_models
 from . import DependsApiDb, domains
 
