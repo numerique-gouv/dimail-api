@@ -11,21 +11,40 @@ def my_user(db_api, log):
     user = "bidibule"
     domain = "tutu.net"
 
+    # Database is empty, fake auth, creating the first admin
     res = client.post(
-        "/admin/users/", json={"name": user, "password": "toto", "is_admin": False}
+        "/admin/users",
+        json={"name": "admin", "password": "admin", "is_admin": True},
+        auth=("useless", "useless"),
     )
     assert res.status_code == 200
+
+    # Now, we can create our non-admin user
     res = client.post(
-        "/admin/domains/", json={"name": domain, "features": ["webmail", "mailbox"]}
+        "/admin/users/",
+        json={"name": user, "password": "toto", "is_admin": False},
+        auth=("admin", "admin"),
     )
     assert res.status_code == 200
-    res = client.post("/admin/allows/", json={"user": user, "domain": domain})
+
+    res = client.post(
+        "/admin/domains/",
+        json={"name": domain, "features": ["webmail", "mailbox"]},
+        auth=("admin", "admin"),
+    )
+    assert res.status_code == 200
+
+    res = client.post(
+        "/admin/allows/",
+        json={"user": user, "domain": domain},
+        auth=("admin", "admin"),
+    )
     assert res.status_code == 200
 
     res = client.get("/token/", auth=(user, "toto"))
     assert res.status_code == 200
-    token = res.json()["access_token"]
 
+    token = res.json()["access_token"]
     yield {"user": user, "domains": [domain], "token": token}
 
 
