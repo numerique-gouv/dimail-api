@@ -1,12 +1,13 @@
 import fastapi
 
-from .. import sql_api, web_models
+from .. import auth, sql_api, web_models
 from . import DependsApiDb, users
 
 
 @users.post("/")
 async def post_user(
     db: DependsApiDb,
+    admin: auth.DependsBasicAdmin,
     user: web_models.CreateUser,
 ) -> web_models.WUser:
     user_db = sql_api.get_api_user(db, user.name)

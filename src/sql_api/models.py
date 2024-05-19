@@ -10,6 +10,7 @@ import sqlalchemy.orm as orm
 
 from .. import config
 from .database import Api
+from .creds import Creds
 
 
 class DBUser(Api):
@@ -52,6 +53,16 @@ class DBUser(Api):
         secret = config.settings["JWT_SECRET"]
         algo = "HS256"
         return jwt.encode(data, secret, algo)
+
+    def get_creds(self) -> Creds:
+        if self.is_admin:
+            # log.info(f"The user {user_name} is an admin")
+            return Creds(is_admin=True)
+        domains = self.domains
+        creds = Creds(domains=[])
+        creds.domains = [dom.name for dom in domains]
+        # log.info(f"Non-admin user {user_name}, {creds}")
+        return creds
 
 
 class DBDomain(Api):

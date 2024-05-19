@@ -4,8 +4,8 @@ import uuid
 
 import fastapi
 
-from .. import sql_dovecot, web_models
-from . import DependsAuthToken, DependsDovecotDb, mailboxes
+from .. import auth, sql_dovecot, web_models
+from . import DependsDovecotDb, mailboxes
 
 mail_re = re.compile("^(?P<username>[^@]+)@(?P<domain>[^@]+)$")
 uuid_re = re.compile("^[0-9a-f-]{32,36}$")
@@ -23,13 +23,14 @@ uuid_re = re.compile("^[0-9a-f-]{32,36}$")
 )
 async def get_mailbox(
     mailbox_id: str,
-    perms: DependsAuthToken,
+    user: auth.DependsTokenUser,
     db: DependsDovecotDb,
     # alias_db: typing.Annotated[typing.Any, fastapi.Depends(sql_alias.get_alias_db)],
 ) -> web_models.Mailbox:
     log = logging.getLogger(__name__)
     log.setLevel(logging.INFO)
     log.info(f"Nous cherchons qui est {mailbox_id}")
+    perms = user.get_creds()
     log.info(f"Nous avons comme permissions: {perms}")
     #    test_uuid = uuid_re.match(mailbox_id)
     test_mail = mail_re.match(mailbox_id)

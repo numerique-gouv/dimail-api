@@ -2,8 +2,8 @@ import uuid
 
 import fastapi
 
-from .. import web_models
-from . import DependsAuthToken, mailboxes
+from .. import auth, web_models
+from . import mailboxes
 
 example_users = [
     web_models.Mailbox(
@@ -32,7 +32,7 @@ example_users = [
     },
 )
 async def get_mailboxes(
-    perms: DependsAuthToken,
+    user: auth.DependsTokenUser,
     domain: str = "all",
     #  page_size: int = 20,
     #  page_number: int = 0,

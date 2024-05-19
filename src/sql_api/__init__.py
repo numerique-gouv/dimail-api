@@ -9,7 +9,8 @@ from .crud import (
     get_api_domains,
     get_api_user,
     get_api_users,
+    nb_users,
 )
 from .database import get_api_db, get_maker, init_api_db
-from .get_creds import Creds, get_creds, set_current_user_name
+from .creds import Creds
 from .models import DBAllowed, DBDomain, DBUser
