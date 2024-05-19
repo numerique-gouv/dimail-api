@@ -1,7 +1,6 @@
-# import fastapi
 import fastapi.testclient
 
-from .. import main, admin_routes
+from .. import main
 
 client = fastapi.testclient.TestClient(main.app)
 

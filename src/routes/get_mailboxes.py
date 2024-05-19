@@ -33,7 +33,8 @@ example_users = [
     },
 )
 async def get_mailboxes(
-#    perms: typing.Annotated[sql_api.Creds, fastapi.Depends(get_creds)],
+    #    perms: typing.Annotated[sql_api.Creds, fastapi.Depends(get_creds)],
+    perms: typing.Annotated[sql_api.Creds, fastapi.Depends(JWTBearer())],
     domain: str = "all",
     #  page_size: int = 20,
     #  page_number: int = 0,

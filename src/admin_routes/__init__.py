@@ -1,5 +1,6 @@
-import fastapi
 import logging
+
+import fastapi
 
 from .. import sql_api
 
@@ -13,10 +14,8 @@ domains = fastapi.APIRouter(
     tags=["admin domains"],
 )
 
-allows = fastapi.APIRouter(
-    prefix="/admin/allows",
-    tags=["admin allows"]
-)
+allows = fastapi.APIRouter(prefix="/admin/allows", tags=["admin allows"])
+
 
 def depends_api_db():
     log = logging.getLogger(__name__)
@@ -28,6 +27,7 @@ def depends_api_db():
         yield db
     finally:
         db.close()
+
 
 from .get_allows import get_allows
 from .get_domains import get_domains

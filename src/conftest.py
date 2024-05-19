@@ -4,13 +4,11 @@ import typing
 
 import pytest
 import sqlalchemy as sa
-import sqlalchemy.orm as orm
 
 import alembic.command
 import alembic.config
 
-from . import sql_api
-from . import sql_dovecot
+from . import sql_api, sql_dovecot
 
 
 def make_db(name: str, conn: sa.Engine) -> str:
@@ -25,6 +23,7 @@ def make_db(name: str, conn: sa.Engine) -> str:
 def drop_db(name: str, conn: sa.Engine):
     """Utility function, for internal use. Drops a database."""
     conn.execute(sa.text(f"drop database if exists {name};"))
+
 
 @pytest.fixture(scope="session", name="log")
 def fix_logger(scope="session") -> typing.Generator:
@@ -45,7 +44,6 @@ def root_db(log) -> typing.Generator:
     yield conn
     conn.close()
     log.info("CLOSING root mysql connection")
-
 
 
 @pytest.fixture(scope="session")
@@ -69,29 +67,38 @@ def add_db_in_alembic_config(alembic_config, db_name: str, db_url: str, log):
     tests are run against databases which are not used by the server running
     outside on our systems."""
     before = alembic_config.get_main_option("databases")
-    db_list = before.split(',')
+    db_list = before.split(",")
     if before == "":
         db_list = []
     if db_name in db_list:
-        raise Exception(f"The database {db_name} is already in alembic config. Can't add it twice.")
+        raise Exception(
+            f"The database {db_name} is already in alembic config. Can't add it twice."
+        )
     db_list.append(db_name)
     after = ",".join(db_list)
-    log.info(f"After adding {db_name}, the list of databases is {db_list} leading to {after}")
+    log.info(
+        f"After adding {db_name}, the list of databases is {db_list} leading to {after}"
+    )
     alembic_config.set_main_option("databases", after)
     alembic_config.set_section_option(db_name, "sqlalchemy.url", db_url)
+
 
 def remove_db_from_alembic_config(alembic_config, db_name: str, log):
     """Utility function, for internal use. Removes a database that was previously
     added into the alembic config."""
     before = alembic_config.get_main_option("databases")
-    db_list = before.split(',')
+    db_list = before.split(",")
     if before == "":
         db_list = []
     if db_name not in db_list:
-        raise Exception(f"The database {db_name} is not in alembic config. Can't remove it twice.")
-    db_list = [ x for x in db_list if x != db_name ]
+        raise Exception(
+            f"The database {db_name} is not in alembic config. Can't remove it twice."
+        )
+    db_list = [x for x in db_list if x != db_name]
     after = ",".join(db_list)
-    log.info(f"After removing {db_name}, the list of databases is {db_list} leading to {after}")
+    log.info(
+        f"After removing {db_name}, the list of databases is {db_list} leading to {after}"
+    )
     alembic_config.set_main_option("databases", after)
 
 
@@ -146,13 +153,14 @@ def db_api(alembic_run, db_api_url, log) -> typing.Generator:
     sql_api.init_api_db(db_api_url)
     yield
 
+
 @pytest.fixture(scope="function")
 def db_dovecot(alembic_run, db_dovecot_url, log) -> typing.Generator:
     """Fixture that makes sure a database is registered and ready to
     be used as the Dovecot db during tests."""
     log.info("SETUP sql_dovecot to use the testing db")
     sql_dovecot.init_dovecot_db(db_dovecot_url)
-    yield 
+    yield
 
 
 @pytest.fixture(scope="function")
@@ -164,6 +172,7 @@ def db_api_session(db_api, log) -> typing.Generator:
     yield session
     log.info("TEARDOWN sql_api orm session")
     session.close()
+
 
 @pytest.fixture(scope="function")
 def db_dovecot_session(db_dovecot, log) -> typing.Generator:

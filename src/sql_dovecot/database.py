@@ -1,4 +1,4 @@
-import typing
+import atexit
 
 import sqlalchemy
 import sqlalchemy.orm as orm
@@ -10,8 +10,10 @@ db: orm.Session
 
 Dovecot = sqlalchemy.orm.declarative_base()
 
+
 def close_db(db):
     db.close()
+
 
 def init_dovecot_db(config: str):
     global url
@@ -21,11 +23,13 @@ def init_dovecot_db(config: str):
     engine = sqlalchemy.create_engine(url)
     maker = sqlalchemy.orm.sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+
 def get_maker() -> orm.sessionmaker:
     global maker
     if maker is None:
         raise Exception("Please init the database by giving me an url...")
     return maker
+
 
 def get_dovecot_db() -> orm.Session:
     global db
@@ -36,4 +40,3 @@ def get_dovecot_db() -> orm.Session:
         db = maker()
         atexit.register(lambda: close_db(db))
     return db
-

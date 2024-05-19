@@ -5,6 +5,7 @@ from .. import sql_api, sql_dovecot
 mailboxes = APIRouter(prefix="/mailboxes", tags=["mailboxes"])
 token = APIRouter(prefix="/token", tags=["token"])
 
+
 def depends_api_db():
     maker = sql_api.get_maker()
     db = maker()
@@ -15,6 +16,7 @@ def depends_api_db():
     finally:
         db.close()
 
+
 def depends_dovecot_db():
     maker = sql_dovecot.get_maker()
     db = maker()
@@ -24,6 +26,7 @@ def depends_dovecot_db():
         yield db
     finally:
         db.close()
+
 
 from .get_mailbox import get_mailbox
 from .get_mailboxes import get_mailboxes

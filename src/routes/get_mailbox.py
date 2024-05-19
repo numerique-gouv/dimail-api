@@ -14,6 +14,7 @@ from . import depends_dovecot_db, mailboxes
 mail_re = re.compile("^(?P<username>[^@]+)@(?P<domain>[^@]+)$")
 uuid_re = re.compile("^[0-9a-f-]{32,36}$")
 
+
 class JWTBearer(fastapi.security.HTTPBearer):
     def __init__(self, auto_error: bool = True):
         log = logging.getLogger(__name__)
@@ -27,15 +28,19 @@ class JWTBearer(fastapi.security.HTTPBearer):
         credentials: fastapi.security.HTTPAuthorizationCredentials
         try:
             credentials = await super(JWTBearer, self).__call__(request)
-        except:
+        except Exception as e:
             log.error("Failed super, so failed auth.")
-            raise
+            raise e
         if not credentials:
             log.info("There are no creds, fuck up")
-            raise fastapi.HTTPException(status_code=403, detail="Invalid authorization code.")
+            raise fastapi.HTTPException(
+                status_code=403, detail="Invalid authorization code."
+            )
         if not credentials.scheme == "Bearer":
             log.info("Creds are not Bearer, get out")
-            raise fastapi.HTTPException(status_code=403, detail="Invalid authentication scheme.")
+            raise fastapi.HTTPException(
+                status_code=403, detail="Invalid authentication scheme."
+            )
         token = self.verify_jwt(log, credentials.credentials)
         username = token["sub"]
         log.info(f"Greetings user {username}")
