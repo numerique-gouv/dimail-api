@@ -13,8 +13,22 @@ from . import sql_api
 from . import sql_dovecot
 
 
+def make_db(name: str, conn: sa.Engine) -> str:
+    """Utility function, for internal use. Ensure a database, named 'name'
+    is created and empty. 'conn' is a mariadb/mysql connection as root user"""
+    conn.execute(sa.text(f"drop database if exists {name};"))
+    conn.execute(sa.text(f"create database {name};"))
+    conn.execute(sa.text(f"grant ALL on {name}.* to test@'%' identified by 'toto';"))
+    return f"mysql+pymysql://test:toto@localhost:3306/{name}"
+
+
+def drop_db(name: str, conn: sa.Engine):
+    """Utility function, for internal use. Drops a database."""
+    conn.execute(sa.text(f"drop database if exists {name};"))
+
 @pytest.fixture(scope="session", name="log")
 def fix_logger(scope="session") -> typing.Generator:
+    """Fixture making the logger available"""
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
     logger.info("SETUP logger")
@@ -24,6 +38,7 @@ def fix_logger(scope="session") -> typing.Generator:
 
 @pytest.fixture(scope="session")
 def root_db(log) -> typing.Generator:
+    """Fixtures that makes a connection to mariadb/mysql as root available."""
     log.info("CONNECTING as mysql root")
     root_db = sa.create_engine("mysql+pymysql://root:toto@localhost:3306/mysql")
     conn = root_db.connect()
@@ -32,67 +47,86 @@ def root_db(log) -> typing.Generator:
     log.info("CLOSING root mysql connection")
 
 
-def make_db(name: str, conn: sa.Engine) -> str:
-    conn.execute(sa.text(f"drop database if exists {name};"))
-    conn.execute(sa.text(f"create database {name};"))
-    conn.execute(sa.text(f"grant ALL on {name}.* to test@'%' identified by 'toto';"))
-    return f"mysql+pymysql://test:toto@localhost:3306/{name}"
-
-
-def drop_db(name: str, conn: sa.Engine):
-    conn.execute(sa.text(f"drop database if exists {name};"))
-
-
-@pytest.fixture(scope="session")
-def ensure_db_api(root_db, alembic_config, log) -> typing.Generator:
-    log.info("SETUP api database (drop and create)")
-    url = make_db("test", root_db)
-    before = set_alembic_url(alembic_config, "api", url, log)
-    yield url
-    alembic_config.set_main_option("databases", before)
-    drop_db("test", root_db)
-    log.info("TEARDOWN api database (drop)")
-
-
-@pytest.fixture(scope="session")
-def ensure_db_dovecot(root_db, alembic_config, log) -> typing.Generator:
-    log.info("SETUP dovecot database (drop and create)")
-    url = make_db("test2", root_db)
-    before = set_alembic_url(alembic_config, "dovecot", url, log)
-    yield url
-    alembic_config.set_main_option("databases", before)
-    drop_db("test2", root_db)
-    log.info("TEARDOWN dovecot database (drop)")
-
 
 @pytest.fixture(scope="session")
 def alembic_config(log) -> typing.Generator:
+    """Fixtures that makes available the alambic config, for future use. The
+    list of databases is made empty. Alembic is told not to do anything to
+    the logger, so that we can have logs where we want them."""
     log.info("SETUP alembic config")
     if not os.path.exists("alembic.ini"):
         raise Exception("Je veux tourner dans src, avec mon fichier alembic.ini")
     cfg = alembic.config.Config("alembic.ini")
     cfg.set_main_option("databases", "")
     cfg.set_main_option("init_logger", "False")
-    # cfg.set_section_option("api", "sqlalchemy.url", 'mysql+pymysql://test:toto@localhost:3306/test')
-    # cfg.set_section_option("dovecot", "sqlalchemy.url", 'mysql+pymysql://test:toto@localhost:3306/test2')
     yield cfg
     log.info("TEARDOWN alembic config")
 
 
-def set_alembic_url(alembic_config, db_name: str, db_url: str, log):
+def add_db_in_alembic_config(alembic_config, db_name: str, db_url: str, log):
+    """Utility function, for internal use. Modify an alembic config object,
+    adds a database, set the right url for this database. This makes sure the
+    tests are run against databases which are not used by the server running
+    outside on our systems."""
     before = alembic_config.get_main_option("databases")
+    db_list = before.split(',')
     if before == "":
-        log.info(f"{db_name} is alone")
-        alembic_config.set_main_option("databases", db_name)
-    else:
-        log.info(f"{db_name} is added to {before}")
-        alembic_config.set_main_option("databases", f"{before}, {db_name}")
+        db_list = []
+    if db_name in db_list:
+        raise Exception(f"The database {db_name} is already in alembic config. Can't add it twice.")
+    db_list.append(db_name)
+    after = ",".join(db_list)
+    log.info(f"After adding {db_name}, the list of databases is {db_list} leading to {after}")
+    alembic_config.set_main_option("databases", after)
     alembic_config.set_section_option(db_name, "sqlalchemy.url", db_url)
-    return before
+
+def remove_db_from_alembic_config(alembic_config, db_name: str, log):
+    """Utility function, for internal use. Removes a database that was previously
+    added into the alembic config."""
+    before = alembic_config.get_main_option("databases")
+    db_list = before.split(',')
+    if before == "":
+        db_list = []
+    if db_name not in db_list:
+        raise Exception(f"The database {db_name} is not in alembic config. Can't remove it twice.")
+    db_list = [ x for x in db_list if x != db_name ]
+    after = ",".join(db_list)
+    log.info(f"After removing {db_name}, the list of databases is {db_list} leading to {after}")
+    alembic_config.set_main_option("databases", after)
+
+
+@pytest.fixture(scope="session")
+def db_api_url(root_db, alembic_config, log) -> typing.Generator:
+    """Fixture that makes a database available as the API db for testing.
+    Adds the database and the url in alembic config. Yields an url to
+    connect to that db."""
+    log.info("SETUP api database (drop and create)")
+    url = make_db("test", root_db)
+    add_db_in_alembic_config(alembic_config, "api", url, log)
+    yield url
+    remove_db_from_alembic_config(alembic_config, "api", log)
+    drop_db("test", root_db)
+    log.info("TEARDOWN api database (drop)")
+
+
+@pytest.fixture(scope="session")
+def db_dovecot_url(root_db, alembic_config, log) -> typing.Generator:
+    """Fixture that makes a database available as the Dovecot db for testing.
+    Adds the database and the url in alembic config. Yields an url to
+    connect to that db."""
+    log.info("SETUP dovecot database (drop and create)")
+    url = make_db("test2", root_db)
+    add_db_in_alembic_config(alembic_config, "dovecot", url, log)
+    yield url
+    remove_db_from_alembic_config(alembic_config, "dovecot", log)
+    drop_db("test2", root_db)
+    log.info("TEARDOWN dovecot database (drop)")
 
 
 @pytest.fixture(scope="function")
 def alembic_run(alembic_config, log) -> typing.Generator:
+    """Fixture that makes sure alembic has run on all the registered
+    databases."""
     log.info("SETUP with alembic (upgrade)")
     bases = alembic_config.get_main_option("databases")
     log.info(f" - Here are the databases : {bases}")
@@ -105,14 +139,38 @@ def alembic_run(alembic_config, log) -> typing.Generator:
 
 
 @pytest.fixture(scope="function")
-def db_api(alembic_run, ensure_db_api, log) -> typing.Generator:
+def db_api(alembic_run, db_api_url, log) -> typing.Generator:
+    """Fixture that makes sure a database is registered and ready to
+    be used as the API db during tests."""
     log.info("SETUP sql_api to use the testing db")
-    sql_api.init_api_db(ensure_db_api)
+    sql_api.init_api_db(db_api_url)
     yield
 
 @pytest.fixture(scope="function")
-def db_dovecot(alembic_run, ensure_db_dovecot, log) -> typing.Generator:
+def db_dovecot(alembic_run, db_dovecot_url, log) -> typing.Generator:
+    """Fixture that makes sure a database is registered and ready to
+    be used as the Dovecot db during tests."""
     log.info("SETUP sql_dovecot to use the testing db")
-    sql_dovecot.init_dovecot_db(ensure_db_dovecot)
+    sql_dovecot.init_dovecot_db(db_dovecot_url)
     yield 
 
+
+@pytest.fixture(scope="function")
+def db_api_session(db_api, log) -> typing.Generator:
+    """Fixture that makes a connection to the API database available."""
+    log.info("SETUP sql_api orm session")
+    maker = sql_api.get_maker()
+    session = maker()
+    yield session
+    log.info("TEARDOWN sql_api orm session")
+    session.close()
+
+@pytest.fixture(scope="function")
+def db_dovecot_session(db_dovecot, log) -> typing.Generator:
+    """Fixture that makes a connecion to the Dovecot database available."""
+    log.info("SETUP sql_dovecot orm session")
+    maker = sql_dovecot.get_maker()
+    session = maker()
+    yield session
+    log.info("TEARDOWN sql_dovecot orm session")
+    session.close()
