@@ -43,8 +43,6 @@ class depends_jwt(fastapi.security.HTTPBearer):
     API database the credentials for this user, and yields an sql_api.Creds object."""
 
     def __init__(self, auto_error: bool = True):
-        log = logging.getLogger(__name__)
-        log.info("We are building the JWTBearer")
         super(depends_jwt, self).__init__(auto_error=auto_error)
 
     async def __call__(self, request: fastapi.Request):
@@ -53,17 +51,17 @@ class depends_jwt(fastapi.security.HTTPBearer):
         log.info("We are in da place")
         credentials: fastapi.security.HTTPAuthorizationCredentials
         try:
-            credentials = await super(JWTBearer, self).__call__(request)
+            credentials = await super(depends_jwt, self).__call__(request)
         except Exception as e:
             log.error("Failed super, so failed auth.")
             raise e
         if not credentials:
-            log.info("There are no creds, fuck up")
+            log.info("There are no creds, failed auth.")
             raise fastapi.HTTPException(
                 status_code=403, detail="Invalid authorization code."
             )
         if not credentials.scheme == "Bearer":
-            log.info("Creds are not Bearer, get out")
+            log.info("Creds are not Bearer, failed auth.")
             raise fastapi.HTTPException(
                 status_code=403, detail="Invalid authentication scheme."
             )
@@ -87,9 +85,8 @@ class depends_jwt(fastapi.security.HTTPBearer):
 
     def verify_jwt(self, log, jwtoken: str) -> dict:
         secret = config.settings["JWT_SECRET"]
-        log.info(f"Secret is {secret}")
         algo = "HS256"
-        log.info("Trying to decode the tokeni...")
+        log.info("Trying to decode the token...")
         try:
             token = jwt.decode(jwtoken, secret, algo)
             log.info(f"Decoded token as {token}")
