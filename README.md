@@ -45,6 +45,12 @@ mysql -u api_user -pcoincoin -h localhost -P 3306 api
 uvicorn src.main:app --reload
 ```
 
+Pour que uvicorn affiche tous les logs (et pas seulement les siens) :
+```bash
+uvicorn src.main:app --reload --log-config logs.yaml
+```
+
+
 ### Lancer les tests _(depuis le répertoire `src`)_
 ```bash 
 pytest
