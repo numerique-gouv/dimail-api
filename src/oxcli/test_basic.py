@@ -28,7 +28,29 @@ def test_ox():
         cluster=ox_cluster,
     )
 
+    ctx = ox_cluster.get_context(1)
+    assert isinstance(ctx, oxcli.OxContext)
+    assert ctx.cid == 1
+
+    ctx = ox_cluster.get_context(2)
+    assert ctx is None
+
+    ctx = ox_cluster.get_context_by_name("testing")
+    assert isinstance(ctx, oxcli.OxContext)
+    assert ctx.cid == 1
+
+    ctx = ox_cluster.get_context_by_name("doest_not_exist")
+    assert ctx is None
+
+    ctx = ox_cluster.get_context_by_domain("example.com")
+    assert isinstance(ctx, oxcli.OxContext)
+    assert ctx.cid == 1
+
+    ctx = ox_cluster.get_context_by_domain("not-a-real-domain.biz")
+    assert ctx is None
+
     # At the beginning, we have the admin user
+    ctx = ox_cluster.get_context(1)
     admin_user = oxcli.OxUser(
         uid=2,
         username="admin_user",

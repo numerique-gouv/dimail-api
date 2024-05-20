@@ -14,7 +14,7 @@ if os.path.exists("sql_api"):
     if ".." not in sys.path and os.path.exists("../src"):
         sys.path.insert(0, "..")
 from src.sql_api.models import Api
-from src.sql_dovecot.models import Dovecot
+from src.sql_dovecot.database import Dovecot
 
 USE_TWOPHASE = False
 

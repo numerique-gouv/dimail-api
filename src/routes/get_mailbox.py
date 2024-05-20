@@ -4,7 +4,7 @@ import uuid
 
 import fastapi
 
-from .. import auth, sql_dovecot, web_models
+from .. import auth, oxcli, sql_dovecot, web_models
 from . import DependsDovecotDb, mailboxes
 
 mail_re = re.compile("^(?P<username>[^@]+)@(?P<domain>[^@]+)$")
@@ -71,6 +71,17 @@ async def get_mailbox(
     if not perms.can_read(domain):
         log.info(f"Permission denied on domain {domain} for curent user")
         raise fastapi.HTTPException(status_code=403, detail="Permission denied")
+
+    ox_cluster = oxcli.OxCluster()
+    ctx = ox_cluster.get_context_by_domain(domain)
+    if ctx is None:
+        log.info("Aucun context ne gere le domaine chez OX")
+    else:
+        ox_user = ctx.get_user_by_email(mailbox_id)
+        if ox_user is None:
+            log.info("Le contexte ne connait pas cet email")
+        else:
+            log.info("J'ai trouve le user chez OX")
 
     imap = sql_dovecot.get_dovecot_user(db, username, domain)
     if imap is None:
