@@ -21,10 +21,7 @@ def test_something(db_api, log):
     assert response.json() == {"name": "first_admin", "uuid": uuid, "is_admin": True}
 
     # Database is not empty anymore, only admins can do admin requests
-    response = client.get(
-        "/admin/users",
-        auth=("first_admin", "toto")
-    )
+    response = client.get("/admin/users", auth=("first_admin", "toto"))
     assert response.status_code == 200
     assert response.json() == [{"name": "first_admin", "uuid": uuid, "is_admin": True}]
 
@@ -39,7 +36,7 @@ def test_something(db_api, log):
     response = client.post(
         "/admin/users",
         json={"name": "testing", "password": "titi", "is_admin": False},
-        auth=("first_admin", "wrong_password")
+        auth=("first_admin", "wrong_password"),
     )
     assert response.status_code == 401
 

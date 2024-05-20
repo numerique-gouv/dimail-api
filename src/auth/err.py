@@ -2,6 +2,7 @@ import logging
 
 import fastapi
 
+
 class PermissionDenied(fastapi.HTTPException):
     def __init__(self):
         log = logging.getLogger(__name__)
@@ -10,4 +11,3 @@ class PermissionDenied(fastapi.HTTPException):
             status_code=fastapi.status.HTTP_401_UNAUTHORIZED,
             detail="Permission denied",
         )
-

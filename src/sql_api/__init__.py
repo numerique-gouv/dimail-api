@@ -1,3 +1,4 @@
+from .creds import Creds
 from .crud import (
     allow_domain_for_user,
     create_api_domain,
@@ -12,5 +13,4 @@ from .crud import (
     nb_users,
 )
 from .database import get_api_db, get_maker, init_api_db
-from .creds import Creds
 from .models import DBAllowed, DBDomain, DBUser

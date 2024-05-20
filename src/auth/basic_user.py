@@ -1,3 +1,4 @@
+import logging
 import typing
 
 import fastapi
@@ -8,7 +9,7 @@ from .. import sql_api
 from . import err
 
 
-def authenticate_user(db: orm.Session, user_name: str, password: str) -> sql_api.DBUser:    
+def authenticate_user(db: orm.Session, user_name: str, password: str) -> sql_api.DBUser:
     """Fetch a user from the API db, checks his password, if everything
     is fine, returns the user. Will raise a PermissionDenied exception
     if something is wrong.
@@ -29,7 +30,7 @@ def authenticate_user(db: orm.Session, user_name: str, password: str) -> sql_api
         raise err.PermissionDenied()
     return db_user
 
-import logging
+
 class BasicUser(fastapi.security.HTTPBasic):
     def __init__(self):
         super(BasicUser, self).__init__()
@@ -46,7 +47,7 @@ class BasicUser(fastapi.security.HTTPBasic):
         if not creds:
             log.info("No credentials provided, failed auth.")
             raise err.PermissionDenied()
-        
+
         maker = sql_api.get_maker()
         session = maker()
         user = authenticate_user(session, creds.username, creds.password)
@@ -56,5 +57,5 @@ class BasicUser(fastapi.security.HTTPBasic):
         finally:
             session.close()
 
-DependsBasicUser = typing.Annotated[sql_api.DBUser, fastapi.Depends(BasicUser()) ]
 
+DependsBasicUser = typing.Annotated[sql_api.DBUser, fastapi.Depends(BasicUser())]

@@ -2,11 +2,10 @@ import logging
 import typing
 
 import fastapi
-import sqlalchemy.orm as orm
 
 from .. import sql_api
-from .basic_user import BasicUser
 from . import err
+from .basic_user import BasicUser
 
 
 class BasicAdmin(BasicUser):
@@ -30,5 +29,5 @@ class BasicAdmin(BasicUser):
             raise err.PermissionDenied()
         yield user
 
-DependsBasicAdmin = typing.Annotated[sql_api.DBUser, fastapi.Depends(BasicAdmin()) ]
 
+DependsBasicAdmin = typing.Annotated[sql_api.DBUser, fastapi.Depends(BasicAdmin())]

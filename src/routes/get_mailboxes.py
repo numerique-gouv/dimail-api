@@ -38,6 +38,7 @@ async def get_mailboxes(
     #  page_number: int = 0,
 ) -> list[web_models.Mailbox]:
     print(f"Searching users in domain {domain}\n")
+    perms = user.get_creds()
     if domain == "all":
         if "example.com" not in perms.domains:
             return []

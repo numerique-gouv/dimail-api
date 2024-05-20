@@ -11,7 +11,7 @@ def my_user(db_api, log):
     user = "bidibule"
     domain = "tutu.net"
 
-    # Database is empty, fake auth, creating the first admin
+    # Database is empty, fake auth, creating the first admin
     res = client.post(
         "/admin/users",
         json={"name": "admin", "password": "admin", "is_admin": True},

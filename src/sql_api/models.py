@@ -9,8 +9,8 @@ import sqlalchemy as sa
 import sqlalchemy.orm as orm
 
 from .. import config
-from .database import Api
 from .creds import Creds
+from .database import Api
 
 
 class DBUser(Api):

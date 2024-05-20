@@ -11,5 +11,3 @@ class Creds(pydantic.BaseModel):
         if domain in self.domains:
             return True
         return False
-
-

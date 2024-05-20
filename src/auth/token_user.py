@@ -59,7 +59,7 @@ class TokenUser(fastapi.security.HTTPBearer):
         log.info("Trying to decode the token...")
         try:
             token = jwt.decode(jwtoken, secret, algo)
-        except jwt.ExpiredSignatureError as e:
+        except jwt.ExpiredSignatureError:
             log.info("Token has expired")
             raise err.PermissionDenied()
         except jwt.PyJWTError as e:
@@ -80,4 +80,3 @@ class TokenUser(fastapi.security.HTTPBearer):
 
 
 DependsTokenUser = typing.Annotated[sql_api.DBUser, fastapi.Depends(TokenUser())]
-

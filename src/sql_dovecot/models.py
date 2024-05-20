@@ -16,7 +16,9 @@ class ImapUser(database.Dovecot):
     home = sa.Column(sa.String(255, collation="ascii_bin"), nullable=False)
     uid = sa.Column(sa.Integer, nullable=False)
     gid = sa.Column(sa.Integer, nullable=False)
-    active = sa.Column(sa.dialects.mysql.CHAR(length=1), nullable=False, server_default="Y")
+    active = sa.Column(
+        sa.dialects.mysql.CHAR(length=1), nullable=False, server_default="Y"
+    )
 
 
 # CREATE TABLE `users` (
