@@ -7,6 +7,7 @@ import fastapi.security
 import jwt
 
 from .. import config, sql_api
+from . import err
 
 
 class TokenUser(fastapi.security.HTTPBearer):
@@ -19,24 +20,19 @@ class TokenUser(fastapi.security.HTTPBearer):
 
     async def __call__(self, request: fastapi.Request):
         log = logging.getLogger(__name__)
-        log.setLevel(logging.INFO)
-        log.info("We are in da place")
+        log.debug("Trying to auth a user with a token")
         credentials: fastapi.security.HTTPAuthorizationCredentials
         try:
             credentials = await super(TokenUser, self).__call__(request)
         except Exception as e:
-            log.error("Failed super, so failed auth.")
+            log.info(f"Failed super raising {e}, so failed auth.")
             raise e
         if not credentials:
             log.info("There are no creds, failed auth.")
-            raise fastapi.HTTPException(
-                status_code=403, detail="Invalid authorization code."
-            )
+            raise err.PermissionDenied()
         if not credentials.scheme == "Bearer":
             log.info("Creds are not Bearer, failed auth.")
-            raise fastapi.HTTPException(
-                status_code=403, detail="Invalid authentication scheme."
-            )
+            raise err.PermissionDenied()
         token = self.verify_jwt(log, credentials.credentials)
         username = token["sub"]
         log.info(f"Greetings user {username}")
@@ -63,17 +59,24 @@ class TokenUser(fastapi.security.HTTPBearer):
         log.info("Trying to decode the token...")
         try:
             token = jwt.decode(jwtoken, secret, algo)
-            log.info(f"Decoded token as {token}")
-            now = datetime.datetime.now(datetime.timezone.utc).timestamp()
-            exp = token["exp"]
-            if exp < now:
-                log.info(f"Token is expired now={now}, exp={exp}")
-                raise fastapi.HTTPException(status_code=403, detail="Expired token")
-            log.info("Token is valid")
-            return token
+        except jwt.ExpiredSignatureError as e:
+            log.info("Token has expired")
+            raise err.PermissionDenied()
+        except jwt.PyJWTError as e:
+            log.info(f"Failed to decode token: {e}")
+            raise err.PermissionDenied()
         except Exception as e:
-            log.info("Failed to decode token")
+            log.info(f"Unexpected <{e}>")
             raise e
+
+        log.info(f"Decoded token as {token}")
+        now = datetime.datetime.now(datetime.timezone.utc).timestamp()
+        exp = token["exp"]
+        if exp < now:
+            log.info(f"Token is expired now={now}, exp={exp}")
+            raise err.PermissionDenied()
+        log.info("Token is valid")
+        return token
 
 
 DependsTokenUser = typing.Annotated[sql_api.DBUser, fastapi.Depends(TokenUser())]

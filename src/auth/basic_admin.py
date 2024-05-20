@@ -5,7 +5,8 @@ import fastapi
 import sqlalchemy.orm as orm
 
 from .. import sql_api
-from .basic_user import BasicUser, PermissionDeniedException
+from .basic_user import BasicUser
+from . import err
 
 
 class BasicAdmin(BasicUser):
@@ -14,6 +15,7 @@ class BasicAdmin(BasicUser):
 
     async def __call__(self, request: fastapi.Request):
         log = logging.getLogger(__name__)
+        log.debug("Trying to auth an ADMIN with basic http")
         user: sql_api.DBUser
         try:
             user = await super(BasicAdmin, self).__call__(request).__anext__()
@@ -22,10 +24,10 @@ class BasicAdmin(BasicUser):
             raise e
         if not user:
             log.info("There is no user, failed auth.")
-            raise PermissionDeniedException()
+            raise err.PermissionDenied()
         if not user.is_admin:
             log.error("This user is not an admin. Failed auth.")
-            raise PermissionDeniedException()
+            raise err.PermissionDenied()
         yield user
 
 DependsBasicAdmin = typing.Annotated[sql_api.DBUser, fastapi.Depends(BasicAdmin()) ]

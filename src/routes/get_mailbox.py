@@ -19,7 +19,7 @@ uuid_re = re.compile("^[0-9a-f-]{32,36}$")
         404: {"description": "Mailbox not found"},
         422: {"description": "Email address is not well formed"},
     },
-    description="The expected mailbox_id can be the e-mail address of the uuid of a mailbox",
+    description="The expected mailbox_id can be the e-mail address or the uuid of a mailbox",
 )
 async def get_mailbox(
     mailbox_id: str,
@@ -28,7 +28,6 @@ async def get_mailbox(
     # alias_db: typing.Annotated[typing.Any, fastapi.Depends(sql_alias.get_alias_db)],
 ) -> web_models.Mailbox:
     log = logging.getLogger(__name__)
-    log.setLevel(logging.INFO)
     log.info(f"Nous cherchons qui est {mailbox_id}")
     perms = user.get_creds()
     log.info(f"Nous avons comme permissions: {perms}")
