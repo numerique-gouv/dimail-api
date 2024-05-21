@@ -57,3 +57,8 @@ def test_something(db_api, db_dovecot, my_user, log):
     )
     assert response.status_code == 404
     assert response.json() == {"detail": "Mailbox not found"}
+
+    response = client.get(
+        "/mailboxes/toto@example.com", headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 403
