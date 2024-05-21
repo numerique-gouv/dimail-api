@@ -70,6 +70,8 @@ class TokenUser(fastapi.security.HTTPBearer):
             raise e
 
         log.info(f"Decoded token as {token}")
+         # TODO cette vérification est redondante
+         # le jwt.decode le vérifie déjà
         now = datetime.datetime.now(datetime.timezone.utc).timestamp()
         exp = token["exp"]
         if exp < now:
