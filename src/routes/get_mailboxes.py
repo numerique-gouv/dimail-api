@@ -1,10 +1,9 @@
-import typing
 import uuid
 
 import fastapi
 
-from .. import sql_api, web_models
-from . import get_creds, mailboxes
+from .. import auth, web_models
+from . import mailboxes
 
 example_users = [
     web_models.Mailbox(
@@ -33,12 +32,13 @@ example_users = [
     },
 )
 async def get_mailboxes(
-    perms: typing.Annotated[sql_api.Creds, fastapi.Depends(get_creds)],
+    user: auth.DependsTokenUser,
     domain: str = "all",
     #  page_size: int = 20,
     #  page_number: int = 0,
 ) -> list[web_models.Mailbox]:
     print(f"Searching users in domain {domain}\n")
+    perms = user.get_creds()
     if domain == "all":
         if "example.com" not in perms.domains:
             return []

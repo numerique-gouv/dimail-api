@@ -1,4 +1,5 @@
 import enum
+import uuid
 
 import pydantic
 
@@ -9,12 +10,27 @@ class Feature(enum.StrEnum):
     Alias = "alias"
 
 
-class WUser(pydantic.BaseModel):
-    name: str
-    is_admin: bool
+class WToken(pydantic.BaseModel):
+    access_token: str
+    token_type: str
 
     class ConfigDict:
         from_attribute = True
+
+
+class WUser(pydantic.BaseModel):
+    name: str
+    is_admin: bool
+    uuid: uuid.UUID
+
+    class ConfigDict:
+        from_attribute = True
+
+
+class CreateUser(pydantic.BaseModel):
+    name: str
+    password: str
+    is_admin: bool
 
 
 class WDomain(pydantic.BaseModel):

@@ -1,10 +1,20 @@
 import logging
+import os
 import re
+import sys
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
+
+# We need to import those as src.something, so that their own "from .. import stuff" works
+# properly.
+if os.path.exists("sql_api"):
+    if ".." not in sys.path and os.path.exists("../src"):
+        sys.path.insert(0, "..")
+from src.sql_api.models import Api
+from src.sql_dovecot.database import Dovecot
 
 USE_TWOPHASE = False
 
@@ -41,16 +51,7 @@ db_names = config.get_main_option("databases", "")
 #       'engine1':mymodel.metadata1,
 #       'engine2':mymodel.metadata2
 # }
-import os
-import sys
 
-if os.path.exists("sql_api"):
-    if ".." not in sys.path and os.path.exists("../src"):
-        sys.path.insert(0, "..")
-# We need to import those as src.something, so that their own "from .. import stuff" works
-# properly.
-from src.sql_api.models import Api
-from src.sql_dovecot.models import Dovecot
 
 target_metadata = {"api": Api.metadata, "dovecot": Dovecot.metadata}
 
@@ -142,10 +143,10 @@ def run_migrations_online() -> None:
 
         for rec in engines.values():
             rec["transaction"].commit()
-    except:
+    except Exception as e:
         for rec in engines.values():
             rec["transaction"].rollback()
-        raise
+        raise e
     finally:
         for rec in engines.values():
             rec["connection"].close()

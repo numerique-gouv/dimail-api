@@ -9,3 +9,7 @@ flake8==6.0.0
 black==24.3.0
 isort==5.12.0
 pre-commit==3.3.2
+passlib==1.7.4
+argon2-cffi==23.1.0
+python-multipart==0.0.9
+PyJWT==2.8.0

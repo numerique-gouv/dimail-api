@@ -1,13 +1,11 @@
 import logging
 import re
-import typing
 import uuid
 
 import fastapi
-import sqlalchemy
 
-from .. import sql_api, sql_dovecot, web_models
-from . import get_creds, mailboxes
+from .. import auth, oxcli, sql_dovecot, web_models
+from . import DependsDovecotDb, mailboxes
 
 mail_re = re.compile("^(?P<username>[^@]+)@(?P<domain>[^@]+)$")
 uuid_re = re.compile("^[0-9a-f-]{32,36}$")
@@ -19,18 +17,20 @@ uuid_re = re.compile("^[0-9a-f-]{32,36}$")
         200: {"description": "Get a mailbox from his e_mail"},
         403: {"description": "Permission denied"},
         404: {"description": "Mailbox not found"},
+        422: {"description": "Email address is not well formed"},
     },
-    description="The expected mailbox_id can be the e-mail address of the uuid of a mailbox",
+    description="The expected mailbox_id can be the e-mail address or the uuid of a mailbox",
 )
 async def get_mailbox(
     mailbox_id: str,
-    perms: typing.Annotated[sql_api.Creds, fastapi.Depends(get_creds)],
-    db: typing.Annotated[typing.Any, fastapi.Depends(sql_dovecot.get_dovecot_db)],
+    user: auth.DependsTokenUser,
+    db: DependsDovecotDb,
+    # alias_db: typing.Annotated[typing.Any, fastapi.Depends(sql_alias.get_alias_db)],
 ) -> web_models.Mailbox:
     log = logging.getLogger(__name__)
-    log.setLevel(logging.INFO)
-
     log.info(f"Nous cherchons qui est {mailbox_id}")
+    perms = user.get_creds()
+    log.info(f"Nous avons comme permissions: {perms}")
     #    test_uuid = uuid_re.match(mailbox_id)
     test_mail = mail_re.match(mailbox_id)
     #    domain = None
@@ -64,7 +64,7 @@ async def get_mailbox(
 
     if domain is None:
         log.error(
-            f"Comment ca le domaine n'est pas defini alors que ca match la regexp ?"
+            "Comment ca le domaine n'est pas defini alors que ca match la regexp ?"
         )
         raise fastapi.HTTPException(status_code=422, detail="Invalid email address")
 
@@ -72,7 +72,18 @@ async def get_mailbox(
         log.info(f"Permission denied on domain {domain} for curent user")
         raise fastapi.HTTPException(status_code=403, detail="Permission denied")
 
-    imap = sql_dovecot.get_dovecot_user(db, infos["username"], infos["domain"])
+    ox_cluster = oxcli.OxCluster()
+    ctx = ox_cluster.get_context_by_domain(domain)
+    if ctx is None:
+        log.info("Aucun context ne gere le domaine chez OX")
+    else:
+        ox_user = ctx.get_user_by_email(mailbox_id)
+        if ox_user is None:
+            log.info("Le contexte ne connait pas cet email")
+        else:
+            log.info("J'ai trouve le user chez OX")
+
+    imap = sql_dovecot.get_dovecot_user(db, username, domain)
     if imap is None:
         log.info("La base dovecot ne contient pas cette adresse.")
         raise fastapi.HTTPException(status_code=404, detail="Mailbox not found")
@@ -80,14 +91,14 @@ async def get_mailbox(
     log.info("On a trouve l'adresse.")
     return web_models.Mailbox(
         type="mailbox",
-        status="broken (only imap)",
+        status="ok",
         email=imap.username + "@" + imap.domain,
         givenName=None,
         surName=None,
         displayName=None,
         username=imap.username,
         domain=imap.domain,
-        uuid=uuid.UUID4(),
+        uuid=uuid.uuid4(),
     )
 
 

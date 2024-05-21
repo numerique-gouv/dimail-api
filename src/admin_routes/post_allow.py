@@ -1,13 +1,14 @@
 import fastapi
 
-from .. import sql_api, web_models
-from . import allows
+from .. import auth, sql_api, web_models
+from . import DependsApiDb, allows
 
 
 @allows.post("/")
 async def post_allow(
+    db: DependsApiDb,
+    user: auth.DependsBasicAdmin,
     allow: web_models.WAllowed,
-    db=fastapi.Depends(sql_api.get_api_db),
 ) -> web_models.WAllowed:
     user_db = sql_api.get_api_user(db, allow.user)
     if user_db is None:

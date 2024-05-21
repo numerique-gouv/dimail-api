@@ -1,15 +1,18 @@
-import sqlalchemy
-import sqlalchemy.orm
+import atexit
 
-from .. import config
+import sqlalchemy
+import sqlalchemy.orm as orm
 
 url: str
 engine: sqlalchemy.Engine
-maker: sqlalchemy.orm.sessionmaker | None = None
+maker: orm.sessionmaker | None = None
+db: orm.Session | None = None
 
-Api = sqlalchemy.orm.declarative_base()
+Api = orm.declarative_base()
 
-test = config.settings.api_db_url
+
+def close_db(db):
+    db.close()
 
 
 def init_api_db(config: str):
@@ -18,15 +21,22 @@ def init_api_db(config: str):
     global maker
     url = config
     engine = sqlalchemy.create_engine(url)
-    maker = sqlalchemy.orm.sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    maker = orm.sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def get_api_db():
+    global db
+    global maker
+    if db is None:
+        if maker is None:
+            raise Exception("You need to init the db by giving me a valid URL")
+        db = maker()
+        atexit.register(lambda: close_db(db))
+    return db
+
+
+def get_maker():
     global maker
     if maker is None:
-        raise Exception("We need to init the database")
-    db = maker()
-    try:
-        yield db
-    finally:
-        db.close()
+        raise Exception("You need to init the db by giving me a valid URL")
+    return maker

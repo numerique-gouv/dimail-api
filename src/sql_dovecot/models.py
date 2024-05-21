@@ -1,23 +1,24 @@
-from sqlalchemy import JSON, Boolean, Column, ForeignKey, Integer, String
-from sqlalchemy.dialects import mysql
-from sqlalchemy.orm import relationship
+import sqlalchemy as sa
+import sqlalchemy.dialects.mysql
 
-from .database import Dovecot
+from . import database
 
 
-class ImapUser(Dovecot):
+class ImapUser(database.Dovecot):
     __tablename__ = "users"
-    username = Column(
-        String(128, collation="ascii_bin"), nullable=False, primary_key=True
+    username = sa.Column(
+        sa.String(128, collation="ascii_bin"), nullable=False, primary_key=True
     )
-    domain = Column(
-        String(128, collation="ascii_bin"), nullable=False, primary_key=True
+    domain = sa.Column(
+        sa.String(128, collation="ascii_bin"), nullable=False, primary_key=True
     )
-    password = Column(String(150, collation="ascii_bin"), nullable=False)
-    home = Column(String(255, collation="ascii_bin"), nullable=False)
-    uid = Column(Integer, nullable=False)
-    gid = Column(Integer, nullable=False)
-    active = Column(mysql.CHAR(length=1), nullable=False, server_default="Y")
+    password = sa.Column(sa.String(150, collation="ascii_bin"), nullable=False)
+    home = sa.Column(sa.String(255, collation="ascii_bin"), nullable=False)
+    uid = sa.Column(sa.Integer, nullable=False)
+    gid = sa.Column(sa.Integer, nullable=False)
+    active = sa.Column(
+        sa.dialects.mysql.CHAR(length=1), nullable=False, server_default="Y"
+    )
 
 
 # CREATE TABLE `users` (

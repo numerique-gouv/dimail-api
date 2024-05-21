@@ -151,6 +151,21 @@ def _get_context(self: OxCluster, cid: int) -> OxContext | None:
     return None
 
 
+def _get_context_by_name(self: OxCluster, name: str) -> OxContext | None:
+    all = self.list_contexts()
+    for ctx in all:
+        if ctx.name == name:
+            return ctx
+    return None
+
+def _get_context_by_domain(self: OxCluster, domain: str) -> OxContext | None:
+    all = self.list_contexts()
+    for ctx in all:
+        if domain in ctx.domains:
+            return ctx
+    return None
+
+
 def _create_context(
     self: OxCluster, cid: int | None, name: str, domain: str
 ) -> OxContext:
@@ -202,7 +217,9 @@ def _create_context(
     )
     ctx = self.get_context(cid)
     if ctx is None:
-        raise Exception("Created the context, but failed to list it...")
+        raise Exception(
+            "Created the context, but failed to list it, and with a message that is longer..."
+        )
     return ctx
 
 
@@ -401,6 +418,8 @@ OxCluster.run_for_item = _run_for_item
 
 OxCluster.list_contexts = _list_contexts
 OxCluster.get_context = _get_context
+OxCluster.get_context_by_name = _get_context_by_name
+OxCluster.get_context_by_domain = _get_context_by_domain
 OxCluster.create_context = _create_context
 OxCluster.add_mapping = _add_mapping
 
