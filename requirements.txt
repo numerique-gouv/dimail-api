@@ -2,7 +2,7 @@ fastapi==0.111.0
 uvicorn==0.29.0
 alembic==1.13.1
 SQLAlchemy==2.0.29
-PyMySQL==1.1.0
+PyMySQL==1.1.1
 pytest==8.2.0
 dynaconf==3.2.5
 flake8==6.0.0
