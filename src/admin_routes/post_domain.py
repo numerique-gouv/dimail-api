@@ -4,7 +4,7 @@ from .. import auth, oxcli, sql_api, web_models
 from . import DependsApiDb, domains
 
 
-@domains.post("/")
+@domains.post("/", status_code=201)
 async def post_domain(
     db: DependsApiDb,
     user: auth.DependsBasicAdmin,

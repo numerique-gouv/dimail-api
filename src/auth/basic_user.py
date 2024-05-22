@@ -10,7 +10,7 @@ from . import err
 
 
 def authenticate_user(db: orm.Session, user_name: str, password: str) -> sql_api.DBUser:
-    """Fetch a user from the API db, checks his password, if everything
+    """Fetch a user from the API db, checks their password, if everything
     is fine, returns the user. Will raise a PermissionDenied exception
     if something is wrong.
     May forge an admin user if the API db is empty."""
