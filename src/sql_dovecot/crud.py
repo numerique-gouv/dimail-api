@@ -22,5 +22,6 @@ def create_dovecot_user(db: orm.Session, username: str, domain: str, password: s
     except Exception as e:
         print(str(e))
         db.rollback()
+        return None
     db.refresh(imap_user)
     return imap_user
