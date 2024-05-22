@@ -21,7 +21,7 @@ async def post_domain(
     ox_cluster = oxcli.OxCluster()
     ctx = ox_cluster.get_context_by_domain(domain.name)
     if ctx is not None and ctx.name != domain.context_name:
-        raise fastapi.HTTPException(status_code=409, detail=f"The domain is curently mapped to OX context {ctx.name}")
+        raise fastapi.HTTPException(status_code=409, detail=f"The domain is currently mapped to OX context {ctx.name}")
 
     if ctx is None:
         ctx = ox_cluster.get_context_by_name(domain.context_name)
