@@ -57,6 +57,8 @@ async def post_mailbox(
         email=imap_user.username + "@" + imap_user.domain,
         givenName=ox_user.givenName,
         surName=ox_user.surName,
+        displayName=ox_user.displayName,
+        username=imap_user.username,
         domain=imap_user.domain,
         uuid=uuid.uuid4(),
     )
