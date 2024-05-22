@@ -185,7 +185,7 @@ def db_dovecot_session(db_dovecot, log) -> typing.Generator:
     session.close()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def ox_cluster(log) -> typing.Generator:
     """Fixture that provides an empty OX cluster."""
     log.info("SETUP empty ox cluster")

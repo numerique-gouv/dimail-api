@@ -5,7 +5,7 @@ from .. import main
 client = fastapi.testclient.TestClient(main.app)
 
 
-def test_something(db_api, log):
+def test_something(db_api, ox_cluster, log):
     # At the beginning of time, databse is empty, random users accepted and are admins
     response = client.get("/admin/users", auth=("useless", "useless"))
     assert response.status_code == 200
