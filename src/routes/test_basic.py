@@ -60,7 +60,21 @@ def test_create_mailbox(ox_cluster, my_user, db_dovecot):
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 200
-    assert response.json() == {"coin": "pan"}
+    # FIXME On a besoin de rendre prédictible les uuid qu'on génère pendant
+    # les tests. On a aussi besoin de définir ce que c'est que l'uuid d'une
+    # mailbox, parce que ce n'est pas clair pour l'instant...
+    uuid = response.json()["uuid"]
+    assert response.json() == {
+        "type": "mailbox",
+        "status": "ok",
+        "email": "address@tutu.net",
+        "surName": "Essai",
+        "givenName": "Test",
+        "displayName": "Test Essai",
+        "username": "address",
+        "domain": "tutu.net",
+        "uuid": uuid,
+    }
 
 
 def test_something(db_api, db_dovecot, my_user, log):
