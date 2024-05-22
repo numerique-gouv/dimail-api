@@ -40,6 +40,7 @@ class WDomain(pydantic.BaseModel):
     webmail_domain: str | None = None
     imap_domains: list[str] | None = None
     smtp_domains: list[str] | None = None
+    context_name: str | None
 
     class ConfigDict:
         from_attribute = True

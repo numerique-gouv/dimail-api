@@ -29,7 +29,7 @@ def my_user(db_api, log):
 
     res = client.post(
         "/admin/domains/",
-        json={"name": domain, "features": ["webmail", "mailbox"]},
+        json={"name": domain, "features": ["webmail", "mailbox"], "context_name": "dimail"},
         auth=("admin", "admin"),
     )
     assert res.status_code == 200
@@ -46,6 +46,18 @@ def my_user(db_api, log):
 
     token = res.json()["access_token"]
     yield {"user": user, "domains": [domain], "token": token}
+
+
+def test_create_mailbox(my_user):
+    token = my_user["token"]
+
+    response = client.post(
+        "/mailboxes",
+        json={"email": "address@tutu.net", "surName": "Essai", "givenName": "Test", "displayName": "Test Essai"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 200
+    assert response.json() == {"coin": "pan"}
 
 
 def test_something(db_api, db_dovecot, my_user, log):

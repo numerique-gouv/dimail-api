@@ -1,6 +1,6 @@
 import fastapi
 
-from .. import auth, sql_api, web_models
+from .. import auth, oxcli, sql_api, web_models
 from . import DependsApiDb, domains
 
 
@@ -14,5 +14,12 @@ async def post_domain(
 
     if domain_db is not None:
         raise fastapi.HTTPException(status_code=409, detail="Domain already exists")
+
+    ox_cluster = oxcli.OxCluster()
+    ctx = ox_cluster.get_context_by_name(domain.context_name)
+    if ctx is None:
+        ctx = ox_cluster.create_context(None, domain.context_name, domain.name)
+    else:
+        ctx.add_domain(domain.name)
 
     return sql_api.create_api_domain(db, domain)
