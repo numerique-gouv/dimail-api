@@ -158,9 +158,10 @@ def _get_context_by_name(self: OxCluster, name: str) -> OxContext | None:
             return ctx
     return None
 
+
 def _get_context_by_domain(self: OxCluster, domain: str) -> OxContext | None:
-    all = self.list_contexts()
-    for ctx in all:
+    all_contexts = self.list_contexts()
+    for ctx in all_contexts:
         if domain in ctx.domains:
             return ctx
     return None
