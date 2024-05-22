@@ -1,10 +1,7 @@
 from .. import oxcli
 
 
-def test_ox():
-    ox_cluster = oxcli.OxCluster()
-
-    ox_cluster.purge()
+def test_ox(ox_cluster):
 
     res = ox_cluster.list_contexts()
     assert res == []
@@ -107,5 +104,4 @@ def test_ox():
     got_user = ctx.get_user_by_name("titi")
     assert got_user is None
 
-    ox_cluster.purge()
 

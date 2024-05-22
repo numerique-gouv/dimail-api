@@ -20,6 +20,6 @@ async def post_domain(
     if ctx is None:
         ctx = ox_cluster.create_context(None, domain.context_name, domain.name)
     else:
-        ctx.add_domain(domain.name)
+        ctx.add_mapping(domain.name)
 
     return sql_api.create_api_domain(db, domain)

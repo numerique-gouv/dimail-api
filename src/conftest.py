@@ -8,7 +8,7 @@ import sqlalchemy as sa
 import alembic.command
 import alembic.config
 
-from . import sql_api, sql_dovecot
+from . import oxcli, sql_api, sql_dovecot
 
 
 def make_db(name: str, conn: sa.Engine) -> str:
@@ -183,3 +183,15 @@ def db_dovecot_session(db_dovecot, log) -> typing.Generator:
     yield session
     log.info("TEARDOWN sql_dovecot orm session")
     session.close()
+
+
+@pytest.fixture(scope="session")
+def ox_cluster(log) -> typing.Generator:
+    """Fixture that provides an empty OX cluster."""
+    log.info("SETUP empty ox cluster")
+    ox_cluster = oxcli.OxCluster()
+    ox_cluster.purge()
+    yield ox_cluster
+    log.info("TEARDOWN ox cluster")
+    ox_cluster.purge()
+
