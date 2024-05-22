@@ -116,7 +116,7 @@ def _run_for_item(self: OxCluster, command: list[str]) -> str:
     file.wait()
 
     if file.returncode != 0:
-        log.error(f"Faled to call {command}")
+        log.error(f"Failed to call {command}")
         log.error(file.stderr.read())
         raise Exception("Failed to run ssh command")
 
@@ -183,7 +183,7 @@ def _create_context(
         if ctx.cid > max_id:
             max_id = ctx.cid
     if cid is None:
-        cid = max_id
+        cid = max_id + 1
     self.run_for_item(
         [
             "/opt/open-xchange/sbin/createcontext",

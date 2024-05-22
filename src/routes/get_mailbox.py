@@ -81,7 +81,7 @@ async def get_mailbox(
         if ox_user is None:
             log.info("Le contexte ne connait pas cet email")
         else:
-            log.info("J'ai trouve le user chez OX")
+            log.info(f"J'ai trouve le user chez OX: {ox_user}")
 
     imap = sql_dovecot.get_dovecot_user(db, username, domain)
     if imap is None:
