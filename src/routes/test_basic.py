@@ -7,7 +7,7 @@ client = fastapi.testclient.TestClient(main.app)
 
 
 @pytest.fixture(scope="function")
-def my_user(db_api, log):
+def my_user(ox_cluster, db_api, log):
     user = "bidibule"
     domain = "tutu.net"
 
@@ -34,6 +34,9 @@ def my_user(db_api, log):
     )
     assert res.status_code == 200
 
+    ctx = ox_cluster.get_context_by_name("dimail")
+    assert domain in ctx.domains
+
     res = client.post(
         "/admin/allows/",
         json={"user": user, "domain": domain},
@@ -48,7 +51,7 @@ def my_user(db_api, log):
     yield {"user": user, "domains": [domain], "token": token}
 
 
-def test_create_mailbox(my_user):
+def test_create_mailbox(ox_cluster, my_user, db_dovecot):
     token = my_user["token"]
 
     response = client.post(
