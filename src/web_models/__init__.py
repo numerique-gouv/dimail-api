@@ -1,2 +1,2 @@
 from .admin import CreateUser, Feature, WAllowed, WDomain, WToken, WUser
-from .mailbox import Mailbox, MailboxStatus, MailboxType
+from .mailbox import CreateMailbox, Mailbox, MailboxStatus, MailboxType

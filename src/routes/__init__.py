@@ -48,5 +48,6 @@ DependsDovecotDb = typing.Annotated[typing.Any, fastapi.Depends(depends_dovecot_
 from .get_mailbox import get_mailbox
 from .get_mailboxes import get_mailboxes
 from .get_token import login_for_access_token
+from .post_mailbox import post_mailbox
 
 # from .post_user import post_user

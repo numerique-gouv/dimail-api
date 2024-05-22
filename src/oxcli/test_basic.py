@@ -106,3 +106,6 @@ def test_ox():
 
     got_user = ctx.get_user_by_name("titi")
     assert got_user is None
+
+    ox_cluster.purge()
+
