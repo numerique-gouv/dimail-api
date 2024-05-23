@@ -9,6 +9,7 @@ import alembic.command
 import alembic.config
 
 from . import oxcli, sql_api, sql_dovecot, sql_postfix
+from testcontainers.mysql import MySqlContainer
 
 
 def make_db(name: str, conn: sa.Engine) -> str:
@@ -33,6 +34,28 @@ def fix_logger(scope="session") -> typing.Generator:
     logger.info("SETUP logger")
     yield logger
     logger.info("TEARDOWN logger")
+
+
+@pytest.fixture(scope="module")
+def mysql_container(log, request):
+    mysql = MySqlContainer("mysql:5.7.17")
+    log.info("SETUP MYSQL CONTAINER")
+    mysql.start()
+
+    def remove_container():
+        mysql.stop()
+        log.info("TEARDOWN MYSQL CONTAINER")
+
+    request.addfinalizer(remove_container)
+    return mysql
+
+
+@pytest.fixture(scope="module")
+def engine(mysql_container):
+    engine = sa.create_engine(mysql_container.get_connection_url())
+    engine.connect()
+    engine.begin
+    yield engine
 
 
 @pytest.fixture(scope="session")
