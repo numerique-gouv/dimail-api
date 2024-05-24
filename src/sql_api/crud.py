@@ -91,3 +91,15 @@ def allow_domain_for_user(db: orm.Session, allowed: web_models.WAllowed):
     db.commit()
     db.refresh(db_allowed)
     return db_allowed
+
+
+def remove_domain_for_user(db: orm.Session, allowed: web_models.WAllowed):
+    """Remove domain ownership to user. The user won't be able to add/delete mailboxes for this domain."""
+    db_allowed = (
+        db.query(models.DBAllowed)
+        .filter_by(domain=allowed.domain, user=allowed.user)
+        .first()
+    )
+    db.delete(db_allowed)
+    db.commit()
+    return {}
