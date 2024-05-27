@@ -194,4 +194,3 @@ def ox_cluster(log) -> typing.Generator:
     yield ox_cluster
     log.info("TEARDOWN ox cluster")
     ox_cluster.purge()
-

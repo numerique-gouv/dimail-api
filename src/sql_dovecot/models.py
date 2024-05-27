@@ -1,6 +1,6 @@
+import passlib.hash
 import sqlalchemy as sa
 import sqlalchemy.dialects.mysql
-import passlib.hash
 
 from . import database
 
@@ -27,7 +27,7 @@ class ImapUser(database.Dovecot):
     def check_password(self, password: str) -> bool:
         if not self.password.startswith("{ARGON2ID}"):
             raise Exception("This password was not encoded by me, i can't check it")
-        return passlib.hash.argon2.verify(password, self.password[len("{ARGON2ID}"):])
+        return passlib.hash.argon2.verify(password, self.password[len("{ARGON2ID}") :])
 
 
 # CREATE TABLE `users` (

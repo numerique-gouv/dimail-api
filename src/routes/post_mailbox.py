@@ -1,7 +1,7 @@
 import logging
-import uuid
 import re
 import secrets
+import uuid
 
 import fastapi
 
@@ -58,11 +58,12 @@ async def post_mailbox(
         uuid=uuid.uuid4(),
     )
 
+
 ###     imap = sql_dovecot.get_dovecot_user(db, username, domain)
 ###     if imap is None:
 ###         log.info("La base dovecot ne contient pas cette adresse.")
 ###         raise fastapi.HTTPException(status_code=404, detail="Mailbox not found")
-### 
+###
 ###     log.info("On a trouve l'adresse.")
 ###     return web_models.Mailbox(
 ###         type="mailbox",
@@ -75,8 +76,8 @@ async def post_mailbox(
 ###         domain=imap.domain,
 ###         uuid=uuid.uuid4(),
 ###     )
-### 
-### 
+###
+###
 ### #    if (
 ### #        mailbox_id != "toto@example.com"
 ### #        and mailbox_id != "d437abd5-2b49-47db-be49-05f79f1cc242"
