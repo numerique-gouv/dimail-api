@@ -2,7 +2,6 @@ from .. import oxcli
 
 
 def test_ox(ox_cluster):
-
     res = ox_cluster.list_contexts()
     assert res == []
     ctx = ox_cluster.create_context(1, "testing", "example.com")
@@ -103,5 +102,3 @@ def test_ox(ox_cluster):
 
     got_user = ctx.get_user_by_name("titi")
     assert got_user is None
-
-

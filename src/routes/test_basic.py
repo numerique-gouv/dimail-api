@@ -29,7 +29,11 @@ def my_user(ox_cluster, db_api, log):
 
     res = client.post(
         "/admin/domains/",
-        json={"name": domain, "features": ["webmail", "mailbox"], "context_name": "dimail"},
+        json={
+            "name": domain,
+            "features": ["webmail", "mailbox"],
+            "context_name": "dimail",
+        },
         auth=("admin", "admin"),
     )
     assert res.status_code == 200
@@ -56,7 +60,12 @@ def test_create_mailbox(ox_cluster, my_user, db_dovecot_session):
 
     response = client.post(
         "/mailboxes",
-        json={"email": "address@tutu.net", "surName": "Essai", "givenName": "Test", "displayName": "Test Essai"},
+        json={
+            "email": "address@tutu.net",
+            "surName": "Essai",
+            "givenName": "Test",
+            "displayName": "Test Essai",
+        },
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 200

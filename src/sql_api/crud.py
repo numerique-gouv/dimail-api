@@ -56,17 +56,16 @@ def delete_api_user(db: orm.Session, user_name: str):
 
 def create_api_domain(db: orm.Session, domain: web_models.WDomain):
     db_domain = models.DBDomain(
-        name=domain.name,
-        features=[ str(f) for f in domain.features ]
+        name=domain.name, features=[str(f) for f in domain.features]
     )
     if domain.webmail_domain is not None:
         db_domain.webmail_domain = domain.webmail_domain
     if domain.mailbox_domain is not None:
         db_domain.mailbox_domain = domain.mailbox_domain
     if domain.imap_domains is not None:
-        db_domain.imap_domains = [ dom for dom in domain.imap_domains ]
+        db_domain.imap_domains = [dom for dom in domain.imap_domains]
     if domain.smtp_domains is not None:
-        db_domain.smtp_domains = [ dom for dom in domain.smtp_domains ]
+        db_domain.smtp_domains = [dom for dom in domain.smtp_domains]
     db.add(db_domain)
     db.commit()
     db.refresh(db_domain)

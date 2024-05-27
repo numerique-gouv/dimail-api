@@ -10,9 +10,10 @@ async def post_domain(
     user: auth.DependsBasicAdmin,
     domain: web_models.WDomain,
 ) -> web_models.WDomain:
-
     if "webmail" in domain.features and domain.context_name is None:
-        raise fastapi.HTTPException(status_code=409, detail="OX context name is mandatory for mailbox feature")
+        raise fastapi.HTTPException(
+            status_code=409, detail="OX context name is mandatory for mailbox feature"
+        )
 
     domain_db = sql_api.get_api_domain(db, domain.name)
     if domain_db is not None:
@@ -21,7 +22,10 @@ async def post_domain(
     ox_cluster = oxcli.OxCluster()
     ctx = ox_cluster.get_context_by_domain(domain.name)
     if ctx is not None and ctx.name != domain.context_name:
-        raise fastapi.HTTPException(status_code=409, detail=f"The domain is currently mapped to OX context {ctx.name}")
+        raise fastapi.HTTPException(
+            status_code=409,
+            detail=f"The domain is currently mapped to OX context {ctx.name}",
+        )
 
     if ctx is None:
         ctx = ox_cluster.get_context_by_name(domain.context_name)
@@ -42,5 +46,5 @@ async def post_domain(
         mailbox_domain=domain_db.mailbox_domain,
         webmail_domain=domain_db.webmail_domain,
         imap_domains=domain_db.imap_domains,
-        smtp_domains=domain_db.smtp_domains
+        smtp_domains=domain_db.smtp_domains,
     )

@@ -24,15 +24,15 @@ class Mailbox(pydantic.BaseModel):
     domain: str | None = None
     uuid: pydantic.UUID4
 
+
 class CreateMailbox(pydantic.BaseModel):
     email: str
     givenName: str
     surName: str
     displayName: str
 
+
 class NewMailbox(pydantic.BaseModel):
     email: str
     password: str
     uuid: pydantic.UUID4
-
-
