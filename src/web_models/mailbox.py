@@ -30,4 +30,9 @@ class CreateMailbox(pydantic.BaseModel):
     surName: str
     displayName: str
 
+class NewMailbox(pydantic.BaseModel):
+    email: str
+    password: str
+    uuid: pydantic.UUID4
+
 

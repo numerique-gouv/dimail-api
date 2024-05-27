@@ -1,7 +1,7 @@
 import fastapi.testclient
 import pytest
 
-from .. import main
+from .. import main, sql_dovecot
 
 client = fastapi.testclient.TestClient(main.app)
 
@@ -51,7 +51,7 @@ def my_user(ox_cluster, db_api, log):
     yield {"user": user, "domains": [domain], "token": token}
 
 
-def test_create_mailbox(ox_cluster, my_user, db_dovecot):
+def test_create_mailbox(ox_cluster, my_user, db_dovecot_session):
     token = my_user["token"]
 
     response = client.post(
@@ -63,18 +63,14 @@ def test_create_mailbox(ox_cluster, my_user, db_dovecot):
     # FIXME On a besoin de rendre prédictible les uuid qu'on génère pendant
     # les tests. On a aussi besoin de définir ce que c'est que l'uuid d'une
     # mailbox, parce que ce n'est pas clair pour l'instant...
-    uuid = response.json()["uuid"]
-    assert response.json() == {
-        "type": "mailbox",
-        "status": "ok",
-        "email": "address@tutu.net",
-        "surName": "Essai",
-        "givenName": "Test",
-        "displayName": "Test Essai",
-        "username": "address",
-        "domain": "tutu.net",
-        "uuid": uuid,
-    }
+    got = response.json()
+    assert got["email"] == "address@tutu.net"
+    # assert got["uuid"] == something smart here :)
+
+    # Check the password is properly encoded in dovecot database
+    imap_user = sql_dovecot.get_dovecot_user(db_dovecot_session, "address", "tutu.net")
+    assert isinstance(imap_user, sql_dovecot.ImapUser)
+    assert imap_user.check_password(got["password"])
 
 
 def test_something(db_api, db_dovecot, my_user, log):
