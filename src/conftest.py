@@ -29,7 +29,8 @@ def make_db_with_user(name: str, user: str, password: str, conn: sa.Connection) 
     conn.execute(sa.text(f"create database {name};"))
     conn.execute(sa.text(f"grant ALL on {name}.* to {user}@'%' identified by '{password}';"))
     mariadb_port = conn.engine.url.port
-    return f"mysql+pymysql://{user}:{password}@localhost:{mariadb_port}/{name}"
+    mariadb_host = conn.engine.url.host
+    return f"mysql+pymysql://{user}:{password}@{mariadb_host}:{mariadb_port}/{name}"
 
 
 def drop_db(name: str, conn: sa.Engine):
@@ -73,6 +74,7 @@ def engine(mysql_container):
 def root_db(log, mariadb_container) -> typing.Generator:
     """Fixtures that makes a connection to mariadb/mysql as root available."""
     log.info("CONNECTING as mysql root")
+    # root_db = sa.create_engine("mysql+pymysql://root:toto@localhost:3306/mysql")
     root_db = sa.create_engine(mariadb_container.get_connection_url())
     conn = root_db.connect()
     yield conn
