@@ -12,4 +12,4 @@ def test_useless(db_dovecot_session):
     assert isinstance(imap_user, sql_dovecot.ImapUser)
     assert imap_user.username == "toto"
     assert imap_user.domain == "example.com"
-    assert imap_user.password == "SHOULD BE ENCODED secret"
+    assert imap_user.check_password("secret")

@@ -16,6 +16,7 @@ def create_dovecot_user(db: orm.Session, username: str, domain: str, password: s
         gid=0,
         home="",
     )
+    imap_user.set_password(password)
     try:
         db.add(imap_user)
         db.commit()
