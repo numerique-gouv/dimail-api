@@ -22,10 +22,12 @@ class ImapUser(database.Dovecot):
     )
 
     def set_password(self, password: str) -> None:
-        self.password = passlib.hash.argon2.hash(password)
+        self.password = "{ARGON2ID}" + passlib.hash.argon2.hash(password)
 
     def check_password(self, password: str) -> bool:
-        return passlib.hash.argon2.verify(password, self.password)
+        if not self.password.startswith("{ARGON2ID}"):
+            raise Exception("This password was not encoded by me, i can't check it")
+        return passlib.hash.argon2.verify(password, self.password[len("{ARGON2ID}"):])
 
 
 # CREATE TABLE `users` (
