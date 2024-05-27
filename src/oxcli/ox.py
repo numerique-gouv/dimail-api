@@ -144,16 +144,16 @@ def _list_contexts(self: OxCluster) -> [OxContext]:
 
 
 def _get_context(self: OxCluster, cid: int) -> OxContext | None:
-    all = self.list_contexts()
-    for ctx in all:
+    all_contexts = self.list_contexts()
+    for ctx in all_contexts:
         if ctx.cid == cid:
             return ctx
     return None
 
 
 def _get_context_by_name(self: OxCluster, name: str) -> OxContext | None:
-    all = self.list_contexts()
-    for ctx in all:
+    all_contexts = self.list_contexts()
+    for ctx in all_contexts:
         if ctx.name == name:
             return ctx
     return None
@@ -170,9 +170,9 @@ def _get_context_by_domain(self: OxCluster, domain: str) -> OxContext | None:
 def _create_context(
     self: OxCluster, cid: int | None, name: str, domain: str
 ) -> OxContext:
-    all = self.list_contexts()
+    all_contexts = self.list_contexts()
     max_id = 0
-    for ctx in all:
+    for ctx in all_contexts:
         if cid is not None and ctx.cid == cid:
             raise Exception(f"Context id {cid} already exists")
         if ctx.name == name:
@@ -398,16 +398,16 @@ def _search_user(self: OxContext, username: str) -> list[OxUser]:
 
 
 def _get_user_by_name(self: OxContext, username: str) -> OxUser | None:
-    all = self.search_user(username)
-    for user in all:
+    all_users = self.search_user(username)
+    for user in all_users:
         if user.username == username:
             return user
     return None
 
 
 def _get_user_by_email(self: OxContext, email: str) -> OxUser | None:
-    all = self.list_users()
-    for user in all:
+    all_users = self.list_users()
+    for user in all_users:
         if user.email == email:
             return user
     return None
