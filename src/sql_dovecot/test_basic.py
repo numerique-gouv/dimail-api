@@ -1,3 +1,4 @@
+import logging
 from .. import sql_dovecot
 
 def test_useless(db_dovecot_session):
@@ -13,3 +14,5 @@ def test_useless(db_dovecot_session):
     assert imap_user.username == "toto"
     assert imap_user.domain == "example.com"
     assert imap_user.check_password("secret")
+    log = logging.getLogger(__name__)
+    log.info(f"Encrypted: {imap_user.password}")
