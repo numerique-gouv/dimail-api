@@ -50,7 +50,13 @@ def fix_logger(scope="session") -> typing.Generator:
 
 @pytest.fixture(scope="session")
 def mariadb_container(log, request):
-    mysql = MySqlContainer("mariadb:11.2", username="root", password="toto", dbname="mysql")
+    """
+    Fixtures qui démarre un conteneur MariaDB avec le user root si
+    la variable d'environnement `DIMAIL_STARTS_TESTS_CONTAINERS` n'est pas fausse
+    """
+    if not os.environ.get("DIMAIL_STARTS_TESTS_CONTAINERS"):
+        return None
+    mysql = MySqlContainer("mariadb:11.2", username="root", password="password_root", dbname="mysql")
     log.info("SETUP MARIADB CONTAINER")
     mysql.start()
 
@@ -62,32 +68,21 @@ def mariadb_container(log, request):
     return mysql
 
 
-@pytest.fixture(scope="module")
-def engine(mysql_container):
-    engine = sa.create_engine(mysql_container.get_connection_url())
-    engine.connect()
-    engine.begin
-    yield engine
-
-
 @pytest.fixture(scope="session")
 def root_db(log, mariadb_container) -> typing.Generator:
-    """Fixtures that makes a connection to mariadb/mysql as root available."""
-    log.info("CONNECTING as mysql root")
-    # root_db = sa.create_engine("mysql+pymysql://root:toto@localhost:3306/mysql")
-    root_db = sa.create_engine(mariadb_container.get_connection_url())
+    """
+    Fixtures that makes a connection to mariadb/mysql as root available.
+    Look at .docker_compose.yml to see args when fixture `mariadb_container` is not false
+    """
+    root_url = "mysql+pymysql://root:toto@localhost:3306/mysql"
+    if mariadb_container:
+        root_url = mariadb_container.get_connection_url()
+    root_db = sa.create_engine(root_url)
+    log.info(f"CONNECTING as mysql root to {root_url}")
     conn = root_db.connect()
     yield conn
     conn.close()
     log.info("CLOSING root mysql connection")
-
-
-# @pytest.fixture(scope="session")
-# def mariadb_port(log, mariadb_container) -> int:
-#     """Fixtures that exposes port for random mariadb container."""
-#     log.info(f"type of mariadb container: {type(mariadb_container)}")
-#     log.info(f"type of mariadb container port: {type(mariadb_container.port)}")
-#     return mariadb_container.port
 
 
 @pytest.fixture(scope="session")
