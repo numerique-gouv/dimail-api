@@ -1,5 +1,6 @@
 import sqlalchemy as sa
 import sqlalchemy.dialects.mysql
+import passlib.hash
 
 from . import database
 
@@ -19,6 +20,12 @@ class ImapUser(database.Dovecot):
     active = sa.Column(
         sa.dialects.mysql.CHAR(length=1), nullable=False, server_default="Y"
     )
+
+    def set_password(self, password: str) -> None:
+        self.password = passlib.hash.argon2.hash(password)
+
+    def check_password(self, password: str) -> bool:
+        return passlib.hash.argon2.verify(password, self.password)
 
 
 # CREATE TABLE `users` (
