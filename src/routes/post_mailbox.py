@@ -1,6 +1,7 @@
 import logging
 import uuid
 import re
+import secrets
 
 import fastapi
 
@@ -18,7 +19,7 @@ async def post_mailbox(
     mailbox: web_models.CreateMailbox,
     user: auth.DependsTokenUser,
     db: DependsDovecotDb,
-) -> web_models.Mailbox:
+) -> web_models.NewMailbox:
     log = logging.getLogger(__name__)
 
     test_mail = mail_re.match(mailbox.email)
@@ -48,18 +49,12 @@ async def post_mailbox(
         domain=domain,
     )
 
-    password = "GenerateARandomPassword"
+    password = secrets.token_urlsafe(12)
     imap_user = sql_dovecot.create_dovecot_user(db, username, domain, password)
 
-    return web_models.Mailbox(
-        type="mailbox",
-        status="ok",
+    return web_models.NewMailbox(
         email=imap_user.username + "@" + imap_user.domain,
-        givenName=ox_user.givenName,
-        surName=ox_user.surName,
-        displayName=ox_user.displayName,
-        username=imap_user.username,
-        domain=imap_user.domain,
+        password=password,
         uuid=uuid.uuid4(),
     )
 
