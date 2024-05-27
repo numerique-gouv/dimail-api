@@ -2,6 +2,8 @@ import logging
 import os
 import typing
 
+import alembic.command
+import alembic.config
 import pytest
 import sqlalchemy as sa
 
@@ -11,14 +13,23 @@ import alembic.config
 from . import oxcli, sql_api, sql_dovecot, sql_postfix
 from testcontainers.mysql import MySqlContainer
 
+from . import oxcli, sql_api, sql_dovecot
 
-def make_db(name: str, conn: sa.Engine) -> str:
+
+def make_db(name: str, conn: sa.Connection) -> str:
+    """Utility function, for internal use. Ensure a database, named 'name'
+    is created and empty. 'conn' is a mariadb/mysql connection as root user"""
+    return make_db_with_user(name, "test", "toto", conn)
+
+
+def make_db_with_user(name: str, user: str, password: str, conn: sa.Connection) -> str:
     """Utility function, for internal use. Ensure a database, named 'name'
     is created and empty. 'conn' is a mariadb/mysql connection as root user"""
     conn.execute(sa.text(f"drop database if exists {name};"))
     conn.execute(sa.text(f"create database {name};"))
-    conn.execute(sa.text(f"grant ALL on {name}.* to test@'%' identified by 'toto';"))
-    return f"mysql+pymysql://test:toto@localhost:3306/{name}"
+    conn.execute(sa.text(f"grant ALL on {name}.* to {user}@'%' identified by '{password}';"))
+    mariadb_port = conn.engine.url.port
+    return f"mysql+pymysql://{user}:{password}@localhost:{mariadb_port}/{name}"
 
 
 def drop_db(name: str, conn: sa.Engine):
@@ -36,15 +47,15 @@ def fix_logger(scope="session") -> typing.Generator:
     logger.info("TEARDOWN logger")
 
 
-@pytest.fixture(scope="module")
-def mysql_container(log, request):
-    mysql = MySqlContainer("mysql:5.7.17")
-    log.info("SETUP MYSQL CONTAINER")
+@pytest.fixture(scope="session")
+def mariadb_container(log, request):
+    mysql = MySqlContainer("mariadb:11.2", username="root", password="toto", dbname="mysql")
+    log.info("SETUP MARIADB CONTAINER")
     mysql.start()
 
     def remove_container():
         mysql.stop()
-        log.info("TEARDOWN MYSQL CONTAINER")
+        log.info("TEARDOWN MARIADB CONTAINER")
 
     request.addfinalizer(remove_container)
     return mysql
@@ -59,14 +70,22 @@ def engine(mysql_container):
 
 
 @pytest.fixture(scope="session")
-def root_db(log) -> typing.Generator:
+def root_db(log, mariadb_container) -> typing.Generator:
     """Fixtures that makes a connection to mariadb/mysql as root available."""
     log.info("CONNECTING as mysql root")
-    root_db = sa.create_engine("mysql+pymysql://root:toto@localhost:3306/mysql")
+    root_db = sa.create_engine(mariadb_container.get_connection_url())
     conn = root_db.connect()
     yield conn
     conn.close()
     log.info("CLOSING root mysql connection")
+
+
+# @pytest.fixture(scope="session")
+# def mariadb_port(log, mariadb_container) -> int:
+#     """Fixtures that exposes port for random mariadb container."""
+#     log.info(f"type of mariadb container: {type(mariadb_container)}")
+#     log.info(f"type of mariadb container port: {type(mariadb_container.port)}")
+#     return mariadb_container.port
 
 
 @pytest.fixture(scope="session")
