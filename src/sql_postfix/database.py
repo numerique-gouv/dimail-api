@@ -19,7 +19,7 @@ def init_db(config: str):
 def get_maker() -> orm.sessionmaker:
     global maker
     if maker is None:
-        raise Enception("Please init the postfix database by giving me an url...")
+        raise Exception("Please init the postfix database by giving me an url...")
     return maker
 
 
