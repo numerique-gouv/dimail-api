@@ -50,9 +50,14 @@ class BasicUser(fastapi.security.HTTPBasic):
 
         maker = sql_api.get_maker()
         session = maker()
-        user = authenticate_user(session, creds.username, creds.password)
         try:
-            log.debug(f"Gretting user {user.name}")
+            user = authenticate_user(session, creds.username, creds.password)
+        except Exception as e:
+            log.debug(f"Failed auth")
+            session.close()
+            raise e
+        try:
+            log.debug(f"Greetings user {user.name}")
             yield user
         finally:
             session.close()
