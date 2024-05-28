@@ -10,10 +10,9 @@ import sqlalchemy as sa
 import alembic.command
 import alembic.config
 
-from . import oxcli, sql_api, sql_dovecot, sql_postfix
-from testcontainers.mysql import MySqlContainer
+import testcontainers.mysql as tc
 
-from . import oxcli, sql_api, sql_dovecot
+from . import oxcli, sql_api, sql_dovecot, sql_postfix
 
 
 def make_db(name: str, conn: sa.Connection) -> str:
@@ -56,7 +55,7 @@ def mariadb_container(log, request):
     """
     if not os.environ.get("DIMAIL_STARTS_TESTS_CONTAINERS"):
         return None
-    mysql = MySqlContainer("mariadb:11.2", username="root", password="password_root", dbname="mysql")
+    mysql = tc.MySqlContainer("mariadb:11.2", username="root", password="password_root", dbname="mysql")
     log.info("SETUP MARIADB CONTAINER")
     mysql.start()
 
