@@ -13,5 +13,5 @@ from .crud import (
     nb_users,
     remove_domain_for_user,
 )
-from .database import get_api_db, get_maker, init_api_db
+from .database import get_db, get_maker, init_db
 from .models import DBAllowed, DBDomain, DBUser

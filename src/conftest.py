@@ -8,7 +8,7 @@ import sqlalchemy as sa
 import alembic.command
 import alembic.config
 
-from . import oxcli, sql_api, sql_dovecot
+from . import oxcli, sql_api, sql_dovecot, sql_postfix
 
 
 def make_db(name: str, conn: sa.Engine) -> str:
@@ -130,6 +130,20 @@ def db_dovecot_url(root_db, alembic_config, log) -> typing.Generator:
     log.info("TEARDOWN dovecot database (drop)")
 
 
+@pytest.fixture(scope="session")
+def db_postfix_url(root_db, alembic_config, log) -> typing.Generator:
+    """Fixtures that makes a database available as the Postfix db for testing.
+    Adds the database and the url in alembic config. Yields an url to
+    connect to that db."""
+    log.info("SETUP postfix database (drop and create)")
+    url = make_db("test3",root_db)
+    add_db_in_alembic_config(alembic_config, "postfix", url, log)
+    yield url
+    remove_db_from_alembic_config(alembic_config, "postfix", log)
+    drop_db("test3",root_db)
+    log.info("TEARDOWN postfix database (drop)")
+
+
 @pytest.fixture(scope="function")
 def alembic_run(alembic_config, log) -> typing.Generator:
     """Fixture that makes sure alembic has run on all the registered
@@ -150,7 +164,7 @@ def db_api(alembic_run, db_api_url, log) -> typing.Generator:
     """Fixture that makes sure a database is registered and ready to
     be used as the API db during tests."""
     log.info("SETUP sql_api to use the testing db")
-    sql_api.init_api_db(db_api_url)
+    sql_api.init_db(db_api_url)
     yield
 
 
@@ -160,6 +174,15 @@ def db_dovecot(alembic_run, db_dovecot_url, log) -> typing.Generator:
     be used as the Dovecot db during tests."""
     log.info("SETUP sql_dovecot to use the testing db")
     sql_dovecot.init_db(db_dovecot_url)
+    yield
+
+
+@pytest.fixture(scope="function")
+def db_postfix(alembic_run, db_postfix_url, log) -> typing.Generator:
+    """Fixture that makes sure a database is registered and ready to
+    be used as the Dovecot db during tests."""
+    log.info("SETUP sql_postfix to use the testing db")
+    sql_postfix.init_db(db_postfix_url)
     yield
 
 
@@ -182,6 +205,17 @@ def db_dovecot_session(db_dovecot, log) -> typing.Generator:
     session = maker()
     yield session
     log.info("TEARDOWN sql_dovecot orm session")
+    session.close()
+
+
+@pytest.fixture(scope="function")
+def db_postfix_session(db_postfix, log) -> typing.Generator:
+    """Fixture that makes a connecion to the Dovecot database available."""
+    log.info("SETUP sql_postfix orm session")
+    maker = sql_postfix.get_maker()
+    session = maker()
+    yield session
+    log.info("TEARDOWN sql_postfix orm session")
     session.close()
 
 
