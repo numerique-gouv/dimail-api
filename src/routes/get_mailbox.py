@@ -1,14 +1,12 @@
 import logging
-import re
 import uuid
 
 import fastapi
 
-from .. import auth, oxcli, sql_dovecot, web_models
+from .. import auth, oxcli, sql_dovecot, utils, web_models
 from . import DependsDovecotDb, mailboxes
 
-mail_re = re.compile("^(?P<username>[^@]+)@(?P<domain>[^@]+)$")
-uuid_re = re.compile("^[0-9a-f-]{32,36}$")
+# uuid_re = re.compile("^[0-9a-f-]{32,36}$")
 
 
 @mailboxes.get(
@@ -32,7 +30,6 @@ async def get_mailbox(
     perms = user.get_creds()
     log.info(f"Nous avons comme permissions: {perms}")
     #    test_uuid = uuid_re.match(mailbox_id)
-    test_mail = mail_re.match(mailbox_id)
     #    domain = None
     #    if test_uuid is not None:
     #        print("Ca ressemble a un uuid")
@@ -52,14 +49,12 @@ async def get_mailbox(
     #        else:
     #            raise fastapi.HTTPException(status_code=404, detail="Mailbox not found")
 
-    if test_mail is None:
-        log.info("Ca n'a pas une tete d'adresse mail.")
+    try:
+        (username, domain) = utils.split_email(mailbox_id)
+    except Exception as e:
+        log.info("Failed to split the email address")
         raise fastapi.HTTPException(status_code=422, detail="Invalid email address")
 
-    log.info("Ca ressemble a une adresse mail")
-    infos = test_mail.groupdict()
-    domain = infos["domain"]
-    username = infos["username"]
     log.info(f"Cette adresse est sur le domaine {domain}")
 
     if domain is None:
