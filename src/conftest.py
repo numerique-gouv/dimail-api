@@ -192,9 +192,11 @@ def db_api_session(db_api, log) -> typing.Generator:
     log.info("SETUP sql_api orm session")
     maker = sql_api.get_maker()
     session = maker()
-    yield session
-    log.info("TEARDOWN sql_api orm session")
-    session.close()
+    try:
+        yield session
+    finally:
+        log.info("TEARDOWN sql_api orm session")
+        session.close()
 
 
 @pytest.fixture(scope="function")
@@ -203,9 +205,11 @@ def db_dovecot_session(db_dovecot, log) -> typing.Generator:
     log.info("SETUP sql_dovecot orm session")
     maker = sql_dovecot.get_maker()
     session = maker()
-    yield session
-    log.info("TEARDOWN sql_dovecot orm session")
-    session.close()
+    try:
+        yield session
+    finally:
+        log.info("TEARDOWN sql_dovecot orm session")
+        session.close()
 
 
 @pytest.fixture(scope="function")
@@ -214,9 +218,11 @@ def db_postfix_session(db_postfix, log) -> typing.Generator:
     log.info("SETUP sql_postfix orm session")
     maker = sql_postfix.get_maker()
     session = maker()
-    yield session
-    log.info("TEARDOWN sql_postfix orm session")
-    session.close()
+    try:
+        yield session
+    finally:
+        log.info("TEARDOWN sql_postfix orm session")
+        session.close()
 
 
 @pytest.fixture(scope="function")
