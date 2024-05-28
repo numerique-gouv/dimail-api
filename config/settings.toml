@@ -1,2 +1,2 @@
-api_db_url  = "mysql+pymysql://api_user:coincoin@localhost:3306/api"
-imap_db_url = "mysql+pymysql://dovecot:toto@localhost:3306/dovecot"
+api_db_url  = "mysql+pymysql://api_user:invalide@localhost:3306/api"
+imap_db_url = "mysql+pymysql://dovecot:invalide@localhost:3306/dovecot"
