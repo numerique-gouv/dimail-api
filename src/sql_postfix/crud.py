@@ -7,8 +7,14 @@ def get_alias(db: orm.Session, alias: str, destination: str):
     return db.get(models.PostfixAlias, {"alias": alias, "destination": destination})
 
 
-def get_aliases(db: orm.Session, domain: str):
+def get_aliases_by_domain(db: orm.Session, domain: str):
     return db.query(models.PostfixAlias).filter(models.PostfixAlias.domain == domain).all()
+
+
+def get_aliases_by_name(db: orm.Session, name: str):
+    return db.query(models.PostfixAlias).filter(
+        models.PostfixAlias.alias == name
+    ).all()
 
 
 def create_alias(
