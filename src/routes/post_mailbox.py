@@ -1,14 +1,11 @@
 import logging
-import re
 import secrets
 import uuid
 
 import fastapi
 
-from .. import auth, oxcli, sql_dovecot, web_models
+from .. import auth, oxcli, sql_dovecot, utils, web_models
 from . import DependsDovecotDb, mailboxes
-
-mail_re = re.compile("^(?P<username>[^@]+)@(?P<domain>[^@]+)$")
 
 
 @mailboxes.post("/", description="Create a mailbox in dovecot and OX", status_code=201)
@@ -19,14 +16,11 @@ async def post_mailbox(
 ) -> web_models.NewMailbox:
     log = logging.getLogger(__name__)
 
-    test_mail = mail_re.match(mailbox.email)
-    if test_mail is None:
-        log.info("Ca n'a pas une tete d'adresse mail.")
+    try:
+        (username, domain) = utils.split_email(mailbox.email)
+    except Exception as e:
+        log.info("Failed to split the email address")
         raise fastapi.HTTPException(status_code=422, detail="Invalid email address")
-
-    infos = test_mail.groupdict()
-    domain = infos["domain"]
-    username = infos["username"]
 
     perms = user.get_creds()
     if not perms.can_read(domain):
