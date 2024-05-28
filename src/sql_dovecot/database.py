@@ -1,27 +1,27 @@
 import atexit
 
-import sqlalchemy
+import sqlalchemy as sa
 import sqlalchemy.orm as orm
 
-url: str
-engine: sqlalchemy.Engine
+#url: str
+#engine: sa.Engine
 maker: orm.sessionmaker | None = None
 db: orm.Session
 
-Dovecot = sqlalchemy.orm.declarative_base()
+Dovecot = orm.declarative_base()
 
 
 def close_db(db):
     db.close()
 
 
-def init_dovecot_db(config: str):
-    global url
-    global engine
+def init_db(config: str):
+    #global url
+    #global engine
     global maker
     url = config
-    engine = sqlalchemy.create_engine(url)
-    maker = sqlalchemy.orm.sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    engine = sa.create_engine(url)
+    maker = orm.sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def get_maker() -> orm.sessionmaker:
@@ -31,7 +31,7 @@ def get_maker() -> orm.sessionmaker:
     return maker
 
 
-def get_dovecot_db() -> orm.Session:
+def get_db() -> orm.Session:
     global db
     global maker
     if db is None:

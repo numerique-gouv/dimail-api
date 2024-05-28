@@ -159,7 +159,7 @@ def db_dovecot(alembic_run, db_dovecot_url, log) -> typing.Generator:
     """Fixture that makes sure a database is registered and ready to
     be used as the Dovecot db during tests."""
     log.info("SETUP sql_dovecot to use the testing db")
-    sql_dovecot.init_dovecot_db(db_dovecot_url)
+    sql_dovecot.init_db(db_dovecot_url)
     yield
 
 
