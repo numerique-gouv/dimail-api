@@ -15,6 +15,7 @@ if os.path.exists("sql_api"):
         sys.path.insert(0, "..")
 from src.sql_api.models import Api
 from src.sql_dovecot.database import Dovecot
+from src.sql_postfix.database import Postfix
 
 USE_TWOPHASE = False
 
@@ -53,7 +54,11 @@ db_names = config.get_main_option("databases", "")
 # }
 
 
-target_metadata = {"api": Api.metadata, "dovecot": Dovecot.metadata}
+target_metadata = {
+    "api": Api.metadata,
+    "dovecot": Dovecot.metadata,
+    "postfix": Postfix.metadata,
+}
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

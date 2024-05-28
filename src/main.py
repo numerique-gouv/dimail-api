@@ -2,7 +2,7 @@ import fastapi
 
 from . import admin_routes, config, routes, sql_api, sql_dovecot
 
-sql_api.init_api_db(config.settings.api_db_url)
+sql_api.init_db(config.settings.api_db_url)
 sql_dovecot.init_db(config.settings.imap_db_url)
 
 if config.settings.JWT_SECRET == "bare secret":
