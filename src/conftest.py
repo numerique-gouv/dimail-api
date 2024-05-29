@@ -276,7 +276,7 @@ def ox_container(log, request, dimail_test_network, mariadb_container, ox_contai
         log.info(f"ox started in -> {delay}s")
         time.sleep(1)  # pour être sûr que le service ssh est up
     except Exception as e:
-        log.info(f"Le conteneur {ox_container_image} n'a pas pu démarrer {e}")
+        log.info(f"Le conteneur {ox_container_image} n'a pas démarré {e}")
         pytest.skip()
     log.info(f"url de ox_container -> {ox.get_container_host_ip()}:{ox.get_exposed_port(22)}")
 
@@ -306,7 +306,7 @@ def mariadb_container(log, request, dimail_test_network) -> tc.MySqlContainer | 
     try:
         mysql.start()
         delay = wait_for_logs(mysql, "MariaDB init process done. Ready for start up.")
-        log.info(f"MARIADB starts in {delay}s")
+        log.info(f"MARIADB started in {delay}s")
     except Exception as e:
         log.info(f"Le conteneur {mysql} n'a pas démarré {e}")
         pytest.skip()
