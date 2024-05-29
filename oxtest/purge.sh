@@ -21,4 +21,3 @@ else
         echo Il y a encore du monde
         exit 1
 fi
-
