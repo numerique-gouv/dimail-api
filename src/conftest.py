@@ -178,6 +178,13 @@ def alembic_run(alembic_config, log) -> typing.Generator:
     log.info(f" - Here are the databases : {bases}")
     alembic.command.upgrade(alembic_config, "head")
     yield
+    for sess in sa.orm.session._sessions.values():
+        if sess._close_state != sa.orm.session._SessionCloseState.CLOSED:
+            caller = sess.info["caller"]
+            file   = sess.info["file"]
+            log.error(f"We have an UNCLOSED session in the orm: {sess}")
+            log.error(f"   caller: {caller} @ {file}")
+            assert "" == f"WE LOST A SESSION created by {caller} @ {file}"
     bases = alembic_config.get_main_option("databases")
     alembic.command.downgrade(alembic_config, "base")
     log.info("TEARDOWN with alembic (downgrade)")
