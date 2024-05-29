@@ -6,6 +6,6 @@ from . import DependsApiDb, users
 async def get_users(
     db: DependsApiDb,
     user: auth.DependsBasicAdmin,
-) -> list[web_models.WUser]:
+) -> list[web_models.User]:
     users = sql_api.get_users(db)
-    return users
+    return [ web_models.User.from_db(user) for user in users ]

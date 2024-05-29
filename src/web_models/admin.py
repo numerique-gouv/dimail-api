@@ -20,13 +20,18 @@ class WToken(pydantic.BaseModel):
         from_attribute = True
 
 
-class WUser(pydantic.BaseModel):
+class User(pydantic.BaseModel):
     name: str
     is_admin: bool
     uuid: uuid.UUID
 
-    class ConfigDict:
-        from_attribute = True
+    @classmethod
+    def from_db(cls, in_db: sql_api.DBUser):
+        return cls(
+            name=in_db.name,
+            is_admin=in_db.is_admin,
+            uuid=in_db.uuid,
+        )
 
 
 class CreateUser(pydantic.BaseModel):
