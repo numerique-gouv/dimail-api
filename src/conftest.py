@@ -33,7 +33,7 @@ def make_db_with_user(name: str, user: str, password: str, conn: sa.Connection) 
     return f"mysql+pymysql://{user}:{password}@{mariadb_host}:{mariadb_port}/{name}"
 
 
-def drop_db(name: str, conn: sa.Engine):
+def drop_db(name: str, conn: sa.Connection):
     """Utility function, for internal use. Drops a database."""
     conn.execute(sa.text(f"drop database if exists {name};"))
 
@@ -62,13 +62,9 @@ def root_db(log, mariadb_container, request) -> typing.Generator:
     log.info(f"CONNECTING as mysql root to {root_url}")
     root_db = sa.create_engine(root_url)
     conn = root_db.connect()
-
-    def close_connection():
-        conn.close()
-        log.info("CLOSING root mysql connection")
-
-    request.addfinalizer(close_connection())
     yield conn
+    conn.close()
+    log.info("CLOSING root mysql connection")
 
 
 @pytest.fixture(scope="session")
@@ -298,7 +294,7 @@ def mariadb_container(log, request, dimail_test_network) -> tc.MySqlContainer | 
         return None
 
     mysql = (tc.MySqlContainer("mariadb:11.2", username="root", password="toto", dbname="mysql")
-             .with_name("mariadb")
+             # .with_name("mariadb")
              .with_bind_ports(3306, 3306)
              .with_network(dimail_test_network)
              .with_network_aliases("mariadb"))
@@ -323,7 +319,7 @@ def mariadb_container(log, request, dimail_test_network) -> tc.MySqlContainer | 
 def ox_container_image(log, request) -> str | None:
     if not need_start_test_container():
         return None
-    pyw = DockerClient()
+    pyw = DockerClient(log_level="WARN")
     tag = "dimail-oxtest"
     log.info(f"[START] construction de l'image -> {tag}")
     pyw.build("../oxtest/", tags=tag)
