@@ -4,6 +4,7 @@ from .crud import (
     create_domain,
     create_user,
     delete_user,
+    deny_domain_for_user,
     get_allowed,
     get_allows,
     get_domain,
@@ -11,7 +12,6 @@ from .crud import (
     get_user,
     get_users,
     nb_users,
-    deny_domain_for_user,
 )
 from .database import get_db, get_maker, init_db
 from .models import DBAllowed, DBDomain, DBUser
