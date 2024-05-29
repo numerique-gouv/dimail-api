@@ -86,6 +86,8 @@ def get_allowed(db: orm.Session, user: str, domain: str):
 
 
 def allow_domain_for_user(db: orm.Session, allowed: web_models.WAllowed):
+    """Says the domain is allowed for the user. The user can manage mailboxes and
+    aliases on that domain."""
     db_allowed = models.DBAllowed(**allowed.model_dump())
     db.add(db_allowed)
     db.commit()
@@ -93,8 +95,9 @@ def allow_domain_for_user(db: orm.Session, allowed: web_models.WAllowed):
     return db_allowed
 
 
-def remove_domain_for_user(db: orm.Session, allowed: web_models.WAllowed):
-    """Remove domain ownership to user. The user won't be able to add/delete mailboxes for this domain."""
+def deny_domain_for_user(db: orm.Session, allowed: web_models.WAllowed):
+    """Says the domain is denied (not allowed anymore) for the user. The user will
+    not anymore be able to manage the aliases and the mailboxes on that domain."""
     db_allowed = (
         db.query(models.DBAllowed)
         .filter_by(domain=allowed.domain, user=allowed.user)

@@ -11,7 +11,7 @@ from .crud import (
     get_user,
     get_users,
     nb_users,
-    remove_domain_for_user,
+    deny_domain_for_user,
 )
 from .database import get_db, get_maker, init_db
 from .models import DBAllowed, DBDomain, DBUser
