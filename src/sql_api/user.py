@@ -3,7 +3,7 @@ import sqlalchemy.orm as orm
 
 from . import models
 
-def nb_users(db: orm.Session) -> int:
+def count_users(db: orm.Session) -> int:
     return db.query(models.DBUser).count()
 
 
