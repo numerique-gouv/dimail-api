@@ -6,7 +6,7 @@ def test_imap__create_and_get_a_user(db_dovecot_session):
     imap_user = sql_dovecot.get_user(db_dovecot_session, "toto", "example.com")
     assert imap_user is None
 
-    imap_user = sql_dovecot.create_dovecot_user(
+    imap_user = sql_dovecot.create_user(
         db_dovecot_session, "toto", "example.com", "secret"
     )
     assert isinstance(imap_user, sql_dovecot.ImapUser)
