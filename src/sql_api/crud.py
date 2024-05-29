@@ -81,7 +81,7 @@ def get_allows(db: orm.Session, user: str, domain: str):
     return query.all()
 
 
-def get_api_allowed(db: orm.Session, user: str, domain: str):
+def get_allowed(db: orm.Session, user: str, domain: str):
     return db.query(models.DBAllowed).filter_by(domain=domain, user=user).first()
 
 

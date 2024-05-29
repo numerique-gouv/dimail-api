@@ -4,7 +4,7 @@ from .crud import (
     create_domain,
     create_user,
     delete_user,
-    get_api_allowed,
+    get_allowed,
     get_allows,
     get_domain,
     get_domains,

@@ -18,7 +18,7 @@ async def delete_allow(
     if domain_db is None:
         raise fastapi.HTTPException(status_code=404, detail="Domain not found")
 
-    allowed_db = sql_api.get_api_allowed(db, user_name, domain_name)
+    allowed_db = sql_api.get_allowed(db, user_name, domain_name)
     if allowed_db is None:
         raise fastapi.HTTPException(
             status_code=404,

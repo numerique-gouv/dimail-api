@@ -19,7 +19,7 @@ async def post_allow(
     domain_db = sql_api.get_domain(db, allow.domain)
     if domain_db is None:
         raise fastapi.HTTPException(status_code=404, detail="Domain not found")
-    allowed_db = sql_api.get_api_allowed(db, allow.user, allow.domain)
+    allowed_db = sql_api.get_allowed(db, allow.user, allow.domain)
     if allowed_db is not None:
         raise fastapi.HTTPException(
             status_code=409, detail="Domain already allowed for this user"
