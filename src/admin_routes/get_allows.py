@@ -9,5 +9,5 @@ async def get_allows(
     username: str = "",
     domain: str = "",
 ) -> list[web_models.WAllowed]:
-    allows = sql_api.get_api_allows(db, username, domain)
+    allows = sql_api.get_allows(db, username, domain)
     return allows

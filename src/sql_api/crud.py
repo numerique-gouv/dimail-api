@@ -72,7 +72,7 @@ def create_domain(db: orm.Session, domain: web_models.WDomain):
     return db_domain
 
 
-def get_api_allows(db: orm.Session, user: str, domain: str):
+def get_allows(db: orm.Session, user: str, domain: str):
     query = db.query(models.DBAllowed)
     if user != "":
         query = query.filter_by(user=user)
