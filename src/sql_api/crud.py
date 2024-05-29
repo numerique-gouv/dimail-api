@@ -25,7 +25,7 @@ def get_domains(db: orm.Session):
     return db.query(models.DBDomain).all()
 
 
-def get_api_domain(db: orm.Session, domain_name: str):
+def get_domain(db: orm.Session, domain_name: str):
     return db.get(models.DBDomain, domain_name)
     return db.query(models.DBDomain).filter(models.DBDomain.name == domain_name).first()
 

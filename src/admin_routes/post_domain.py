@@ -15,7 +15,7 @@ async def post_domain(
             status_code=409, detail="OX context name is mandatory for mailbox feature"
         )
 
-    domain_db = sql_api.get_api_domain(db, domain.name)
+    domain_db = sql_api.get_domain(db, domain.name)
     if domain_db is not None:
         raise fastapi.HTTPException(status_code=409, detail="Domain already exists")
 
