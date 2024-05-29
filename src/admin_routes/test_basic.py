@@ -105,17 +105,18 @@ def test_allows__create_allows(db_api_session, log):
 
     # Create first admin for later auth
     auth = ("admin", "admin_password")
-    sql_api.create_api_user(
+    sql_api.create_user(
         db_api_session, name=auth[0], password=auth[1], is_admin=True
     )
 
     # Create user and domain before access
-    user = sql_api.create_api_user(
+    user = sql_api.create_user(
         db_api_session, name="user", password="password", is_admin=False
     )
-    domain = sql_api.create_api_domain(
+    domain = sql_api.create_domain(
         db_api_session,
-        domain=web_models.WDomain(context_name="context", name="domain", features=[]),
+        name="domain",
+        features=[],
     )
 
     # Create allows for this user on this domain
@@ -135,21 +136,23 @@ def test_allows__delete_allows(db_api_session, log):
 
     # Create first admin for later auth
     auth = ("admin", "admin_password")
-    sql_api.create_api_user(
+    sql_api.create_user(
         db_api_session, name=auth[0], password=auth[1], is_admin=True
     )
 
     # Create allows and related user and domain
-    user = sql_api.create_api_user(
+    user = sql_api.create_user(
         db_api_session, name="user", password="password", is_admin=False
     )
-    domain = sql_api.create_api_domain(
+    domain = sql_api.create_domain(
         db_api_session,
-        domain=web_models.WDomain(context_name="context", name="domain", features=[]),
+        name="domain",
+        features=[],
     )
     sql_api.allow_domain_for_user(
         db_api_session,
-        allowed=web_models.WAllowed(user=user.name, domain=domain.name),
+        user=user.name,
+        domain=domain.name,
     )
 
     # Delete allows

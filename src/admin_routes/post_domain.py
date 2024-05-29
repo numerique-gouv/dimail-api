@@ -8,14 +8,14 @@ from . import DependsApiDb, domains
 async def post_domain(
     db: DependsApiDb,
     user: auth.DependsBasicAdmin,
-    domain: web_models.WDomain,
-) -> web_models.WDomain:
+    domain: web_models.Domain,
+) -> web_models.Domain:
     if "webmail" in domain.features and domain.context_name is None:
         raise fastapi.HTTPException(
             status_code=409, detail="OX context name is mandatory for mailbox feature"
         )
 
-    domain_db = sql_api.get_api_domain(db, domain.name)
+    domain_db = sql_api.get_domain(db, domain.name)
     if domain_db is not None:
         raise fastapi.HTTPException(status_code=409, detail="Domain already exists")
 
@@ -34,17 +34,14 @@ async def post_domain(
         else:
             ctx.add_mapping(domain.name)
 
-    domain_db = sql_api.create_api_domain(db, domain)
-
-    # FIXME Il faut trouver un moyen plus stable de faire les conversions
-    # entre WDomain et DBDomain... Mais je ne sais pas encore dans quel sens
-    # ni où dans le code
-    return web_models.WDomain(
-        name=domain_db.name,
-        features=domain_db.features,
-        context_name=ctx.name,
-        mailbox_domain=domain_db.mailbox_domain,
-        webmail_domain=domain_db.webmail_domain,
-        imap_domains=domain_db.imap_domains,
-        smtp_domains=domain_db.smtp_domains,
+    domain_db = sql_api.create_domain(
+        db,
+        name=domain.name,
+        features=domain.features,
+        webmail_domain=domain.webmail_domain,
+        mailbox_domain=domain.mailbox_domain,
+        imap_domains=domain.imap_domains,
+        smtp_domains=domain.smtp_domains,
     )
+
+    return web_models.Domain.from_db(domain_db, ctx.name)

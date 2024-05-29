@@ -41,7 +41,7 @@ async def post_mailbox(
     )
 
     password = secrets.token_urlsafe(12)
-    imap_user = sql_dovecot.create_dovecot_user(db, username, domain, password)
+    imap_user = sql_dovecot.create_user(db, username, domain, password)
 
     return web_models.NewMailbox(
         email=imap_user.username + "@" + imap_user.domain,

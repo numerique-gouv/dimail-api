@@ -77,7 +77,7 @@ def test_create_mailbox(ox_cluster, my_user, db_dovecot_session):
     # assert got["uuid"] == something smart here :)
 
     # Check the password is properly encoded in dovecot database
-    imap_user = sql_dovecot.get_dovecot_user(db_dovecot_session, "address", "tutu.net")
+    imap_user = sql_dovecot.get_user(db_dovecot_session, "address", "tutu.net")
     assert isinstance(imap_user, sql_dovecot.ImapUser)
     assert imap_user.check_password(got["password"])
 

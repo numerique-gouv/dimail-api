@@ -3,6 +3,8 @@ import uuid
 
 import pydantic
 
+from .. import sql_api
+
 
 class Feature(enum.StrEnum):
     Webmail = "webmail"
@@ -10,21 +12,23 @@ class Feature(enum.StrEnum):
     Alias = "alias"
 
 
-class WToken(pydantic.BaseModel):
+class Token(pydantic.BaseModel):
     access_token: str
     token_type: str
 
-    class ConfigDict:
-        from_attribute = True
 
-
-class WUser(pydantic.BaseModel):
+class User(pydantic.BaseModel):
     name: str
     is_admin: bool
     uuid: uuid.UUID
 
-    class ConfigDict:
-        from_attribute = True
+    @classmethod
+    def from_db(cls, in_db: sql_api.DBUser):
+        return cls(
+            name=in_db.name,
+            is_admin=in_db.is_admin,
+            uuid=in_db.uuid,
+        )
 
 
 class CreateUser(pydantic.BaseModel):
@@ -33,7 +37,7 @@ class CreateUser(pydantic.BaseModel):
     is_admin: bool
 
 
-class WDomain(pydantic.BaseModel):
+class Domain(pydantic.BaseModel):
     name: str
     features: list[Feature]
     mailbox_domain: str | None = None
@@ -42,13 +46,27 @@ class WDomain(pydantic.BaseModel):
     smtp_domains: list[str] | None = None
     context_name: str | None
 
-    class ConfigDict:
-        from_attribute = True
+    @classmethod
+    def from_db(cls, in_db: sql_api.DBDomain, ctx_name: str | None = None):
+        return cls(
+            name=in_db.name,
+            features=in_db.features,
+            mailbox_domain=in_db.mailbox_domain,
+            webmail_domain=in_db.webmail_domain,
+            imap_domains=in_db.imap_domains,
+            smtp_domains=in_db.smtp_domains,
+            context_name=ctx_name,
+        )
 
 
-class WAllowed(pydantic.BaseModel):
+class Allowed(pydantic.BaseModel):
     user: str
     domain: str
 
-    class ConfigDict:
-        from_attribute = True
+    @classmethod
+    def from_db(cls, in_db: sql_api.DBAllowed):
+        return cls(
+            user=in_db.user,
+            domain=in_db.domain,
+        )
+
