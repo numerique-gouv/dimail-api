@@ -115,7 +115,8 @@ def test_allows__create_allows(db_api_session, log):
     )
     domain = sql_api.create_domain(
         db_api_session,
-        domain=web_models.WDomain(context_name="context", name="domain", features=[]),
+        name="domain",
+        features=[],
     )
 
     # Create allows for this user on this domain
@@ -145,11 +146,13 @@ def test_allows__delete_allows(db_api_session, log):
     )
     domain = sql_api.create_domain(
         db_api_session,
-        domain=web_models.WDomain(context_name="context", name="domain", features=[]),
+        name="domain",
+        features=[],
     )
     sql_api.allow_domain_for_user(
         db_api_session,
-        allowed=web_models.WAllowed(user=user.name, domain=domain.name),
+        user=user.name,
+        domain=domain.name,
     )
 
     # Delete allows

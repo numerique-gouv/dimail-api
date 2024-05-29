@@ -3,6 +3,8 @@ import uuid
 
 import pydantic
 
+from .. import sql_api
+
 
 class Feature(enum.StrEnum):
     Webmail = "webmail"
@@ -42,8 +44,17 @@ class WDomain(pydantic.BaseModel):
     smtp_domains: list[str] | None = None
     context_name: str | None
 
-    class ConfigDict:
-        from_attribute = True
+    @classmethod
+    def from_db(cls, in_db: sql_api.DBDomain, ctx_name: str | None = None):
+        return cls(
+            name=in_db.name,
+            features=in_db.features,
+            mailbox_domain=in_db.mailbox_domain,
+            webmail_domain=in_db.webmail_domain,
+            imap_domains=in_db.imap_domains,
+            smtp_domains=in_db.smtp_domains,
+            context_name=ctx_name,
+        )
 
 
 class WAllowed(pydantic.BaseModel):

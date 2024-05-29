@@ -1,7 +1,6 @@
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
 
-from .. import web_models
 from . import models
 
 
@@ -54,25 +53,33 @@ def delete_user(db: orm.Session, user_name: str):
     return db_user
 
 
-def create_domain(db: orm.Session, domain: web_models.WDomain):
+def create_domain(
+    db: orm.Session,
+    name: str,
+    features: list[str],
+    webmail_domain: str | None = None,
+    mailbox_domain: str | None = None,
+    imap_domains: list[str] | None = None,
+    smtp_domains: list[str] | None = None,
+) -> models.DBDomain:
     db_domain = models.DBDomain(
-        name=domain.name, features=[str(f) for f in domain.features]
+        name=name, features=[str(f) for f in features]
     )
-    if domain.webmail_domain is not None:
-        db_domain.webmail_domain = domain.webmail_domain
-    if domain.mailbox_domain is not None:
-        db_domain.mailbox_domain = domain.mailbox_domain
-    if domain.imap_domains is not None:
-        db_domain.imap_domains = [dom for dom in domain.imap_domains]
-    if domain.smtp_domains is not None:
-        db_domain.smtp_domains = [dom for dom in domain.smtp_domains]
+    if webmail_domain is not None:
+        db_domain.webmail_domain = webmail_domain
+    if mailbox_domain is not None:
+        db_domain.mailbox_domain = mailbox_domain
+    if imap_domains is not None:
+        db_domain.imap_domains = [dom for dom in imap_domains]
+    if smtp_domains is not None:
+        db_domain.smtp_domains = [dom for dom in smtp_domains]
     db.add(db_domain)
     db.commit()
     db.refresh(db_domain)
     return db_domain
 
 
-def get_allows(db: orm.Session, user: str, domain: str):
+def get_allows(db: orm.Session, user: str = "", domain: str = ""):
     query = db.query(models.DBAllowed)
     if user != "":
         query = query.filter_by(user=user)
@@ -81,28 +88,27 @@ def get_allows(db: orm.Session, user: str, domain: str):
     return query.all()
 
 
-def get_allowed(db: orm.Session, user: str, domain: str):
+def get_allowed(db: orm.Session, user: str, domain: str) -> models.DBAllowed:
+    return db.get(models.DBAllowed, {"domain": domain, "user": user })
     return db.query(models.DBAllowed).filter_by(domain=domain, user=user).first()
 
 
-def allow_domain_for_user(db: orm.Session, allowed: web_models.WAllowed):
+def allow_domain_for_user(db: orm.Session, user: str, domain: str) -> models.DBAllowed:
     """Says the domain is allowed for the user. The user can manage mailboxes and
     aliases on that domain."""
-    db_allowed = models.DBAllowed(**allowed.model_dump())
+    db_allowed = models.DBAllowed(domain=domain, user=user)
     db.add(db_allowed)
     db.commit()
     db.refresh(db_allowed)
     return db_allowed
 
 
-def deny_domain_for_user(db: orm.Session, allowed: web_models.WAllowed):
+def deny_domain_for_user(db: orm.Session, user: str, domain: str) -> None:
     """Says the domain is denied (not allowed anymore) for the user. The user will
     not anymore be able to manage the aliases and the mailboxes on that domain."""
-    db_allowed = (
-        db.query(models.DBAllowed)
-        .filter_by(domain=allowed.domain, user=allowed.user)
-        .first()
-    )
+    db_allowed = get_allowed(db, user, domain)
+    if db_allowed is None:
+        raise Exception("Domain already denied for this user")
     db.delete(db_allowed)
     db.commit()
-    return {}
+    return None

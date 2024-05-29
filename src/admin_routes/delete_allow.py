@@ -25,4 +25,4 @@ async def delete_allow(
             detail="Queried user does not have permissions for this domain.",
         )
 
-    return sql_api.deny_domain_for_user(db, allowed_db)
+    return sql_api.deny_domain_for_user(db, user=user_name, domain=domain_name)
