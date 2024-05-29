@@ -78,7 +78,7 @@ async def get_mailbox(
         else:
             log.info(f"J'ai trouve le user chez OX: {ox_user}")
 
-    imap = sql_dovecot.get_dovecot_user(db, username, domain)
+    imap = sql_dovecot.get_user(db, username, domain)
     if imap is None:
         log.info("La base dovecot ne contient pas cette adresse.")
         raise fastapi.HTTPException(status_code=404, detail="Mailbox not found")
