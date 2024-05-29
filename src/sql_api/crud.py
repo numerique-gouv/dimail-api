@@ -46,7 +46,7 @@ def create_user(db: orm.Session, name: str, password: str, is_admin: bool):
     return db_user
 
 
-def delete_api_user(db: orm.Session, user_name: str):
+def delete_user(db: orm.Session, user_name: str):
     db_user = db.query(models.DBUser).filter(models.DBUser.name == user_name).first()
     if db_user is not None:
         db.delete(db_user)
