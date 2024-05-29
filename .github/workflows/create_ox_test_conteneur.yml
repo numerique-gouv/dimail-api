@@ -24,6 +24,7 @@ jobs:
       - name: Récupère le numéro de version
         run: |
           version=$(cat oxtest/VERSION)
+          echo "container_version=${container_version}"
           echo "container_version=${container_version}" >> $GITHUB_ENV
 
       - name: Login to GitHub Container Registry
