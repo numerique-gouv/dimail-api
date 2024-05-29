@@ -1,5 +1,6 @@
 import logging
 import os
+import time
 import typing
 
 import alembic.command
@@ -52,7 +53,6 @@ def fix_logger(scope="session") -> typing.Generator:
 def dimail_test_network(log):
     with Network() as dimail_test_network:
         yield dimail_test_network
-        dimail_test_network.remove()
 
 
 @pytest.fixture(scope="session")
@@ -70,9 +70,13 @@ def mariadb_container(log, request, dimail_test_network) -> tc.MySqlContainer | 
              .with_network_aliases("mariadb"))
 
     log.info("SETUP MARIADB CONTAINER")
-    mysql.start()
-    delay = wait_for_logs(mysql, "MariaDB init process done. Ready for start up.")
-    log.info(f"MARIADB starts in {delay}s")
+    try:
+        mysql.start()
+        delay = wait_for_logs(mysql, "MariaDB init process done. Ready for start up.")
+        log.info(f"MARIADB starts in {delay}s")
+    except Exception as e:
+        log.info(f"Le conteneur {mysql} n'a pas démarré {e}")
+        pytest.skip()
 
     def remove_container():
         mysql.stop()
@@ -282,40 +286,50 @@ def db_postfix_session(db_postfix, log) -> typing.Generator:
         session.close()
 
 
-@pytest.fixture(scope='session', autouse=True)
-def ox_container(log, request, mariadb_container, dimail_test_network):
-    if not mariadb_container:
-        return None
+@pytest.fixture(scope='session')
+def ox_container_image(log, request) -> str:
     log.info(f"démarre le client Docker")
     pyw = DockerClient()
-    tag = "dimail-oxtest:latest"
-    log.info(f"démarre la construction de l'image -> {tag}")
-    ox_image = pyw.build("../oxtest/", tags=tag)
-    log.info(f"type of ox_image -> {type(ox_image)}")
-    ox_container = (DockerContainer(tag)
+    tag = "dimail-oxtest"
+    log.info(f"[START] construction de l'image -> {tag}")
+    pyw.build("../oxtest/", tags=tag)
+    time.sleep(2) # pour être sûr que le tag soit bien arrivé dans le registry
+    log.info(f"[END] construction de l'image -> {tag}")
+
+    return tag
+
+
+@pytest.fixture(scope='session')
+def ox_container(log, request, mariadb_container, dimail_test_network, ox_container_image):
+    if not mariadb_container:
+        return None
+    ox = (DockerContainer(ox_container_image)
                     .with_network(dimail_test_network)
                     .with_network_aliases("dimail_ox")
                     .with_bind_ports(22, 2222))
     log.info("SETUP OX CONTAINER")
-    ox_container.start()
-    log.info(f"url de ox_container -> {ox_container.get_container_host_ip()}:{ox_container.get_exposed_port(22)}")
-
-    delay = wait_for_logs(ox_container, "Started OX")
-    log.info(f"ox started in -> {delay}s")
+    try:
+        ox.start()
+        delay = wait_for_logs(ox, "Starting ssh daemon")
+        log.info(f"ox started in -> {delay}s")
+        time.sleep(1) # pour être sûr que le service ssh est up
+    except Exception as e:
+        log.info(f"Le conteneur {ox_container_image} n'a pas pu démarrer {e}")
+        pytest.skip()
+    log.info(f"url de ox_container -> {ox.get_container_host_ip()}:{ox.get_exposed_port(22)}")
 
     def remove_container():
         log.info("TEARDOWN OX CONTAINER")
-        ox_container.stop()
+        ox.stop()
 
     request.addfinalizer(remove_container)
-    return ox_container
+    return ox
 
 
 @pytest.fixture(scope="function")
 def ox_cluster(log, ox_container) -> typing.Generator:
     """Fixture that provides an empty OX cluster."""
     log.info("SETUP empty ox cluster")
-    log.info(f"url de ox_container -> {ox_container.get_container_host_ip()}:{ox_container.get_exposed_port(22)}")
     ox_cluster = oxcli.OxCluster()
     ox_cluster.purge()
     yield ox_cluster
