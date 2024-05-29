@@ -59,9 +59,14 @@ class Domain(pydantic.BaseModel):
         )
 
 
-class WAllowed(pydantic.BaseModel):
+class Allowed(pydantic.BaseModel):
     user: str
     domain: str
 
-    class ConfigDict:
-        from_attribute = True
+    @classmethod
+    def from_db(cls, in_db: sql_api.DBAllowed):
+        return cls(
+            user=in_db.user,
+            domain=in_db.domain,
+        )
+

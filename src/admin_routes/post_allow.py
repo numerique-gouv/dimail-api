@@ -8,8 +8,8 @@ from . import DependsApiDb, allows
 async def post_allow(
     db: DependsApiDb,
     user: auth.DependsBasicAdmin,
-    allow: web_models.WAllowed,
-) -> web_models.WAllowed:
+    allow: web_models.Allowed,
+) -> web_models.Allowed:
     """Give ownership of a domain to a user."""
 
     user_db = sql_api.get_user(db, allow.user)
@@ -24,4 +24,9 @@ async def post_allow(
         raise fastapi.HTTPException(
             status_code=409, detail="Domain already allowed for this user"
         )
-    return sql_api.allow_domain_for_user(db, user=allow.user, domain=allow.domain)
+    allowed_db = sql_api.allow_domain_for_user(
+        db,
+        user=allow.user,
+        domain=allow.domain
+    )
+    return web_models.Allowed.from_db(allowed_db)
