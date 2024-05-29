@@ -7,5 +7,5 @@ async def get_users(
     db: DependsApiDb,
     user: auth.DependsBasicAdmin,
 ) -> list[web_models.WUser]:
-    users = sql_api.get_api_users(db)
+    users = sql_api.get_users(db)
     return users

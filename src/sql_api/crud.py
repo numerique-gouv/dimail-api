@@ -9,7 +9,7 @@ def nb_users(db: orm.Session) -> int:
     return db.query(models.DBUser).count()
 
 
-def get_api_users(db: orm.Session):
+def get_users(db: orm.Session):
     return db.query(models.DBUser).all()
 
 
