@@ -35,7 +35,7 @@ class CreateUser(pydantic.BaseModel):
     is_admin: bool
 
 
-class WDomain(pydantic.BaseModel):
+class Domain(pydantic.BaseModel):
     name: str
     features: list[Feature]
     mailbox_domain: str | None = None

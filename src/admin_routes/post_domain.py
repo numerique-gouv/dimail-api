@@ -8,8 +8,8 @@ from . import DependsApiDb, domains
 async def post_domain(
     db: DependsApiDb,
     user: auth.DependsBasicAdmin,
-    domain: web_models.WDomain,
-) -> web_models.WDomain:
+    domain: web_models.Domain,
+) -> web_models.Domain:
     if "webmail" in domain.features and domain.context_name is None:
         raise fastapi.HTTPException(
             status_code=409, detail="OX context name is mandatory for mailbox feature"
@@ -44,4 +44,4 @@ async def post_domain(
         smtp_domains=domain.smtp_domains,
     )
 
-    return web_models.WDomain.from_db(domain_db, ctx.name)
+    return web_models.Domain.from_db(domain_db, ctx.name)
