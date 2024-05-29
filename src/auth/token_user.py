@@ -46,8 +46,8 @@ class TokenUser(fastapi.security.HTTPBearer):
             session.close()
             raise
         log.info(f"Got the user in db: {user}")
-        # We need to keep the orm session running, to that the user object is
-        # usable (he needs his orm session for some operations)
+        # We need to keep the orm session running, so that the user object is
+        # usable (it needs its orm session for some operations)
         try:
             yield user
         finally:

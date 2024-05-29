@@ -11,10 +11,7 @@ from . import DependsDovecotDb, mailboxes
 mail_re = re.compile("^(?P<username>[^@]+)@(?P<domain>[^@]+)$")
 
 
-@mailboxes.post(
-    "/",
-    description="Create a mailbox in dovecot and OX",
-)
+@mailboxes.post("/", description="Create a mailbox in dovecot and OX", status_code=201)
 async def post_mailbox(
     mailbox: web_models.CreateMailbox,
     user: auth.DependsTokenUser,
@@ -42,7 +39,7 @@ async def post_mailbox(
         log.error(f"Le domaine {domain} est inconnu du cluster OX")
         raise Exception("Le domaine est connu de la base API, mais pas de OX")
 
-    ox_user = ctx.create_user(
+    ctx.create_user(
         givenName=mailbox.givenName,
         surName=mailbox.surName,
         username=username,
@@ -57,5 +54,3 @@ async def post_mailbox(
         password=password,
         uuid=uuid.uuid4(),
     )
-
-

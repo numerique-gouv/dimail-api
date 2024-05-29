@@ -33,6 +33,7 @@ def depends_api_db():
 
 DependsApiDb = typing.Annotated[orm.Session, fastapi.Depends(depends_api_db)]
 
+from .delete_allow import delete_allow
 from .get_allows import get_allows
 from .get_domains import get_domains
 from .get_user import get_user

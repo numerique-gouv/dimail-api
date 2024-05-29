@@ -4,13 +4,16 @@ from .. import auth, sql_api, web_models
 from . import DependsApiDb, allows
 
 
-@allows.post("/")
+@allows.post("/", status_code=201)
 async def post_allow(
     db: DependsApiDb,
     user: auth.DependsBasicAdmin,
     allow: web_models.WAllowed,
 ) -> web_models.WAllowed:
+    """Give ownership of a domain to a user."""
+
     user_db = sql_api.get_api_user(db, allow.user)
+
     if user_db is None:
         raise fastapi.HTTPException(status_code=404, detail="User not found")
     domain_db = sql_api.get_api_domain(db, allow.domain)

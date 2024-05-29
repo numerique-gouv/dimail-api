@@ -17,7 +17,7 @@ def my_user(ox_cluster, db_api, log):
         json={"name": "admin", "password": "admin", "is_admin": True},
         auth=("useless", "useless"),
     )
-    assert res.status_code == 200
+    assert res.status_code == fastapi.status.HTTP_201_CREATED
 
     # Now, we can create our non-admin user
     res = client.post(
@@ -25,7 +25,7 @@ def my_user(ox_cluster, db_api, log):
         json={"name": user, "password": "toto", "is_admin": False},
         auth=("admin", "admin"),
     )
-    assert res.status_code == 200
+    assert res.status_code == fastapi.status.HTTP_201_CREATED
 
     res = client.post(
         "/admin/domains/",
@@ -36,7 +36,7 @@ def my_user(ox_cluster, db_api, log):
         },
         auth=("admin", "admin"),
     )
-    assert res.status_code == 200
+    assert res.status_code == fastapi.status.HTTP_201_CREATED
 
     ctx = ox_cluster.get_context_by_name("dimail")
     assert domain in ctx.domains
@@ -46,7 +46,7 @@ def my_user(ox_cluster, db_api, log):
         json={"user": user, "domain": domain},
         auth=("admin", "admin"),
     )
-    assert res.status_code == 200
+    assert res.status_code == fastapi.status.HTTP_201_CREATED
 
     res = client.get("/token/", auth=(user, "toto"))
     assert res.status_code == 200
@@ -68,7 +68,7 @@ def test_create_mailbox(ox_cluster, my_user, db_dovecot_session):
         },
         headers={"Authorization": f"Bearer {token}"},
     )
-    assert response.status_code == 200
+    assert response.status_code == fastapi.status.HTTP_201_CREATED
     # FIXME On a besoin de rendre prédictible les uuid qu'on génère pendant
     # les tests. On a aussi besoin de définir ce que c'est que l'uuid d'une
     # mailbox, parce que ce n'est pas clair pour l'instant...

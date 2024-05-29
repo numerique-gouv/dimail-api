@@ -14,7 +14,7 @@ uuid_re = re.compile("^[0-9a-f-]{32,36}$")
 @mailboxes.get(
     "/{mailbox_id}",
     responses={
-        200: {"description": "Get a mailbox from his e_mail"},
+        200: {"description": "Get a mailbox from their e-mail"},
         403: {"description": "Permission denied"},
         404: {"description": "Mailbox not found"},
         422: {"description": "Email address is not well formed"},
