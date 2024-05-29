@@ -7,5 +7,5 @@ async def get_domains(
     db: DependsApiDb,
     user: auth.DependsBasicAdmin,
 ) -> list[web_models.WDomain]:
-    domains = sql_api.get_api_domains(db)
+    domains = sql_api.get_domains(db)
     return domains

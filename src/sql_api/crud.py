@@ -21,7 +21,7 @@ def get_user(db: orm.Session, user_name: str):
     return db.query(models.DBUser).filter(models.DBUser.name == user_name).first()
 
 
-def get_api_domains(db: orm.Session):
+def get_domains(db: orm.Session):
     return db.query(models.DBDomain).all()
 
 
