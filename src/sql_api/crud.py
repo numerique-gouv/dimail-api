@@ -30,7 +30,7 @@ def get_domain(db: orm.Session, domain_name: str):
     return db.query(models.DBDomain).filter(models.DBDomain.name == domain_name).first()
 
 
-def create_api_user(db: orm.Session, name: str, password: str, is_admin: bool):
+def create_user(db: orm.Session, name: str, password: str, is_admin: bool):
     db_user = models.DBUser(
         name=name,
         is_admin=is_admin,

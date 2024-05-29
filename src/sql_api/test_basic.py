@@ -2,7 +2,7 @@ from .. import sql_api
 
 
 def test_create_user(db_api_session):
-    sql_api.create_api_user(
+    sql_api.create_user(
         db_api_session, name="toto", password="titi", is_admin=False
     )
 
@@ -10,7 +10,7 @@ def test_create_user(db_api_session):
 def test_delete_user(db_api_session, log):
     log.debug("Here is a debug log")
     # First, we create a user
-    sql_api.create_api_user(
+    sql_api.create_user(
         db_api_session, name="toto", password="titi", is_admin=False
     )
     # Then, we retrieve the user
