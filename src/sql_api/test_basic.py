@@ -14,13 +14,13 @@ def test_delete_user(db_api_session, log):
         db_api_session, name="toto", password="titi", is_admin=False
     )
     # Then, we retrieve the user
-    user = sql_api.get_api_user(db_api_session, "toto")
+    user = sql_api.get_user(db_api_session, "toto")
     assert user == sql_api.DBUser(name="toto", is_admin=False)
     # Delete returns the user as it was before deletion, so, unchanged
     user = sql_api.delete_api_user(db_api_session, "toto")
     assert user == sql_api.DBUser(name="toto", is_admin=False)
     # When trying to fetch it again, we fail
-    user = sql_api.get_api_user(db_api_session, "toto")
+    user = sql_api.get_user(db_api_session, "toto")
     assert user is None
 
 

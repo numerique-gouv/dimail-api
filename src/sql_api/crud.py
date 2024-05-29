@@ -13,7 +13,7 @@ def get_api_users(db: orm.Session):
     return db.query(models.DBUser).all()
 
 
-def get_api_user(db: orm.Session, user_name: str):
+def get_user(db: orm.Session, user_name: str):
     return db.get(models.DBUser, user_name)
     return db.execute(
         sa.select(models.DBUser).where(models.DBUser.name == user_name)

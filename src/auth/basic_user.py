@@ -15,7 +15,7 @@ def authenticate_user(db: orm.Session, user_name: str, password: str) -> sql_api
     if something is wrong.
     May forge an admin user if the API db is empty."""
     log = logging.getLogger(__name__)
-    db_user = sql_api.get_api_user(db, user_name)
+    db_user = sql_api.get_user(db, user_name)
     if db_user is None:
         log.info(f"No user found in database for username {user_name}")
         nb_users = sql_api.nb_users(db)

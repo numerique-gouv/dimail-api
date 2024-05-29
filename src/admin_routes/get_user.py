@@ -10,7 +10,7 @@ async def get_user(
     user: auth.DependsBasicAdmin,
     user_name: str,
 ) -> web_models.WUser:
-    user_db = sql_api.get_api_user(db, user_name)
+    user_db = sql_api.get_user(db, user_name)
     if user_db is None:
         raise fastapi.HTTPException(status_code=404, detail="User not found")
     return user_db

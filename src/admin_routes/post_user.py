@@ -12,7 +12,7 @@ async def post_user(
 ) -> web_models.WUser:
     """Create user."""
 
-    user_db = sql_api.get_api_user(db, user.name)
+    user_db = sql_api.get_user(db, user.name)
 
     if user_db is not None:
         raise fastapi.HTTPException(status_code=409, detail="User already exists")

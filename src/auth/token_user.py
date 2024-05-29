@@ -40,7 +40,7 @@ class TokenUser(fastapi.security.HTTPBearer):
         session = maker()
         try:
             log.info("Getting the user in db")
-            user = sql_api.get_api_user(session, username)
+            user = sql_api.get_user(session, username)
         except Exception as e:
             log.error(f"Failed to get user: {e}")
             session.close()

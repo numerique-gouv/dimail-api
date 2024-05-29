@@ -12,7 +12,7 @@ async def post_allow(
 ) -> web_models.WAllowed:
     """Give ownership of a domain to a user."""
 
-    user_db = sql_api.get_api_user(db, allow.user)
+    user_db = sql_api.get_user(db, allow.user)
 
     if user_db is None:
         raise fastapi.HTTPException(status_code=404, detail="User not found")
