@@ -18,9 +18,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Récupère le numéro de version
+        run: |
+          version=$(cat oxtest/VERSION)
+          echo "container_version=${container_version}" >> $GITHUB_ENV
 
       - name: Login to GitHub Container Registry
         id: login
@@ -40,4 +44,5 @@ jobs:
           push: ${{ github.actor != 'dependabot[bot]' }}
           tags: |  
             ghcr.io/${{ github.repository }}/oxtest:latest
-            ghcr.io/${{ github.repository }}/oxtest:v7
+            ghcr.io/${{ github.repository }}/oxtest:${{ github.sha }}
+            ghcr.io/${{ github.repository }}/oxtest:${{ env.container_version }}
