@@ -6,10 +6,10 @@ import alembic.command
 import alembic.config
 import pytest
 import sqlalchemy as sa
-
-import alembic.command
-import alembic.config
-
+from python_on_whales import DockerClient
+from testcontainers.core.container import DockerContainer
+from testcontainers.core.network import Network
+from testcontainers.core.waiting_utils import wait_for_logs
 import testcontainers.mysql as tc
 
 from . import oxcli, sql_api, sql_dovecot, sql_postfix
@@ -40,6 +40,7 @@ def drop_db(name: str, conn: sa.Engine):
 @pytest.fixture(scope="session", name="log")
 def fix_logger(scope="session") -> typing.Generator:
     """Fixture making the logger available"""
+    logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
     logger.info("SETUP logger")
@@ -48,16 +49,30 @@ def fix_logger(scope="session") -> typing.Generator:
 
 
 @pytest.fixture(scope="session")
-def mariadb_container(log, request):
+def dimail_test_network(log):
+    with Network() as dimail_test_network:
+        yield dimail_test_network
+        dimail_test_network.remove()
+
+
+@pytest.fixture(scope="session")
+def mariadb_container(log, request, dimail_test_network) -> tc.MySqlContainer | None:
     """
     Fixtures qui démarre un conteneur MariaDB avec le user root si
     la variable d'environnement `DIMAIL_STARTS_TESTS_CONTAINERS` n'est pas fausse
     """
     if not os.environ.get("DIMAIL_STARTS_TESTS_CONTAINERS"):
         return None
-    mysql = tc.MySqlContainer("mariadb:11.2", username="root", password="password_root", dbname="mysql")
+    mysql = (tc.MySqlContainer("mariadb:11.2", username="root", password="toto", dbname="mysql")
+             .with_name("mariadb")
+             .with_bind_ports(3306,3306)
+             .with_network(dimail_test_network)
+             .with_network_aliases("mariadb"))
+
     log.info("SETUP MARIADB CONTAINER")
     mysql.start()
+    delay = wait_for_logs(mysql, "MariaDB init process done. Ready for start up.")
+    log.info(f"MARIADB starts in {delay}s")
 
     def remove_container():
         mysql.stop()
@@ -68,7 +83,7 @@ def mariadb_container(log, request):
 
 
 @pytest.fixture(scope="session")
-def root_db(log, mariadb_container) -> typing.Generator:
+def root_db(log, mariadb_container, request) -> typing.Generator:
     """
     Fixtures that makes a connection to mariadb/mysql as root available.
     Look at .docker_compose.yml to see args when fixture `mariadb_container` is not false
@@ -76,12 +91,16 @@ def root_db(log, mariadb_container) -> typing.Generator:
     root_url = "mysql+pymysql://root:toto@localhost:3306/mysql"
     if mariadb_container:
         root_url = mariadb_container.get_connection_url()
-    root_db = sa.create_engine(root_url)
     log.info(f"CONNECTING as mysql root to {root_url}")
+    root_db = sa.create_engine(root_url)
     conn = root_db.connect()
+
+    def close_connection():
+        conn.close()
+        log.info("CLOSING root mysql connection")
+
+    request.addfinalizer(close_connection())
     yield conn
-    conn.close()
-    log.info("CLOSING root mysql connection")
 
 
 @pytest.fixture(scope="session")
@@ -263,10 +282,40 @@ def db_postfix_session(db_postfix, log) -> typing.Generator:
         session.close()
 
 
+@pytest.fixture(scope='session', autouse=True)
+def ox_container(log, request, mariadb_container, dimail_test_network):
+    if not mariadb_container:
+        return None
+    log.info(f"démarre le client Docker")
+    pyw = DockerClient()
+    tag = "dimail-oxtest:latest"
+    log.info(f"démarre la construction de l'image -> {tag}")
+    ox_image = pyw.build("../oxtest/", tags=tag)
+    log.info(f"type of ox_image -> {type(ox_image)}")
+    ox_container = (DockerContainer(tag)
+                    .with_network(dimail_test_network)
+                    .with_network_aliases("dimail_ox")
+                    .with_bind_ports(22, 2222))
+    log.info("SETUP OX CONTAINER")
+    ox_container.start()
+    log.info(f"url de ox_container -> {ox_container.get_container_host_ip()}:{ox_container.get_exposed_port(22)}")
+
+    delay = wait_for_logs(ox_container, "Started OX")
+    log.info(f"ox started in -> {delay}s")
+
+    def remove_container():
+        log.info("TEARDOWN OX CONTAINER")
+        ox_container.stop()
+
+    request.addfinalizer(remove_container)
+    return ox_container
+
+
 @pytest.fixture(scope="function")
-def ox_cluster(log) -> typing.Generator:
+def ox_cluster(log, ox_container) -> typing.Generator:
     """Fixture that provides an empty OX cluster."""
     log.info("SETUP empty ox cluster")
+    log.info(f"url de ox_container -> {ox_container.get_container_host_ip()}:{ox_container.get_exposed_port(22)}")
     ox_cluster = oxcli.OxCluster()
     ox_cluster.purge()
     yield ox_cluster
