@@ -5,6 +5,6 @@ from . import token
 @token.get("/")
 async def login_for_access_token(
     user: auth.DependsBasicUser,
-) -> web_models.WToken:
+) -> web_models.Token:
     token = user.create_token()
-    return web_models.WToken(access_token=token, token_type="bearer")
+    return web_models.Token(access_token=token, token_type="bearer")

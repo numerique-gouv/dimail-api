@@ -12,12 +12,9 @@ class Feature(enum.StrEnum):
     Alias = "alias"
 
 
-class WToken(pydantic.BaseModel):
+class Token(pydantic.BaseModel):
     access_token: str
     token_type: str
-
-    class ConfigDict:
-        from_attribute = True
 
 
 class User(pydantic.BaseModel):
