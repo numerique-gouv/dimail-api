@@ -140,3 +140,54 @@ def test_allows(db_api_session):
     assert allows[0].user == "toto"
     assert allows[0].domain == "example.net"
 
+
+def test_creds(db_api_session):
+    user_toto = sql_api.create_user(
+        db_api_session,
+        name="toto",
+        password="toto",
+        is_admin=False
+    )
+    user_tutu = sql_api.create_user(
+        db_api_session,
+        name="tutu",
+        password="toto",
+        is_admin=False
+    )
+    user_admin = sql_api.create_user(
+        db_api_session,
+        name="chef",
+        password="secret",
+        is_admin=True,
+    )
+    domain_com = sql_api.create_domain(
+        db_api_session,
+        name="example.com",
+        features=[],
+    )
+    domain_net = sql_api.create_domain(
+        db_api_session,
+        name="example.net",
+        features=[],
+    )
+
+    creds = user_toto.get_creds()
+    assert isinstance(creds, sql_api.Creds)
+    assert creds.is_admin == False
+    assert not creds.can_read("example.com")
+
+    # Quand on donne les droits au user en SQL, ça se reflète dans les creds
+    sql_api.allow_domain_for_user(db_api_session, "toto", "example.com")
+    creds = user_toto.get_creds()
+    assert creds.can_read("example.com")
+
+    # Un admin n'a pas besoin de droits spécifiques
+    creds = user_admin.get_creds()
+    assert creds.can_read("example.com")
+
+    # Quand on retire les droits au user en SQL, ça se reflète dans les creds
+    sql_api.deny_domain_for_user(db_api_session, "toto", "example.com")
+    creds = user_toto.get_creds()
+    assert not creds.can_read("example.com")
+
+
