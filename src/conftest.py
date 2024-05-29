@@ -295,7 +295,6 @@ def mariadb_container(log, request, dimail_test_network) -> tc.MySqlContainer | 
 
     mysql = (tc.MySqlContainer("mariadb:11.2", username="root", password="toto", dbname="mysql")
              # .with_name("mariadb")
-             .with_bind_ports(3306, 3306)
              .with_network(dimail_test_network)
              .with_network_aliases("mariadb"))
     log.info("SETUP MARIADB CONTAINER")
