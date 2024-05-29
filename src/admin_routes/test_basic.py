@@ -113,7 +113,7 @@ def test_allows__create_allows(db_api_session, log):
     user = sql_api.create_user(
         db_api_session, name="user", password="password", is_admin=False
     )
-    domain = sql_api.create_api_domain(
+    domain = sql_api.create_domain(
         db_api_session,
         domain=web_models.WDomain(context_name="context", name="domain", features=[]),
     )
@@ -143,7 +143,7 @@ def test_allows__delete_allows(db_api_session, log):
     user = sql_api.create_user(
         db_api_session, name="user", password="password", is_admin=False
     )
-    domain = sql_api.create_api_domain(
+    domain = sql_api.create_domain(
         db_api_session,
         domain=web_models.WDomain(context_name="context", name="domain", features=[]),
     )

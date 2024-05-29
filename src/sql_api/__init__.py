@@ -1,7 +1,7 @@
 from .creds import Creds
 from .crud import (
     allow_domain_for_user,
-    create_api_domain,
+    create_domain,
     create_user,
     delete_user,
     get_api_allowed,

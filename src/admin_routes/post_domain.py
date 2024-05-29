@@ -34,7 +34,7 @@ async def post_domain(
         else:
             ctx.add_mapping(domain.name)
 
-    domain_db = sql_api.create_api_domain(db, domain)
+    domain_db = sql_api.create_domain(db, domain)
 
     # FIXME Il faut trouver un moyen plus stable de faire les conversions
     # entre WDomain et DBDomain... Mais je ne sais pas encore dans quel sens

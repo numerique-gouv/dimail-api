@@ -54,7 +54,7 @@ def delete_user(db: orm.Session, user_name: str):
     return db_user
 
 
-def create_api_domain(db: orm.Session, domain: web_models.WDomain):
+def create_domain(db: orm.Session, domain: web_models.WDomain):
     db_domain = models.DBDomain(
         name=domain.name, features=[str(f) for f in domain.features]
     )
