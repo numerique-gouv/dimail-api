@@ -157,11 +157,11 @@ def db_postfix_url(root_db, alembic_config, log) -> typing.Generator:
     Adds the database and the url in alembic config. Yields an url to
     connect to that db."""
     log.info("SETUP postfix database (drop and create)")
-    url = make_db("test3",root_db)
+    url = make_db("test3", root_db)
     add_db_in_alembic_config(alembic_config, "postfix", url, log)
     yield url
     remove_db_from_alembic_config(alembic_config, "postfix", log)
-    drop_db("test3",root_db)
+    drop_db("test3", root_db)
     log.info("TEARDOWN postfix database (drop)")
 
 
@@ -249,8 +249,13 @@ def db_postfix_session(db_postfix, log) -> typing.Generator:
 @pytest.fixture(scope="function")
 def ox_cluster(log, ox_container) -> typing.Generator:
     """Fixture that provides an empty OX cluster."""
-    log.info("SETUP empty ox cluster")
+    # ox_ssh_url  = f"ssh://root@{ox_container.get_container_host_ip()}:{ox_container.get_exposed_port(22)}"
+    log.info(f"SETUP empty ox cluster")
     ox_cluster = oxcli.OxCluster()
+    if ox_container:
+        ox_ssh_url = f"ssh://root@{ox_container.get_container_host_ip()}:{ox_container.get_exposed_port(22)}"
+        ox_cluster.ssh_url = ox_ssh_url
+    log.info(f"url de connexion ssh vers le cluster OX -> {ox_cluster.url()}")
     ox_cluster.purge()
     yield ox_cluster
     log.info("TEARDOWN ox cluster")
@@ -258,23 +263,22 @@ def ox_cluster(log, ox_container) -> typing.Generator:
 
 
 @pytest.fixture(scope='session')
-def ox_container(log, request, dimail_test_network, mariadb_container, ox_container_image):
-    if not mariadb_container: # a besoin que mariadb soit up pour installer ox
+def ox_container(log, request, dimail_test_network, mariadb_container, ox_container_image) -> DockerContainer | None:
+    if not mariadb_container:  # a besoin que mariadb soit up pour installer ox
         return None
     ox = (DockerContainer(ox_container_image)
           .with_network(dimail_test_network)
           .with_network_aliases("dimail_ox")
-          .with_bind_ports(22, 2222))
+          .with_bind_ports(22))
+
     log.info("SETUP OX CONTAINER")
-    try:
-        ox.start()
-        delay = wait_for_logs(ox, "Starting ssh daemon")
-        log.info(f"ox started in -> {delay}s")
-        time.sleep(1)  # pour être sûr que le service ssh est up
-    except Exception as e:
-        log.info(f"Le conteneur {ox_container_image} n'a pas démarré {e}")
-        pytest.skip()
-    log.info(f"url de ox_container -> {ox.get_container_host_ip()}:{ox.get_exposed_port(22)}")
+    ox.start()
+    delay = wait_for_logs(ox, "Starting ssh daemon")
+    log.info(f"ox started in -> {delay}s")
+    time.sleep(1)  # pour être sûr que le service ssh est up
+
+    # ox_ssh_url = f"ssh://root@{ox.get_container_host_ip()}:{ox.get_exposed_port(22)}"
+    # log.info(f"url de connexion ssh vers le cluster OX -> {ox_ssh_url}")
 
     def remove_container():
         log.info("TEARDOWN OX CONTAINER")
@@ -295,16 +299,13 @@ def mariadb_container(log, request, dimail_test_network) -> tc.MySqlContainer | 
 
     mysql = (tc.MySqlContainer("mariadb:11.2", username="root", password="toto", dbname="mysql")
              # .with_name("mariadb")
+             .with_bind_ports(3306)
              .with_network(dimail_test_network)
              .with_network_aliases("mariadb"))
     log.info("SETUP MARIADB CONTAINER")
-    try:
-        mysql.start()
-        delay = wait_for_logs(mysql, "MariaDB init process done. Ready for start up.")
-        log.info(f"MARIADB started in {delay}s")
-    except Exception as e:
-        log.info(f"Le conteneur {mysql} n'a pas démarré {e}")
-        pytest.skip()
+    mysql.start()
+    delay = wait_for_logs(mysql, "MariaDB init process done. Ready for start up.")
+    log.info(f"MARIADB started in {delay}s")
 
     def remove_container():
         mysql.stop()
@@ -328,9 +329,9 @@ def ox_container_image(log, request) -> str | None:
 
 
 @pytest.fixture(scope="session")
-def dimail_test_network(log) -> typing.Generator | None:
+def dimail_test_network(log) -> typing.Generator:
     if not need_start_test_container():
-        return None
+        yield None
     with Network() as dimail_test_network:
         log.info(f"crée un réseau Docker -> {dimail_test_network}")
         yield dimail_test_network

@@ -5,13 +5,22 @@ import subprocess
 
 import pydantic
 
+from src import config
+
 
 class OxCluster(pydantic.BaseModel):
     master_username: str = "master_user"
     master_password: str = "master_pass"
     admin_username: str = "admin_user"
     admin_password: str = "admin_pass"
-    ssh_url: str = "ssh://root@localhost:2222"
+    ssh_url: str = config.settings.ox_ssh_url
+
+    def url(self):
+        return self.ssh_url
+
+    # @classmethod
+    # def with_ssh_url(cls, ssh_url: str):
+    #     return cls(ssh_url=ssh_url)
 
 
 class OxContext(pydantic.BaseModel):
@@ -168,7 +177,7 @@ def _get_context_by_domain(self: OxCluster, domain: str) -> OxContext | None:
 
 
 def _create_context(
-    self: OxCluster, cid: int | None, name: str, domain: str
+        self: OxCluster, cid: int | None, name: str, domain: str
 ) -> OxContext:
     all_contexts = self.list_contexts()
     max_id = 0
@@ -301,13 +310,13 @@ def _displayname_exists(self: OxContext, display_name: str) -> bool:
 
 
 def _create_user(
-    self: OxContext,
-    surName: str,
-    givenName: str,
-    displayName: str | None = None,
-    email: str | None = None,
-    username: str | None = None,
-    domain: str | None = None,
+        self: OxContext,
+        surName: str,
+        givenName: str,
+        displayName: str | None = None,
+        email: str | None = None,
+        username: str | None = None,
+        domain: str | None = None,
 ) -> OxUser:
     if email is None and username is not None and domain is not None:
         email = username + "@" + domain
