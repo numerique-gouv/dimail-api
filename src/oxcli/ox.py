@@ -13,14 +13,14 @@ class OxCluster(pydantic.BaseModel):
     master_password: str = "master_pass"
     admin_username: str = "admin_user"
     admin_password: str = "admin_pass"
-    ssh_url: str = config.settings.ox_ssh_url
+    ssh_url: str | None = None
 
     def url(self):
         return self.ssh_url
 
-    # @classmethod
-    # def with_ssh_url(cls, ssh_url: str):
-    #     return cls(ssh_url=ssh_url)
+    def __init__(self):
+        super().__init__()
+        self.ssh_url = config.settings.ox_ssh_url
 
 
 class OxContext(pydantic.BaseModel):

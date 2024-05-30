@@ -13,7 +13,7 @@ from testcontainers.core.container import DockerContainer
 from testcontainers.core.network import Network
 from testcontainers.core.waiting_utils import wait_for_logs
 
-from . import oxcli, sql_api, sql_dovecot, sql_postfix
+from . import oxcli, sql_api, sql_dovecot, sql_postfix, config
 
 
 def make_db(name: str, conn: sa.Connection) -> str:
@@ -249,12 +249,8 @@ def db_postfix_session(db_postfix, log) -> typing.Generator:
 @pytest.fixture(scope="function")
 def ox_cluster(log, ox_container) -> typing.Generator:
     """Fixture that provides an empty OX cluster."""
-    # ox_ssh_url  = f"ssh://root@{ox_container.get_container_host_ip()}:{ox_container.get_exposed_port(22)}"
     log.info(f"SETUP empty ox cluster")
     ox_cluster = oxcli.OxCluster()
-    if ox_container:
-        ox_ssh_url = f"ssh://root@{ox_container.get_container_host_ip()}:{ox_container.get_exposed_port(22)}"
-        ox_cluster.ssh_url = ox_ssh_url
     log.info(f"url de connexion ssh vers le cluster OX -> {ox_cluster.url()}")
     ox_cluster.purge()
     yield ox_cluster
@@ -277,8 +273,9 @@ def ox_container(log, request, dimail_test_network, mariadb_container, ox_contai
     log.info(f"ox started in -> {delay}s")
     time.sleep(1)  # pour être sûr que le service ssh est up
 
-    # ox_ssh_url = f"ssh://root@{ox.get_container_host_ip()}:{ox.get_exposed_port(22)}"
-    # log.info(f"url de connexion ssh vers le cluster OX -> {ox_ssh_url}")
+    ox_ssh_url = f"ssh://root@{ox.get_container_host_ip()}:{ox.get_exposed_port(22)}"
+    log.info(f"url de connexion ssh vers le cluster OX -> {ox_ssh_url}")
+    config.settings.ox_ssh_url = ox_ssh_url
 
     def remove_container():
         log.info("TEARDOWN OX CONTAINER")
