@@ -276,6 +276,8 @@ def ox_container(log, request, dimail_test_network, mariadb_container, ox_contai
     ox_ssh_url = f"ssh://root@{ox.get_container_host_ip()}:{ox.get_exposed_port(22)}"
     log.info(f"url de connexion ssh vers le cluster OX -> {ox_ssh_url}")
     config.settings.ox_ssh_url = ox_ssh_url
+    # on ne veut pas vérifier la clé sur chaque port randon du conteneur
+    config.settings.ox_ssh_args = ["-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null"]
 
     def remove_container():
         log.info("TEARDOWN OX CONTAINER")
@@ -329,9 +331,10 @@ def ox_container_image(log, request) -> str | None:
 def dimail_test_network(log) -> typing.Generator:
     if not need_start_test_container():
         yield None
-    with Network() as dimail_test_network:
-        log.info(f"crée un réseau Docker -> {dimail_test_network}")
-        yield dimail_test_network
+    else:
+        with Network() as dimail_test_network:
+            log.info(f"crée un réseau Docker -> {dimail_test_network}")
+            yield dimail_test_network
 
 
 def need_start_test_container() -> bool:

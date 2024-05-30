@@ -14,6 +14,7 @@ class OxCluster(pydantic.BaseModel):
     admin_username: str = "admin_user"
     admin_password: str = "admin_pass"
     ssh_url: str | None = None
+    ssh_args: list[str] = []
 
     def url(self):
         return self.ssh_url
@@ -21,6 +22,7 @@ class OxCluster(pydantic.BaseModel):
     def __init__(self):
         super().__init__()
         self.ssh_url = config.settings.ox_ssh_url
+        self.ssh_args = config.settings.ox_ssh_args
 
 
 class OxContext(pydantic.BaseModel):
@@ -95,7 +97,7 @@ def __cmd(args: list[str]) -> str:
 
 def _run_for_csv(self: OxCluster, command: list[str]) -> list[str]:
     file = subprocess.Popen(
-        ["ssh", self.ssh_url, __cmd(command)],
+        ["ssh"] + self.ssh_args + [self.ssh_url, __cmd(command)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
@@ -117,7 +119,7 @@ def _run_for_csv(self: OxCluster, command: list[str]) -> list[str]:
 
 def _run_for_item(self: OxCluster, command: list[str]) -> str:
     file = subprocess.Popen(
-        ["ssh", self.ssh_url, __cmd(command)],
+        ["ssh"] + self.ssh_args + [self.ssh_url, __cmd(command)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
