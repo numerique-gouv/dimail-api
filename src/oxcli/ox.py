@@ -5,7 +5,7 @@ import subprocess
 
 import pydantic
 
-from src import config
+from .setup import get_cluster_info
 
 
 class OxCluster(pydantic.BaseModel):
@@ -13,16 +13,22 @@ class OxCluster(pydantic.BaseModel):
     master_password: str = "master_pass"
     admin_username: str = "admin_user"
     admin_password: str = "admin_pass"
+    name: str = "INVALID"
     ssh_url: str | None = None
     ssh_args: list[str] = []
 
     def url(self):
         return self.ssh_url
 
-    def __init__(self):
+    def __init__(self,
+        name: str | None = None,
+    ):
         super().__init__()
-        self.ssh_url = config.settings.ox_ssh_url
-        self.ssh_args = config.settings.ox_ssh_args
+        (name, ssh_url, ssh_args) = get_cluster_info(name)
+        self.name = name
+        self.ssh_url = ssh_url
+        self.ssh_args = ssh_args
+            
 
 
 class OxContext(pydantic.BaseModel):
@@ -96,6 +102,8 @@ def __cmd(args: list[str]) -> str:
 
 
 def _run_for_csv(self: OxCluster, command: list[str]) -> list[str]:
+    if self.ssh_url is None:
+        raise Exception("Il faut configurer OxCluster")
     file = subprocess.Popen(
         ["ssh"] + self.ssh_args + [self.ssh_url, __cmd(command)],
         stdout=subprocess.PIPE,
@@ -118,6 +126,8 @@ def _run_for_csv(self: OxCluster, command: list[str]) -> list[str]:
 
 
 def _run_for_item(self: OxCluster, command: list[str]) -> str:
+    if self.ssh_url is None:
+        raise Exception("Il faut configurer OxCluster")
     file = subprocess.Popen(
         ["ssh"] + self.ssh_args + [self.ssh_url, __cmd(command)],
         stdout=subprocess.PIPE,
