@@ -264,20 +264,19 @@ def make_ox_image(log) -> str:
     return tag
 
 
-def add_ssh_key():
+def create_ssh_key():
     return_code = subprocess.call(['/bin/sh', '../oxtest/add_ssh_key.sh'])
     if return_code != 0:
         raise Exception("Impossible to create ssh key")
 
 
 def make_ox_container(log, network) -> tc_core.container.DockerContainer:
-    add_ssh_key()
+    create_ssh_key()
     image = make_ox_image(log)
     ox = (tc_core.container.DockerContainer(image)
           .with_network(network)
           .with_network_aliases("dimail_ox")
           .with_bind_ports(22))
-
     return ox
 
 
@@ -290,7 +289,7 @@ def ox_name(log, dimail_test_network, root_db_url) -> typing.Generator:
     if not config.settings.test_containers:
         # We use the OX cluster declared in main.py
         yield "default"
-        #  We don't want to build a container as the teardown of the fixture.
+        # We don't want to build a container as the teardown of the fixture.
         return
 
     log.info("SETUP OX CONTAINER")
@@ -303,8 +302,10 @@ def ox_name(log, dimail_test_network, root_db_url) -> typing.Generator:
 
     ox_ssh_url = f"ssh://root@{ox.get_container_host_ip()}:{ox.get_exposed_port(22)}"
     # on ne veut pas vérifier la clé sur chaque port randon du conteneur
-    ox_ssh_args = ["-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "-i",
-                   "/tmp/dimail_api_test_id_rsa"]
+    # et utilisation de la clé ssh générée par le script
+    ox_ssh_args = ["-o", "StrictHostKeyChecking=no",
+                   "-o", "UserKnownHostsFile=/dev/null",
+                   "-i", "/tmp/dimail_api_test_id_rsa"]
     log.info(f"url de connexion ssh vers le cluster OX -> {ox_ssh_url}")
 
     oxcli.declare_cluster("testing", ox_ssh_url, ox_ssh_args)
