@@ -300,7 +300,7 @@ def ox_name(log, dimail_test_network, root_db_url) -> typing.Generator:
 
     ox_ssh_url = f"ssh://root@{ox.get_container_host_ip()}:{ox.get_exposed_port(22)}"
     # on ne veut pas vérifier la clé sur chaque port randon du conteneur
-    ox_ssh_args = ["-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "-i", "/tmp/id_rsa"]
+    ox_ssh_args = ["-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "-i", "/tmp/dimail_api_test_id_rsa"]
     log.info(f"url de connexion ssh vers le cluster OX -> {ox_ssh_url}")
 
     oxcli.declare_cluster("testing", ox_ssh_url, ox_ssh_args)
