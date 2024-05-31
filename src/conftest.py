@@ -281,11 +281,7 @@ def ox_name(log, dimail_test_network, root_db_url) -> typing.Generator:
     one in docker compose, according to the setting of
     `DIMAIL_TEST_CONTAINERS`."""
     if not config.settings.test_containers:
-        oxcli.declare_cluster(
-            "default",
-            config.settings.ssh_url,
-            config.settings.ssh_args,
-        )
+        # We use the OX cluster declared in main.py
         yield "default"
         # We don't want to build a container as the teardown of the fixture.
         return
