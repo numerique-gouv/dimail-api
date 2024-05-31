@@ -253,6 +253,7 @@ def ox_cluster(log, ox_name) -> typing.Generator:
     log.info("TEARDOWN ox cluster")
     ox_cluster.purge()
 
+
 def make_ox_image(log) -> str:
     pyw = pyow.DockerClient(log_level="WARN")
     tag = "dimail-oxtest"
@@ -262,10 +263,12 @@ def make_ox_image(log) -> str:
     log.info(f"[END] construction de l'image -> {tag}")
     return tag
 
+
 def add_ssh_key():
     return_code = subprocess.call(['/bin/sh', '../oxtest/add_ssh_key.sh'])
     if return_code != 0:
         raise Exception("Impossible to create ssh key")
+
 
 def make_ox_container(log, network) -> tc_core.container.DockerContainer:
     add_ssh_key()
@@ -273,11 +276,10 @@ def make_ox_container(log, network) -> tc_core.container.DockerContainer:
     ox = (tc_core.container.DockerContainer(image)
           .with_network(network)
           .with_network_aliases("dimail_ox")
-          .with_bind_ports(22)
-          # .with_volume_mapping(host="/home/christophe/dimail_api_test_id_rsa.pub", container="/root/.ssh/authorized_keys")
-          )
+          .with_bind_ports(22))
 
     return ox
+
 
 @pytest.fixture(scope='session')
 def ox_name(log, dimail_test_network, root_db_url) -> typing.Generator:
@@ -288,9 +290,9 @@ def ox_name(log, dimail_test_network, root_db_url) -> typing.Generator:
     if not config.settings.test_containers:
         # We use the OX cluster declared in main.py
         yield "default"
-        # We don't want to build a container as the teardown of the fixture.
+        #  We don't want to build a container as the teardown of the fixture.
         return
-    
+
     log.info("SETUP OX CONTAINER")
     ox = make_ox_container(log, dimail_test_network)
 
@@ -301,7 +303,8 @@ def ox_name(log, dimail_test_network, root_db_url) -> typing.Generator:
 
     ox_ssh_url = f"ssh://root@{ox.get_container_host_ip()}:{ox.get_exposed_port(22)}"
     # on ne veut pas vérifier la clé sur chaque port randon du conteneur
-    ox_ssh_args = ["-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "-i", "/tmp/dimail_api_test_id_rsa"]
+    ox_ssh_args = ["-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "-i",
+                   "/tmp/dimail_api_test_id_rsa"]
     log.info(f"url de connexion ssh vers le cluster OX -> {ox_ssh_url}")
 
     oxcli.declare_cluster("testing", ox_ssh_url, ox_ssh_args)
@@ -321,10 +324,10 @@ def root_db_url(log, dimail_test_network) -> tc_mysql.MySqlContainer | None:
         return
 
     mariadb = (tc_mysql.MySqlContainer("mariadb:11.2", username="root", password="toto", dbname="mysql")
-             # .with_name("mariadb")
-             .with_bind_ports(3306)
-             .with_network(dimail_test_network)
-             .with_network_aliases("mariadb"))
+               # .with_name("mariadb")
+               .with_bind_ports(3306)
+               .with_network(dimail_test_network)
+               .with_network_aliases("mariadb"))
     log.info("SETUP MARIADB CONTAINER")
     mariadb.start()
     delay = tc_core.waiting_utils.wait_for_logs(mariadb, "MariaDB init process done. Ready for start up.")
