@@ -274,7 +274,7 @@ def make_ox_container(log, network) -> tc_core.container.DockerContainer:
           .with_network(network)
           .with_network_aliases("dimail_ox")
           .with_bind_ports(22)
-          .with_volume_mapping(os.getcwd() + "/tmp/dimail_api_test_id_rsa.pub","/home/debian/.ssh/authorized_keys"))
+          .with_volume_mapping("/tmp/dimail_api_test_id_rsa.pub","/home/debian/.ssh/authorized_keys"))
 
     return ox
 
