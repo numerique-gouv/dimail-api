@@ -1,3 +1,6 @@
 api_db_url  = "mysql+pymysql://api_user:invalide@localhost:3306/api"
 imap_db_url = "mysql+pymysql://dovecot:invalide@localhost:3306/dovecot"
 postfix_db_url = "mysql+pymysql://postfix:invalide@localhost:3306/postfix"
+ox_ssh_url = "ssh://root@localhost:2222"
+ox_ssh_args = []
+test_containers = false

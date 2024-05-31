@@ -1,26 +1,40 @@
 import logging
 import os
+import time
 import typing
-
-import pytest
-import sqlalchemy as sa
 
 import alembic.command
 import alembic.config
+import pytest
+import python_on_whales as pyow
+import sqlalchemy as sa
+import testcontainers.core as tc_core
+import testcontainers.mysql as tc_mysql
+#from testcontainers.core.container import DockerContainer
+#from testcontainers.core.network import Network
+#from testcontainers.core.waiting_utils import wait_for_logs
 
-from . import oxcli, sql_api, sql_dovecot, sql_postfix
+from . import oxcli, sql_api, sql_dovecot, sql_postfix, config
 
 
-def make_db(name: str, conn: sa.Engine) -> str:
+def make_db(name: str, conn: sa.Connection) -> str:
+    """Utility function, for internal use. Ensure a database, named 'name'
+    is created and empty. 'conn' is a mariadb/mysql connection as root user"""
+    return make_db_with_user(name, "test", "toto", conn)
+
+
+def make_db_with_user(name: str, user: str, password: str, conn: sa.Connection) -> str:
     """Utility function, for internal use. Ensure a database, named 'name'
     is created and empty. 'conn' is a mariadb/mysql connection as root user"""
     conn.execute(sa.text(f"drop database if exists {name};"))
     conn.execute(sa.text(f"create database {name};"))
-    conn.execute(sa.text(f"grant ALL on {name}.* to test@'%' identified by 'toto';"))
-    return f"mysql+pymysql://test:toto@localhost:3306/{name}"
+    conn.execute(sa.text(f"grant ALL on {name}.* to {user}@'%' identified by '{password}';"))
+    mariadb_port = conn.engine.url.port
+    mariadb_host = conn.engine.url.host
+    return f"mysql+pymysql://{user}:{password}@{mariadb_host}:{mariadb_port}/{name}"
 
 
-def drop_db(name: str, conn: sa.Engine):
+def drop_db(name: str, conn: sa.Connection):
     """Utility function, for internal use. Drops a database."""
     conn.execute(sa.text(f"drop database if exists {name};"))
 
@@ -28,6 +42,8 @@ def drop_db(name: str, conn: sa.Engine):
 @pytest.fixture(scope="session", name="log")
 def fix_logger(scope="session") -> typing.Generator:
     """Fixture making the logger available"""
+    logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
+    logging.getLogger("docker").setLevel(logging.INFO)
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
     logger.info("SETUP logger")
@@ -36,14 +52,16 @@ def fix_logger(scope="session") -> typing.Generator:
 
 
 @pytest.fixture(scope="session")
-def root_db(log) -> typing.Generator:
-    """Fixtures that makes a connection to mariadb/mysql as root available."""
-    log.info("CONNECTING as mysql root")
-    root_db = sa.create_engine("mysql+pymysql://root:toto@localhost:3306/mysql")
+def root_db(log, root_db_url, request) -> typing.Generator:
+    """
+    Fixtures that makes a connection to mariadb/mysql as root available.
+    """
+    log.info(f"CONNECTING as mysql root to {root_db_url}")
+    root_db = sa.create_engine(root_db_url)
     conn = root_db.connect()
     yield conn
     conn.close()
-    log.info("CLOSING root mysql connection")
+    log.info(f"CLOSING root mysql connection to {root_db_url}")
 
 
 @pytest.fixture(scope="session")
@@ -136,11 +154,11 @@ def db_postfix_url(root_db, alembic_config, log) -> typing.Generator:
     Adds the database and the url in alembic config. Yields an url to
     connect to that db."""
     log.info("SETUP postfix database (drop and create)")
-    url = make_db("test3",root_db)
+    url = make_db("test3", root_db)
     add_db_in_alembic_config(alembic_config, "postfix", url, log)
     yield url
     remove_db_from_alembic_config(alembic_config, "postfix", log)
-    drop_db("test3",root_db)
+    drop_db("test3", root_db)
     log.info("TEARDOWN postfix database (drop)")
 
 
@@ -226,11 +244,106 @@ def db_postfix_session(db_postfix, log) -> typing.Generator:
 
 
 @pytest.fixture(scope="function")
-def ox_cluster(log) -> typing.Generator:
+def ox_cluster(log, ox_name) -> typing.Generator:
     """Fixture that provides an empty OX cluster."""
-    log.info("SETUP empty ox cluster")
+    log.info(f"SETUP empty ox cluster")
+    oxcli.set_default_cluster(ox_name)
     ox_cluster = oxcli.OxCluster()
+    log.info(f"url de connexion ssh vers le cluster OX -> {ox_cluster.url()}")
     ox_cluster.purge()
     yield ox_cluster
     log.info("TEARDOWN ox cluster")
     ox_cluster.purge()
+
+def make_ox_image(log) -> str:
+    pyw = pyow.DockerClient(log_level="WARN")
+    tag = "dimail-oxtest"
+    log.info(f"[START] construction de l'image -> {tag}")
+    pyw.build("../oxtest/", tags=tag)
+    time.sleep(2)  # pour être sûr que le tag soit bien arrivé dans le registry
+    log.info(f"[END] construction de l'image -> {tag}")
+    return tag
+
+
+def make_ox_container(log, network) -> tc_core.container.DockerContainer:
+    image = make_ox_image(log)
+    ox = (tc_core.container.DockerContainer(image)
+          .with_network(network)
+          .with_network_aliases("dimail_ox")
+          .with_bind_ports(22))
+
+    return ox
+
+@pytest.fixture(scope='session')
+def ox_name(log, dimail_test_network, root_db_url) -> typing.Generator:
+    """Fixture that yields the URL for ssh to connect to the OX cluster. Will
+    make a new (virgin) OX container, or will connect to the already existing
+    one in docker compose, according to the setting of
+    `DIMAIL_TEST_CONTAINERS`."""
+    if not config.settings.test_containers:
+        # We use the OX cluster declared in main.py
+        yield "default"
+        # We don't want to build a container as the teardown of the fixture.
+        return
+    
+    log.info("SETUP OX CONTAINER")
+    ox = make_ox_container(log, dimail_test_network)
+
+    ox.start()
+    delay = tc_core.waiting_utils.wait_for_logs(ox, "Starting ssh daemon")
+    log.info(f"ox started in -> {delay}s")
+    time.sleep(1)  # pour être sûr que le service ssh est up
+
+    ox_ssh_url = f"ssh://root@{ox.get_container_host_ip()}:{ox.get_exposed_port(22)}"
+    # on ne veut pas vérifier la clé sur chaque port randon du conteneur
+    ox_ssh_args = ["-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null"]
+    log.info(f"url de connexion ssh vers le cluster OX -> {ox_ssh_url}")
+
+    oxcli.declare_cluster("testing", ox_ssh_url, ox_ssh_args)
+    yield "testing"
+
+    log.info("TEARDOWN OX CONTAINER")
+    ox.stop()
+
+
+@pytest.fixture(scope="session")
+def root_db_url(log, dimail_test_network) -> tc_mysql.MySqlContainer | None:
+    """Fixture that yields an URL to connect to the root database. The database
+    will be running either in a dedicated container, or in your local docker
+    compose, according to the settings `DIMAIL_TEST_CONTAINERS`."""
+    if not config.settings.test_containers:
+        yield "mysql+pymysql://root:toto@localhost:3306/mysql"
+        return
+
+    mariadb = (tc_mysql.MySqlContainer("mariadb:11.2", username="root", password="toto", dbname="mysql")
+             # .with_name("mariadb")
+             .with_bind_ports(3306)
+             .with_network(dimail_test_network)
+             .with_network_aliases("mariadb"))
+    log.info("SETUP MARIADB CONTAINER")
+    mariadb.start()
+    delay = tc_core.waiting_utils.wait_for_logs(mariadb, "MariaDB init process done. Ready for start up.")
+    log.info(f"MARIADB started in {delay}s")
+
+    root_url = mariadb.get_connection_url()
+    yield root_url
+
+    mariadb.stop()
+    log.info("TEARDOWN MARIADB CONTAINER")
+
+
+@pytest.fixture(scope="session")
+def dimail_test_network(log) -> typing.Generator:
+    if not config.settings.test_containers:
+        yield None
+        return
+
+    with tc_core.network.Network() as dimail_test_network:
+        log.info("SETUP network for containers")
+        log.info(f"crée un réseau Docker -> {dimail_test_network}")
+        try:
+            yield dimail_test_network
+        finally:
+            log.info("TEARDOWN network for containers")
+
+
