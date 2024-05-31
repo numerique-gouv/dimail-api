@@ -27,4 +27,5 @@ jobs:
         run: pytest
         working-directory: src
         env:
-          DIMAIL_test_containers = true
+          DIMAIL_JWT_SECRET: "a secret secret"
+          DIMAIL_test_containers: true
