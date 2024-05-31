@@ -10,9 +10,6 @@ import python_on_whales as pyow
 import sqlalchemy as sa
 import testcontainers.core as tc_core
 import testcontainers.mysql as tc_mysql
-#from testcontainers.core.container import DockerContainer
-#from testcontainers.core.network import Network
-#from testcontainers.core.waiting_utils import wait_for_logs
 
 from . import oxcli, sql_api, sql_dovecot, sql_postfix, config
 
@@ -345,5 +342,3 @@ def dimail_test_network(log) -> typing.Generator:
             yield dimail_test_network
         finally:
             log.info("TEARDOWN network for containers")
-
-

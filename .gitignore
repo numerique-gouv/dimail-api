@@ -1,3 +1,6 @@
+# on ne veut pas rajouter d'autre clé ssh
+oxtest/authorized_keys
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
