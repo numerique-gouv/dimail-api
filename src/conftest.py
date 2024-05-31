@@ -6,6 +6,7 @@ import typing
 import alembic.command
 import alembic.config
 import pytest
+import subprocess
 import python_on_whales as pyow
 import sqlalchemy as sa
 import testcontainers.core as tc_core
@@ -261,13 +262,19 @@ def make_ox_image(log) -> str:
     log.info(f"[END] construction de l'image -> {tag}")
     return tag
 
+def add_ssh_key():
+    return_code = subprocess.call(['/bin/sh', '../oxtest/add_ssh_key.sh'])
+    if return_code != 0:
+        raise Exception("Impossible to create ssh key")
 
 def make_ox_container(log, network) -> tc_core.container.DockerContainer:
+    add_ssh_key()
     image = make_ox_image(log)
     ox = (tc_core.container.DockerContainer(image)
           .with_network(network)
           .with_network_aliases("dimail_ox")
-          .with_bind_ports(22))
+          .with_bind_ports(22)
+          .with_volume_mapping(os.getcwd() + "/tmp/dimail_api_test_id_rsa.pub","/home/debian/.ssh/authorized_keys"))
 
     return ox
 
@@ -293,7 +300,7 @@ def ox_name(log, dimail_test_network, root_db_url) -> typing.Generator:
 
     ox_ssh_url = f"ssh://root@{ox.get_container_host_ip()}:{ox.get_exposed_port(22)}"
     # on ne veut pas vérifier la clé sur chaque port randon du conteneur
-    ox_ssh_args = ["-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null"]
+    ox_ssh_args = ["-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "-i", "/tmp/id_rsa"]
     log.info(f"url de connexion ssh vers le cluster OX -> {ox_ssh_url}")
 
     oxcli.declare_cluster("testing", ox_ssh_url, ox_ssh_args)
