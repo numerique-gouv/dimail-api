@@ -51,8 +51,16 @@ let
         ps.passlib
         ps.josepy
         ps.python-multipart
+        ps.testcontainers
+        ps.docker
+        ps.wrapt
+        ps.python-on-whales
         dynaconf
       ]))
     ];
+    shellHook = ''
+      export DIMAIL_JWT_SECRET="a secret secret"
+      export DIMAIL_STARTS_TESTS_CONTAINERS=1
+    '';
   }
 
