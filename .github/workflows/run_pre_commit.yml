@@ -1,0 +1,28 @@
+name: run dimail-api tests
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupère les sources
+        uses: actions/checkout@v4
+
+      - name: Installe Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: '.python-version'
+
+      - name: Installe les dépendances `pip`
+        run: python -m pip install -r requirements.txt
+
+      - name: Lance pre-commit
+        run: pre-commit run --all-files
