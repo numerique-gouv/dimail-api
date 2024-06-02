@@ -69,4 +69,3 @@ class Allowed(pydantic.BaseModel):
             user=in_db.user,
             domain=in_db.domain,
         )
-

@@ -2,6 +2,7 @@ import re
 
 mail_re = re.compile("^(?P<username>[^@]+)@(?P<domain>[^@]+)$")
 
+
 def split_email(email: str) -> tuple:
     test_mail = mail_re.match(email)
     if test_mail is None:
@@ -12,5 +13,3 @@ def split_email(email: str) -> tuple:
     username = infos["username"]
 
     return (username, domain)
-
-

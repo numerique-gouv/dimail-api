@@ -3,8 +3,8 @@ import atexit
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
 
-#url: str
-#engine: sa.Engine
+# url: str
+# engine: sa.Engine
 maker: orm.sessionmaker | None = None
 db: orm.Session
 
@@ -16,8 +16,8 @@ def close_db(db):
 
 
 def init_db(config: str):
-    #global url
-    #global engine
+    # global url
+    # global engine
     global maker
     url = config
     engine = sa.create_engine(url)

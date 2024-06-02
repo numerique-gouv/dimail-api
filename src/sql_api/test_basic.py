@@ -10,9 +10,7 @@ def test_create_user(db_api_session):
 
 def test_delete_user(db_api_session, log):
     # First, we create a user
-    sql_api.create_user(
-        db_api_session, name="toto", password="titi", is_admin=False
-    )
+    sql_api.create_user(db_api_session, name="toto", password="titi", is_admin=False)
     # Then, we retrieve the user
     user = sql_api.get_user(db_api_session, "toto")
     assert user == sql_api.DBUser(name="toto", is_admin=False)
@@ -77,16 +75,10 @@ def test_allows(db_api_session):
     assert allows == []
 
     user_toto = sql_api.create_user(
-        db_api_session,
-        name="toto",
-        password="toto",
-        is_admin=False
+        db_api_session, name="toto", password="toto", is_admin=False
     )
     user_tutu = sql_api.create_user(
-        db_api_session,
-        name="tutu",
-        password="toto",
-        is_admin=False
+        db_api_session, name="tutu", password="toto", is_admin=False
     )
     domain_com = sql_api.create_domain(
         db_api_session,
@@ -126,13 +118,13 @@ def test_allows(db_api_session):
     assert len(allows) == 2
     for item in allows:
         assert item.user == "toto"
-        assert item.domain in [ "example.com", "example.net" ]
+        assert item.domain in ["example.com", "example.net"]
 
     allows = sql_api.get_allows(db_api_session, domain="example.com")
     assert len(allows) == 2
     for item in allows:
         assert item.domain == "example.com"
-        assert item.user in [ "toto", "tutu" ]
+        assert item.user in ["toto", "tutu"]
 
     sql_api.deny_domain_for_user(db_api_session, "toto", "example.com")
     allows = sql_api.get_allows(db_api_session, user="toto")
@@ -143,16 +135,10 @@ def test_allows(db_api_session):
 
 def test_creds(db_api_session):
     user_toto = sql_api.create_user(
-        db_api_session,
-        name="toto",
-        password="toto",
-        is_admin=False
+        db_api_session, name="toto", password="toto", is_admin=False
     )
     user_tutu = sql_api.create_user(
-        db_api_session,
-        name="tutu",
-        password="toto",
-        is_admin=False
+        db_api_session, name="tutu", password="toto", is_admin=False
     )
     user_admin = sql_api.create_user(
         db_api_session,
@@ -189,5 +175,3 @@ def test_creds(db_api_session):
     sql_api.deny_domain_for_user(db_api_session, "toto", "example.com")
     creds = user_toto.get_creds()
     assert not creds.can_read("example.com")
-
-

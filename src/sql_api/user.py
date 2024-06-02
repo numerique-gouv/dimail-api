@@ -3,6 +3,7 @@ import sqlalchemy.orm as orm
 
 from . import models
 
+
 def count_users(db: orm.Session) -> int:
     return db.query(models.DBUser).count()
 
@@ -41,4 +42,3 @@ def delete_user(db: orm.Session, user_name: str):
         db.delete(db_user)
         db.commit()
     return db_user
-

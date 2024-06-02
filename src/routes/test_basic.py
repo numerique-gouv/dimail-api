@@ -106,7 +106,11 @@ def test_alias__creates_and_fetch_an_alias(my_user, db_postfix):
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 200
-    assert response.json() == { "username": "from", "domain": "tutu.net", "destination": "anything@example.com"}
+    assert response.json() == {
+        "username": "from",
+        "domain": "tutu.net",
+        "destination": "anything@example.com",
+    }
 
     response = client.get(
         "/aliases/",
@@ -118,7 +122,13 @@ def test_alias__creates_and_fetch_an_alias(my_user, db_postfix):
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 200
-    assert response.json() == [{ "username": "from", "domain": "tutu.net", "destination": "anything@example.com"}]
+    assert response.json() == [
+        {
+            "username": "from",
+            "domain": "tutu.net",
+            "destination": "anything@example.com",
+        }
+    ]
 
     response = client.post(
         "/aliases/",
@@ -130,8 +140,11 @@ def test_alias__creates_and_fetch_an_alias(my_user, db_postfix):
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 200
-    assert response.json() == { "username": "from", "domain": "tutu.net", "destination": "other@example.com"}
-
+    assert response.json() == {
+        "username": "from",
+        "domain": "tutu.net",
+        "destination": "other@example.com",
+    }
 
     response = client.post(
         "/aliases/",
@@ -167,7 +180,7 @@ def test_alias__creates_and_fetch_an_alias(my_user, db_postfix):
     for item in response.json():
         assert item["domain"] == "tutu.net"
         assert item["username"] == "from"
-        assert item["destination"] in [ "anything@example.com", "other@example.com" ]
+        assert item["destination"] in ["anything@example.com", "other@example.com"]
 
 
 def test_permissions(db_api, db_dovecot, my_user, log):

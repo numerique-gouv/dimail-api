@@ -24,9 +24,5 @@ async def post_allow(
         raise fastapi.HTTPException(
             status_code=409, detail="Domain already allowed for this user"
         )
-    allowed_db = sql_api.allow_domain_for_user(
-        db,
-        user=allow.user,
-        domain=allow.domain
-    )
+    allowed_db = sql_api.allow_domain_for_user(db, user=allow.user, domain=allow.domain)
     return web_models.Allowed.from_db(allowed_db)

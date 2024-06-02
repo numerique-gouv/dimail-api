@@ -12,11 +12,12 @@ class Alias(pydantic.BaseModel):
     def from_db(cls, dbAlias: sql_postfix.PostfixAlias):
         (username, domain) = utils.split_email(dbAlias.alias)
         if domain != dbAlias.domain:
-            raise Exception("The alias in database is not consistend (alias and domain disagree)")
+            raise Exception(
+                "The alias in database is not consistend (alias and domain disagree)"
+            )
 
         return cls(
-            destination = dbAlias.destination,
-            domain = dbAlias.domain,
-            username = username,
+            destination=dbAlias.destination,
+            domain=dbAlias.domain,
+            username=username,
         )
-
