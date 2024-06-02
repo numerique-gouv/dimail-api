@@ -1,4 +1,4 @@
-name: run dimail-api tests
+name: run dimail-api pre-commit
 
 on:
   pull_request:
