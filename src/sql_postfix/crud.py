@@ -29,7 +29,7 @@ def create_alias(
     try:
         db.add(db_alias)
         db.commit()
-    except Exception as e:
+    except Exception:
         db.rollback()
         return None
     db.refresh(db_alias)

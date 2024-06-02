@@ -16,7 +16,7 @@ async def post_alias(
 
     perms = user.get_creds()
     if not perms.can_read(alias.domain):
-        log.info(f"Cet utilisateur n'a pas les droits sur le domaine {domain}")
+        log.info(f"Cet utilisateur n'a pas les droits sur le domaine {alias.domain}")
         raise fastapi.HTTPException(status_code=403, detail="Permission denied")
 
     name = alias.username + "@" + alias.domain

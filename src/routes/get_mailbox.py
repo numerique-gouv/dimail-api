@@ -51,7 +51,7 @@ async def get_mailbox(
 
     try:
         (username, domain) = utils.split_email(mailbox_id)
-    except Exception as e:
+    except Exception:
         log.info("Failed to split the email address")
         raise fastapi.HTTPException(status_code=422, detail="Invalid email address")
 

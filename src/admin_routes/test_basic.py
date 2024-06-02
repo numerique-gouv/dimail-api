@@ -1,6 +1,6 @@
 import fastapi.testclient
 
-from src import main, sql_api, web_models
+from src import main, sql_api
 
 client = fastapi.testclient.TestClient(main.app)
 

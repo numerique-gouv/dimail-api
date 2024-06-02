@@ -247,7 +247,7 @@ def db_postfix_session(db_postfix, log) -> typing.Generator:
 @pytest.fixture(scope="function")
 def ox_cluster(log, ox_name) -> typing.Generator:
     """Fixture that provides an empty OX cluster."""
-    log.info(f"SETUP empty ox cluster")
+    log.info("SETUP empty ox cluster")
     oxcli.set_default_cluster(ox_name)
     ox_cluster = oxcli.OxCluster()
     log.info(f"url de connexion ssh vers le cluster OX -> {ox_cluster.url()}")

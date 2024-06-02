@@ -1,3 +1,5 @@
+import atexit
+
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
 

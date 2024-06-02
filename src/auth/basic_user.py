@@ -53,7 +53,7 @@ class BasicUser(fastapi.security.HTTPBasic):
         try:
             user = authenticate_user(session, creds.username, creds.password)
         except Exception as e:
-            log.debug(f"Failed auth")
+            log.debug("Failed auth")
             session.close()
             raise e
         try:
