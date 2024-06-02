@@ -1,12 +1,7 @@
 name: run dimail-api pre-commit
 
 on:
-  pull_request:
-    branches:
-      - main
   push:
-    branches:
-      - main
 
 jobs:
   check:
