@@ -1,3 +1,5 @@
+import atexit
+
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
 
@@ -6,8 +8,10 @@ db: orm.Session
 
 Postfix = orm.declarative_base()
 
+
 def close_db(db):
     db.close()
+
 
 def init_db(config: str):
     global maker

@@ -1,4 +1,3 @@
-import sqlalchemy as sa
 import sqlalchemy.orm as orm
 
 from . import models
@@ -14,7 +13,7 @@ def get_allows(db: orm.Session, user: str = "", domain: str = ""):
 
 
 def get_allowed(db: orm.Session, user: str, domain: str) -> models.DBAllowed:
-    return db.get(models.DBAllowed, {"domain": domain, "user": user })
+    return db.get(models.DBAllowed, {"domain": domain, "user": user})
     return db.query(models.DBAllowed).filter_by(domain=domain, user=user).first()
 
 

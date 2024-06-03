@@ -2,6 +2,7 @@ import sqlalchemy as sa
 
 from . import database
 
+
 class PostfixAlias(database.Postfix):
     __tablename__ = "aliases"
     alias = sa.Column(
@@ -13,4 +14,3 @@ class PostfixAlias(database.Postfix):
     destination = sa.Column(
         sa.String(500, collation="ascii_bin"), nullable=False, primary_key=True
     )
-

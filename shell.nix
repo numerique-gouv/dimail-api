@@ -18,12 +18,6 @@ let
 
     # has no tests
     doCheck = false;
-
-    meta = {
-      homepage = "https://github.com/pytoolz/toolz/";
-      description = "List processing tools and functional utilities";
-      # [...]
-    };
   };
 
   # last available pycharm
@@ -35,15 +29,14 @@ let
   pkgs.mkShell {
     nativeBuildInputs = with pkgs.buildPackages; [
       pycharm
+      ruff
+      pre-commit
       (pkgs.python312.withPackages (ps: with ps; [
         ps.fastapi
         ps.pytest
         ps.sqlalchemy
         ps.pymysql
         ps.uvicorn
-        ps.flake8
-        ps.black
-        ps.isort
         ps.alembic
         ps.httpx
         ps.pyjwt
@@ -51,8 +44,16 @@ let
         ps.passlib
         ps.josepy
         ps.python-multipart
+        ps.testcontainers
+        ps.docker
+        ps.wrapt
+        ps.python-on-whales
         dynaconf
       ]))
     ];
+    shellHook = ''
+      export DIMAIL_JWT_SECRET="a secret secret"
+      export DIMAIL_STARTS_TESTS_CONTAINERS=1
+    '';
   }
 

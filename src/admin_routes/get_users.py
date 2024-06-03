@@ -8,4 +8,4 @@ async def get_users(
     user: auth.DependsBasicAdmin,
 ) -> list[web_models.User]:
     users = sql_api.get_users(db)
-    return [ web_models.User.from_db(user) for user in users ]
+    return [web_models.User.from_db(user) for user in users]

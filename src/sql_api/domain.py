@@ -1,4 +1,3 @@
-import sqlalchemy as sa
 import sqlalchemy.orm as orm
 
 from . import models
@@ -22,9 +21,7 @@ def create_domain(
     imap_domains: list[str] | None = None,
     smtp_domains: list[str] | None = None,
 ) -> models.DBDomain:
-    db_domain = models.DBDomain(
-        name=name, features=[str(f) for f in features]
-    )
+    db_domain = models.DBDomain(name=name, features=[str(f) for f in features])
     if webmail_domain is not None:
         db_domain.webmail_domain = webmail_domain
     if mailbox_domain is not None:
@@ -37,6 +34,3 @@ def create_domain(
     db.commit()
     db.refresh(db_domain)
     return db_domain
-
-
-

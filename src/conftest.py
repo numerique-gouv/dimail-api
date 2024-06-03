@@ -1,20 +1,19 @@
 import logging
 import os
+import subprocess
 import time
 import typing
 
-import alembic.command
-import alembic.config
 import pytest
 import python_on_whales as pyow
 import sqlalchemy as sa
 import testcontainers.core as tc_core
 import testcontainers.mysql as tc_mysql
-#from testcontainers.core.container import DockerContainer
-#from testcontainers.core.network import Network
-#from testcontainers.core.waiting_utils import wait_for_logs
 
-from . import oxcli, sql_api, sql_dovecot, sql_postfix, config
+import alembic.command
+import alembic.config
+
+from . import config, oxcli, sql_api, sql_dovecot, sql_postfix
 
 
 def make_db(name: str, conn: sa.Connection) -> str:
@@ -28,7 +27,9 @@ def make_db_with_user(name: str, user: str, password: str, conn: sa.Connection) 
     is created and empty. 'conn' is a mariadb/mysql connection as root user"""
     conn.execute(sa.text(f"drop database if exists {name};"))
     conn.execute(sa.text(f"create database {name};"))
-    conn.execute(sa.text(f"grant ALL on {name}.* to {user}@'%' identified by '{password}';"))
+    conn.execute(
+        sa.text(f"grant ALL on {name}.* to {user}@'%' identified by '{password}';")
+    )
     mariadb_port = conn.engine.url.port
     mariadb_host = conn.engine.url.host
     return f"mysql+pymysql://{user}:{password}@{mariadb_host}:{mariadb_port}/{name}"
@@ -246,7 +247,7 @@ def db_postfix_session(db_postfix, log) -> typing.Generator:
 @pytest.fixture(scope="function")
 def ox_cluster(log, ox_name) -> typing.Generator:
     """Fixture that provides an empty OX cluster."""
-    log.info(f"SETUP empty ox cluster")
+    log.info("SETUP empty ox cluster")
     oxcli.set_default_cluster(ox_name)
     ox_cluster = oxcli.OxCluster()
     log.info(f"url de connexion ssh vers le cluster OX -> {ox_cluster.url()}")
@@ -254,6 +255,7 @@ def ox_cluster(log, ox_name) -> typing.Generator:
     yield ox_cluster
     log.info("TEARDOWN ox cluster")
     ox_cluster.purge()
+
 
 def make_ox_image(log) -> str:
     pyw = pyow.DockerClient(log_level="WARN")
@@ -265,16 +267,25 @@ def make_ox_image(log) -> str:
     return tag
 
 
-def make_ox_container(log, network) -> tc_core.container.DockerContainer:
-    image = make_ox_image(log)
-    ox = (tc_core.container.DockerContainer(image)
-          .with_network(network)
-          .with_network_aliases("dimail_ox")
-          .with_bind_ports(22))
+def create_ssh_key():
+    return_code = subprocess.call(["/bin/sh", "../oxtest/add_ssh_key.sh"])
+    if return_code != 0:
+        raise Exception("Impossible to create ssh key")
 
+
+def make_ox_container(log, network) -> tc_core.container.DockerContainer:
+    create_ssh_key()
+    image = make_ox_image(log)
+    ox = (
+        tc_core.container.DockerContainer(image)
+        .with_network(network)
+        .with_network_aliases("dimail_ox")
+        .with_bind_ports(22)
+    )
     return ox
 
-@pytest.fixture(scope='session')
+
+@pytest.fixture(scope="session")
 def ox_name(log, dimail_test_network, root_db_url) -> typing.Generator:
     """Fixture that yields the URL for ssh to connect to the OX cluster. Will
     make a new (virgin) OX container, or will connect to the already existing
@@ -283,9 +294,9 @@ def ox_name(log, dimail_test_network, root_db_url) -> typing.Generator:
     if not config.settings.test_containers:
         # We use the OX cluster declared in main.py
         yield "default"
-        # We don't want to build a container as the teardown of the fixture.
+        # We don't want to build a container as the teardown of the fixture.
         return
-    
+
     log.info("SETUP OX CONTAINER")
     ox = make_ox_container(log, dimail_test_network)
 
@@ -296,7 +307,15 @@ def ox_name(log, dimail_test_network, root_db_url) -> typing.Generator:
 
     ox_ssh_url = f"ssh://root@{ox.get_container_host_ip()}:{ox.get_exposed_port(22)}"
     # on ne veut pas vérifier la clé sur chaque port randon du conteneur
-    ox_ssh_args = ["-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null"]
+    # et utilisation de la clé ssh générée par le script
+    ox_ssh_args = [
+        "-o",
+        "StrictHostKeyChecking=no",
+        "-o",
+        "UserKnownHostsFile=/dev/null",
+        "-i",
+        "/tmp/dimail_api_test_id_rsa",
+    ]
     log.info(f"url de connexion ssh vers le cluster OX -> {ox_ssh_url}")
 
     oxcli.declare_cluster("testing", ox_ssh_url, ox_ssh_args)
@@ -315,14 +334,20 @@ def root_db_url(log, dimail_test_network) -> tc_mysql.MySqlContainer | None:
         yield "mysql+pymysql://root:toto@localhost:3306/mysql"
         return
 
-    mariadb = (tc_mysql.MySqlContainer("mariadb:11.2", username="root", password="toto", dbname="mysql")
-             # .with_name("mariadb")
-             .with_bind_ports(3306)
-             .with_network(dimail_test_network)
-             .with_network_aliases("mariadb"))
+    mariadb = (
+        tc_mysql.MySqlContainer(
+            "mariadb:11.2", username="root", password="toto", dbname="mysql"
+        )
+        # .with_name("mariadb")
+        .with_bind_ports(3306)
+        .with_network(dimail_test_network)
+        .with_network_aliases("mariadb")
+    )
     log.info("SETUP MARIADB CONTAINER")
     mariadb.start()
-    delay = tc_core.waiting_utils.wait_for_logs(mariadb, "MariaDB init process done. Ready for start up.")
+    delay = tc_core.waiting_utils.wait_for_logs(
+        mariadb, "MariaDB init process done. Ready for start up."
+    )
     log.info(f"MARIADB started in {delay}s")
 
     root_url = mariadb.get_connection_url()
@@ -345,5 +370,3 @@ def dimail_test_network(log) -> typing.Generator:
             yield dimail_test_network
         finally:
             log.info("TEARDOWN network for containers")
-
-

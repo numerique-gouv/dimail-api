@@ -1,6 +1,6 @@
 import fastapi.testclient
 
-from src import main, sql_api, web_models
+from src import main, sql_api
 
 client = fastapi.testclient.TestClient(main.app)
 
@@ -105,9 +105,7 @@ def test_allows__create_allows(db_api_session, log):
 
     # Create first admin for later auth
     auth = ("admin", "admin_password")
-    sql_api.create_user(
-        db_api_session, name=auth[0], password=auth[1], is_admin=True
-    )
+    sql_api.create_user(db_api_session, name=auth[0], password=auth[1], is_admin=True)
 
     # Create user and domain before access
     user = sql_api.create_user(
@@ -136,9 +134,7 @@ def test_allows__delete_allows(db_api_session, log):
 
     # Create first admin for later auth
     auth = ("admin", "admin_password")
-    sql_api.create_user(
-        db_api_session, name=auth[0], password=auth[1], is_admin=True
-    )
+    sql_api.create_user(db_api_session, name=auth[0], password=auth[1], is_admin=True)
 
     # Create allows and related user and domain
     user = sql_api.create_user(

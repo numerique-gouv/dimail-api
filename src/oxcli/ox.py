@@ -20,7 +20,8 @@ class OxCluster(pydantic.BaseModel):
     def url(self):
         return self.ssh_url
 
-    def __init__(self,
+    def __init__(
+        self,
         name: str | None = None,
     ):
         super().__init__()
@@ -28,7 +29,6 @@ class OxCluster(pydantic.BaseModel):
         self.name = name
         self.ssh_url = ssh_url
         self.ssh_args = ssh_args
-            
 
 
 class OxContext(pydantic.BaseModel):
@@ -189,7 +189,7 @@ def _get_context_by_domain(self: OxCluster, domain: str) -> OxContext | None:
 
 
 def _create_context(
-        self: OxCluster, cid: int | None, name: str, domain: str
+    self: OxCluster, cid: int | None, name: str, domain: str
 ) -> OxContext:
     all_contexts = self.list_contexts()
     max_id = 0
@@ -322,13 +322,13 @@ def _displayname_exists(self: OxContext, display_name: str) -> bool:
 
 
 def _create_user(
-        self: OxContext,
-        surName: str,
-        givenName: str,
-        displayName: str | None = None,
-        email: str | None = None,
-        username: str | None = None,
-        domain: str | None = None,
+    self: OxContext,
+    surName: str,
+    givenName: str,
+    displayName: str | None = None,
+    email: str | None = None,
+    username: str | None = None,
+    domain: str | None = None,
 ) -> OxUser:
     if email is None and username is not None and domain is not None:
         email = username + "@" + domain

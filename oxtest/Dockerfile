@@ -20,7 +20,7 @@ COPY --chmod=400 ./ssh_host_ed25519_key ./ssh_host_ed25519_key.pub ./
 COPY --chmod=400 ./ssh_host_rsa_key ./ssh_host_rsa_key.pub ./
 
 WORKDIR /root
-COPY ./authorized_keys ./.ssh/authorized_keys
+COPY authorized_keys* ./.ssh/
 COPY --chmod=0755 ./setup.sh ./purge.sh ./
 
 RUN mkdir /run/sshd

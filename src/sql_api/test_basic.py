@@ -10,9 +10,7 @@ def test_create_user(db_api_session):
 
 def test_delete_user(db_api_session, log):
     # First, we create a user
-    sql_api.create_user(
-        db_api_session, name="toto", password="titi", is_admin=False
-    )
+    sql_api.create_user(db_api_session, name="toto", password="titi", is_admin=False)
     # Then, we retrieve the user
     user = sql_api.get_user(db_api_session, "toto")
     assert user == sql_api.DBUser(name="toto", is_admin=False)
@@ -58,7 +56,7 @@ def test_create_domain(db_api_session, log):
     assert db_dom.smtp_domains == ["smtp1", "smtp2"]
 
 
-def test_create_user(db_api_session):
+def test_create_user_bis(db_api_session):
     db_user = sql_api.create_user(
         db_api_session,
         name="essai-test",
@@ -67,7 +65,7 @@ def test_create_user(db_api_session):
     )
     assert isinstance(db_user, sql_api.DBUser)
     assert db_user.name == "essai-test"
-    assert db_user.is_admin == False
+    assert db_user.is_admin is False
     assert db_user.verify_password("toto")
     assert not db_user.verify_password("titi")
 
@@ -76,24 +74,14 @@ def test_allows(db_api_session):
     allows = sql_api.get_allows(db_api_session, user="", domain="")
     assert allows == []
 
-    user_toto = sql_api.create_user(
-        db_api_session,
-        name="toto",
-        password="toto",
-        is_admin=False
-    )
-    user_tutu = sql_api.create_user(
-        db_api_session,
-        name="tutu",
-        password="toto",
-        is_admin=False
-    )
-    domain_com = sql_api.create_domain(
+    sql_api.create_user(db_api_session, name="toto", password="toto", is_admin=False)
+    sql_api.create_user(db_api_session, name="tutu", password="toto", is_admin=False)
+    sql_api.create_domain(
         db_api_session,
         name="example.com",
         features=[],
     )
-    domain_net = sql_api.create_domain(
+    sql_api.create_domain(
         db_api_session,
         name="example.net",
         features=[],
@@ -126,13 +114,13 @@ def test_allows(db_api_session):
     assert len(allows) == 2
     for item in allows:
         assert item.user == "toto"
-        assert item.domain in [ "example.com", "example.net" ]
+        assert item.domain in ["example.com", "example.net"]
 
     allows = sql_api.get_allows(db_api_session, domain="example.com")
     assert len(allows) == 2
     for item in allows:
         assert item.domain == "example.com"
-        assert item.user in [ "toto", "tutu" ]
+        assert item.user in ["toto", "tutu"]
 
     sql_api.deny_domain_for_user(db_api_session, "toto", "example.com")
     allows = sql_api.get_allows(db_api_session, user="toto")
@@ -143,29 +131,21 @@ def test_allows(db_api_session):
 
 def test_creds(db_api_session):
     user_toto = sql_api.create_user(
-        db_api_session,
-        name="toto",
-        password="toto",
-        is_admin=False
+        db_api_session, name="toto", password="toto", is_admin=False
     )
-    user_tutu = sql_api.create_user(
-        db_api_session,
-        name="tutu",
-        password="toto",
-        is_admin=False
-    )
+    sql_api.create_user(db_api_session, name="tutu", password="toto", is_admin=False)
     user_admin = sql_api.create_user(
         db_api_session,
         name="chef",
         password="secret",
         is_admin=True,
     )
-    domain_com = sql_api.create_domain(
+    sql_api.create_domain(
         db_api_session,
         name="example.com",
         features=[],
     )
-    domain_net = sql_api.create_domain(
+    sql_api.create_domain(
         db_api_session,
         name="example.net",
         features=[],
@@ -173,7 +153,7 @@ def test_creds(db_api_session):
 
     creds = user_toto.get_creds()
     assert isinstance(creds, sql_api.Creds)
-    assert creds.is_admin == False
+    assert creds.is_admin is False
     assert not creds.can_read("example.com")
 
     # Quand on donne les droits au user en SQL, ça se reflète dans les creds
@@ -189,5 +169,3 @@ def test_creds(db_api_session):
     sql_api.deny_domain_for_user(db_api_session, "toto", "example.com")
     creds = user_toto.get_creds()
     assert not creds.can_read("example.com")
-
-
