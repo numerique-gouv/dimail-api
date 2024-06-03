@@ -45,9 +45,15 @@ def fix_logger(scope="session") -> typing.Generator:
     """Fixture making the logger available"""
     logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
     logging.getLogger("docker").setLevel(logging.INFO)
+    logging.getLogger("asyncio").setLevel(logging.WARNING)
+    logging.getLogger("testcontainers.core.container").setLevel(logging.WARNING)
+    logging.getLogger("testcontainers.core.waiting_utils").setLevel(logging.WARNING)
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
     logger.info("SETUP logger")
+    use_containers = config.settings.test_containers
+    if use_containers:
+        logger.warning("Will be generating test containers")
     yield logger
     logger.info("TEARDOWN logger")
 
