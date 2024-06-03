@@ -5,6 +5,15 @@ import sqlalchemy.orm as orm
 
 from .. import sql_api
 
+from .delete_allow import delete_allow
+from .get_allows import get_allows
+from .get_domains import get_domains
+from .get_user import get_user
+from .get_users import get_users
+from .post_allow import post_allow
+from .post_domain import post_domain
+from .post_user import post_user
+
 users = fastapi.APIRouter(
     prefix="/admin/users",
     tags=["admin users"],
@@ -32,15 +41,6 @@ def depends_api_db():
 
 
 DependsApiDb = typing.Annotated[orm.Session, fastapi.Depends(depends_api_db)]
-
-from .delete_allow import delete_allow
-from .get_allows import get_allows
-from .get_domains import get_domains
-from .get_user import get_user
-from .get_users import get_users
-from .post_allow import post_allow
-from .post_domain import post_domain
-from .post_user import post_user
 
 __all__ = [
     delete_allow,

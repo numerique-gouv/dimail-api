@@ -3,6 +3,13 @@ import typing
 import fastapi.security
 import sqlalchemy.orm as orm
 
+from .get_alias import get_alias
+from .get_mailbox import get_mailbox
+from .get_mailboxes import get_mailboxes
+from .get_token import login_for_access_token
+from .post_alias import post_alias
+from .post_mailbox import post_mailbox
+
 from .. import sql_api, sql_dovecot, sql_postfix
 
 mailboxes = fastapi.APIRouter(prefix="/mailboxes", tags=["mailboxes"])
@@ -56,16 +63,6 @@ def depends_postfix_db():
 
 
 DependsPostfixDb = typing.Annotated[typing.Any, fastapi.Depends(depends_postfix_db)]
-
-
-from .get_alias import get_alias
-from .get_mailbox import get_mailbox
-from .get_mailboxes import get_mailboxes
-from .get_token import login_for_access_token
-from .post_alias import post_alias
-from .post_mailbox import post_mailbox
-
-# from .post_user import post_user
 
 __all__ = [
     get_alias,
