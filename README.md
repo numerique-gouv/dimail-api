@@ -21,6 +21,51 @@ deactivate
 
 ## Les outils pour tester
 
+### A propos des tests et des bases de données
+
+Les tests sont destructifs: ils écrivent dans les bases de données, et détruisent
+tout à la fin. Normalement, ils doivent se faire sur des bases de données dédiées
+à cet usage (cf. conftest.py, des fixtures créent des bases de données, gèrent les
+upgrades, et font les drops à la fin des tests). Si un test est mal écrit (s'il ne
+passe pas par la bonne fixture), il aura lieu en se connectant à la base de données
+par défaut (celle qui est configurée dans 'config/settings.toml'). C'est pourquoi:
+- le fichier config/settings.toml contient des URL vers les bases de données qui ne
+  permettent pas de se connecte (le mot de passe n'est pas le bon)
+- les bonnes URLs, pour les bases qui tournent dans le mariadb du docker compose,
+  doivent être dans un fichier '.env-dev' (utilisé par 'start-dev.sh'), pour être
+  utilisées par uvicorn
+- les fixtures de test produisent des URLs valides sur les bases qu'elles créent
+
+Et donc, si un test est mal écrit (sans utiliser les bonnes fixtures) il va échouer
+avec un message d'erreur explicite.
+
+Si on met directement les bonnes URLs dans 'config/settings.toml', ou si on charge
+le fichier '.env-dev' dans le terminal où on fait tourner 'pytest', alors un test
+mal écrit va se connecter à la base du docker (et non à la base de test) et risque
+de tout détruire à cet endroit là.
+
+### Le script start-dev.sh
+
+Ce script se charge de lancer toute l'application dans un environnement correct, à savoir :
+- détecter si vous utilisez podman ou docker
+- lancer le docker composer up (ou équivalent), ce qui va...
+  - lancer un serveur mariadb dans un conteneur
+  - lancer un serveur open-xchange dans un conteneur
+- lancer uvicorn avec les bonnes options
+
+Le script va chercher à la racine du dépôt un fichier '.env-dev' qui contient les variables
+d'environnement utiles pour se connecter (en particulier, il contient les URL de connexions
+aux bases de données, ainsi que le secret pour les JWT).
+
+Exemple d'un fichier '.env-dev':
+
+```bash
+export DIMAIL_JWT_SECRET="Not the default secret"
+export DIMAIL_API_DB_URL="mysql+pymysql://api_user:coincoin@localhost:3306/api"
+export DIMAIL_IMAP_DB_URL="mysql+pymysql://dovecot:toto@localhost:3306/dovecot"
+export DIMAIL_POSTFIX_DB_URL="mysql+pymysql://postfix:toto@localhost:3306/dovecot"
+```
+
 ### Démarrer mariadb et un serveur OX
 ```bash
 docker compose up -d
@@ -31,15 +76,6 @@ docker compose up -d
 alembic revision --autogenerate -m "<votre_message>" 
 
 alembic upgrade head
-```
-
-### Modifier les URLs vers vos bases de données 
-
-Dynaconf recupère par défaut les URLs dans `config/settings.toml`. Vous pouvez surcharger ces valeurs en exportant `DIMAIL_API_DB_URL`, `DIMAIL_DOVECOT_DB_URL`, et `DIMAIL_POSTFIX_DB_URL`
-dans le terminal dans lequel vous lancer uvicorn. 
-
-```
-Attention à ne pas lancer pytest dans le même terminal, les tests risqueraient de tourner sur vos bases de données et d'altérer/supprimer leurs contenus.
 ```
 
 ### Se connecter à la base dovecot
