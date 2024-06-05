@@ -73,11 +73,11 @@ from .post_alias import post_alias
 from .post_mailbox import post_mailbox
 
 __all__ = [
+    get_alias,
+    get_domain,
+    get_mailbox,
     get_mailboxes,
     login_for_access_token,
     post_alias,
     post_mailbox,
-    get_domain,
-    get_alias,
-    get_mailbox,
 ]

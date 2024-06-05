@@ -51,7 +51,7 @@ def test_users__create(db_api, ox_cluster, log):
     assert response.json() == {"detail": "User already exists"}
 
 
-def test_domains__fails_no_name(db_api_session, log):
+def test_domains__create_fails_no_name(db_api_session, log):
     """Cannot create domain with no name."""
 
     response = client.post(
