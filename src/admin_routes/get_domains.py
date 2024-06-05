@@ -8,4 +8,4 @@ async def get_domains(
     user: auth.DependsBasicAdmin,
 ) -> list[web_models.Domain]:
     domains = sql_api.get_domains(db)
-    return [web_models.Domain.from_db(dom) for dom in domains]
+    return [web_models.Domain.from_db(domain) for domain in domains]

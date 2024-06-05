@@ -1,11 +1,16 @@
 # ruff: noqa: E402
-
 import typing
 
 import fastapi.security
 import sqlalchemy.orm as orm
 
 from .. import sql_api, sql_dovecot, sql_postfix
+
+
+domains = fastapi.APIRouter(
+    prefix="/domains",
+    tags=["domains"],
+)
 
 mailboxes = fastapi.APIRouter(prefix="/mailboxes", tags=["mailboxes"])
 aliases = fastapi.APIRouter(prefix="/aliases", tags=["aliases"])
@@ -62,15 +67,17 @@ DependsPostfixDb = typing.Annotated[typing.Any, fastapi.Depends(depends_postfix_
 from .get_alias import get_alias
 from .get_mailbox import get_mailbox
 from .get_mailboxes import get_mailboxes
+from .get_domain import get_domain
 from .get_token import login_for_access_token
 from .post_alias import post_alias
 from .post_mailbox import post_mailbox
 
 __all__ = [
-    get_alias,
-    get_mailbox,
     get_mailboxes,
     login_for_access_token,
     post_alias,
     post_mailbox,
+    get_domain,
+    get_alias,
+    get_mailbox,
 ]
