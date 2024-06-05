@@ -30,7 +30,6 @@ def create_domain(
         db_domain.imap_domains = [dom for dom in imap_domains]
     if smtp_domains is not None:
         db_domain.smtp_domains = [dom for dom in smtp_domains]
-
     db.add(db_domain)
     db.commit()
     db.refresh(db_domain)
