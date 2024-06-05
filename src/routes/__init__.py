@@ -1,4 +1,4 @@
-# ruff: noqa: E402, I001
+# ruff: noqa: E402
 import typing
 
 import fastapi.security
