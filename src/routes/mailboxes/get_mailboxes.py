@@ -5,7 +5,7 @@ import logging
 import fastapi
 from ..dependencies import DependsDovecotDb
 
-from src import auth, web_models, sql_api
+from src import auth, web_models, sql_dovecot, oxcli
 from . import router
 
 
@@ -39,7 +39,7 @@ async def get_mailboxes(
     domain_name: str,
     #  page_size: int = 20,
     #  page_number: int = 0,
-) -> list[web_models.Mailbox]:
+):
     log = logging.getLogger(__name__)
     log.info(f"Searching mailboxes in domain {domain_name}\n")
 
@@ -50,13 +50,17 @@ async def get_mailboxes(
             return []
         return example_users
 
-    if domain_name != "all":
-        domain_db = sql_api.get_domain(db, domain_name)
-        if domain_db is None:
-            raise fastapi.HTTPException(status_code=404, detail="Domain not found")
+    # if domain_db is None:
+    #     raise fastapi.HTTPException(status_code=404, detail="Domain not found")
+    if not perms.can_read(domain_name):
+        raise fastapi.HTTPException(status_code=403, detail="Permission denied")
 
-        if not perms.can_read(domain_name):
-            raise fastapi.HTTPException(status_code=403, detail="Permission denied")
-        else:
-            return []
-            # return [domaine_db.mailboxes]
+    # Find the expected domain
+    ox_cluster = oxcli.OxCluster()
+    ctx = ox_cluster.get_context_by_domain(domain_name)
+    if ctx is None:
+        log.error(f"Le domaine {domain_name} est inconnu du cluster OX")
+        raise Exception("Le domaine est connu de la base API, mais pas de OX")
+
+    dovecot_users = sql_dovecot.get_users(db, domain_name)
+    return [web_models.Mailbox.from_db(mailbox, mailbox.username) for mailbox in dovecot_users]
