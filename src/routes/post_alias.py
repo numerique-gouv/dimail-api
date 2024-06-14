@@ -3,7 +3,8 @@ import logging
 import fastapi
 
 from .. import auth, sql_postfix, web_models
-from . import DependsPostfixDb, aliases
+from .dependencies import DependsPostfixDb
+from . import aliases
 
 
 @aliases.post("/", description="Creates an alias in postfix")
@@ -25,8 +26,6 @@ async def post_alias(
         log.info("Cet alias existe deja")
         raise fastapi.HTTPException(status_code=409, detail="Alias already exists")
 
-    db_alias = sql_postfix.create_alias(
-        db, alias.domain, alias.username, alias.destination
-    )
+    db_alias = sql_postfix.create_alias(db, alias.domain, alias.username, alias.destination)
 
     return web_models.Alias.from_db(db_alias)

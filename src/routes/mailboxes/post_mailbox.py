@@ -4,15 +4,17 @@ import uuid
 
 import fastapi
 
-from .. import auth, oxcli, sql_dovecot, utils, web_models
-from . import DependsDovecotDb, mailboxes
+from src import auth, oxcli, sql_dovecot, utils, web_models
+from ..dependencies import DependsDovecotDb
+from . import router
 
 
-@mailboxes.post("/", description="Create a mailbox in dovecot and OX", status_code=201)
+@router.post("/", description="Create a mailbox in dovecot and OX", status_code=201)
 async def post_mailbox(
     mailbox: web_models.CreateMailbox,
     user: auth.DependsTokenUser,
     db: DependsDovecotDb,
+    domain_name: str,
 ) -> web_models.NewMailbox:
     log = logging.getLogger(__name__)
 

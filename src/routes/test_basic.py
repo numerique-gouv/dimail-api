@@ -59,7 +59,7 @@ def test_create_mailbox(ox_cluster, my_user, db_dovecot_session):
     token = my_user["token"]
 
     response = client.post(
-        "/mailboxes",
+        "/domains/{domain_name}/mailboxes",
         json={
             "email": "address@tutu.net",
             "surName": "Essai",
@@ -188,13 +188,15 @@ def test_permissions(db_api, db_dovecot, my_user, log):
     log.info(f"Using token {token}")
 
     response = client.get(
-        "/mailboxes/toto@tutu.net", headers={"Authorization": f"Bearer {token}"}
+        "/domains/{domain_name}/mailboxes/toto@tutu.net",
+        headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 404
     assert response.json() == {"detail": "Mailbox not found"}
 
     response = client.get(
-        "/mailboxes/toto@example.com", headers={"Authorization": f"Bearer {token}"}
+        "/domains/{domain_name}/mailboxes/toto@example.com",
+        headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 403
 
@@ -206,9 +208,7 @@ def test_domains__get_domain_allowed_user(db_api, db_dovecot, my_user, log):
     domain_name = "tutu.net"
 
     # Get domain
-    response = client.get(
-        f"/domains/{domain_name}/", headers={"Authorization": f"Bearer {token}"}
-    )
+    response = client.get(f"/domains/{domain_name}/", headers={"Authorization": f"Bearer {token}"})
 
     assert response.status_code == fastapi.status.HTTP_200_OK
     assert response.json() == {
@@ -233,9 +233,7 @@ def test_domains__get_domain_not_authorized(db_api_session, db_dovecot, my_user)
     )
     # Access is not granted to this user
 
-    response = client.get(
-        f"/domains/{domain.name}/", headers={"Authorization": f"Bearer {token}"}
-    )
+    response = client.get(f"/domains/{domain.name}/", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == fastapi.status.HTTP_401_UNAUTHORIZED
     assert response.json() == {"detail": "Not authorized."}
 
@@ -244,9 +242,7 @@ def test_domains__get_domain_admin_always_authorized(db_api_session):
     """Admin can access details to all domains."""
 
     # Create admin user and domain
-    sql_api.create_user(
-        db_api_session, name="admin", password="admin_password", is_admin=True
-    )
+    sql_api.create_user(db_api_session, name="admin", password="admin_password", is_admin=True)
     response = client.get("/token/", auth=("admin", "admin_password"))
     token = response.json()["access_token"]
 
@@ -257,9 +253,7 @@ def test_domains__get_domain_admin_always_authorized(db_api_session):
     )
     # Admin user is not given allows to any domain
 
-    response = client.get(
-        f"/domains/{domain.name}/", headers={"Authorization": f"Bearer {token}"}
-    )
+    response = client.get(f"/domains/{domain.name}/", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == fastapi.status.HTTP_200_OK
     assert response.json() == {
         "name": domain.name,

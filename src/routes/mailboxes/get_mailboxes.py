@@ -1,9 +1,13 @@
 import uuid
+import logging
+
 
 import fastapi
+from ..dependencies import DependsDovecotDb
 
-from .. import auth, web_models
-from . import mailboxes
+from src import auth, web_models, sql_api
+from . import router
+
 
 example_users = [
     web_models.Mailbox(
@@ -21,31 +25,38 @@ example_users = [
 ]
 
 
-@mailboxes.get(
+@router.get(
     "/",
     responses={
         200: {"description": "Get users from query request"},
-        403: {
-            "description": "Permission denied, insuficient permissions to perform the request"
-        },
+        403: {"description": "Permission denied, insuficient permissions to perform the request"},
         404: {"description": "No users matched the query"},
     },
 )
 async def get_mailboxes(
+    db: DependsDovecotDb,
     user: auth.DependsTokenUser,
-    domain: str = "all",
+    domain_name: str,
     #  page_size: int = 20,
     #  page_number: int = 0,
 ) -> list[web_models.Mailbox]:
-    print(f"Searching users in domain {domain}\n")
+    log = logging.getLogger(__name__)
+    log.info(f"Searching mailboxes in domain {domain_name}\n")
+
     perms = user.get_creds()
-    if domain == "all":
+
+    if domain_name in ["all", "example.com"]:
         if "example.com" not in perms.domains:
             return []
         return example_users
-    if domain != "all":
-        if not perms.can_read(domain):
+
+    if domain_name != "all":
+        domain_db = sql_api.get_domain(db, domain_name)
+        if domain_db is None:
+            raise fastapi.HTTPException(status_code=404, detail="Domain not found")
+
+        if not perms.can_read(domain_name):
             raise fastapi.HTTPException(status_code=403, detail="Permission denied")
-        if domain != "example.com":
+        else:
             return []
-        return example_users
+            # return [domaine_db.mailboxes]
