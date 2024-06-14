@@ -86,7 +86,7 @@ def test_alias__creates_and_fetch_an_alias(my_user, db_postfix):
     token = my_user["token"]
 
     response = client.get(
-        "/aliases",
+        "/domains/tutu.net/aliases",
         params={
             "username": "from",
             "domain": "tutu.net",
@@ -97,7 +97,7 @@ def test_alias__creates_and_fetch_an_alias(my_user, db_postfix):
     assert response.status_code == 404
 
     response = client.post(
-        "/aliases",
+        "/domains/tutu.net/aliases",
         json={
             "username": "from",
             "domain": "tutu.net",
@@ -113,7 +113,7 @@ def test_alias__creates_and_fetch_an_alias(my_user, db_postfix):
     }
 
     response = client.get(
-        "/aliases/",
+        "/domains/tutu.net/aliases/",
         params={
             "username": "from",
             "domain": "tutu.net",
@@ -131,7 +131,7 @@ def test_alias__creates_and_fetch_an_alias(my_user, db_postfix):
     ]
 
     response = client.post(
-        "/aliases/",
+        "/domains/tutu.net/aliases/",
         json={
             "username": "from",
             "domain": "tutu.net",
@@ -147,7 +147,7 @@ def test_alias__creates_and_fetch_an_alias(my_user, db_postfix):
     }
 
     response = client.post(
-        "/aliases/",
+        "/domains/tutu.net/aliases/",
         json={
             "username": "old.chap",
             "domain": "tutu.net",
@@ -158,7 +158,7 @@ def test_alias__creates_and_fetch_an_alias(my_user, db_postfix):
     assert response.status_code == 200
 
     response = client.get(
-        "/aliases/",
+        "/domains/tutu.net/aliases/",
         params={
             "domain": "tutu.net",
         },
@@ -168,7 +168,7 @@ def test_alias__creates_and_fetch_an_alias(my_user, db_postfix):
     assert len(response.json()) == 3
 
     response = client.get(
-        "/aliases/",
+        "/domains/tutu.net/aliases/",
         params={
             "domain": "tutu.net",
             "username": "from",

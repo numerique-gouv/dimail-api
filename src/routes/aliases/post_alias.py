@@ -2,12 +2,12 @@ import logging
 
 import fastapi
 
-from .. import auth, sql_postfix, web_models
-from .dependencies import DependsPostfixDb
-from . import aliases
+from src import auth, sql_postfix, web_models
+from ..dependencies import DependsPostfixDb
+from . import router
 
 
-@aliases.post("/", description="Creates an alias in postfix")
+@router.post("/", description="Creates an alias in postfix")
 async def post_alias(
     alias: web_models.Alias,
     user: auth.DependsTokenUser,
