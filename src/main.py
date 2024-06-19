@@ -23,6 +23,7 @@ app.include_router(admin_routes.users)
 app.include_router(admin_routes.domains)
 app.include_router(admin_routes.allows)
 
+app.include_router(routes.domains)
 app.include_router(routes.token)
 app.include_router(routes.mailboxes)
 app.include_router(routes.aliases)
