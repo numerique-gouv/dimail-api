@@ -1,8 +1,0 @@
-
-
-* GET /domain/example.com/mailboxes/essai
-  GET /domain/example.com/aliases/essai
-  GET /domain/example.com/mailboxes?...
-  GET /domain/example.com/aliases?
-
-
