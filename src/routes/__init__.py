@@ -13,12 +13,7 @@ from .get_token import login_for_access_token
 
 __all__ = [
     aliases,
-    get_alias,
     get_domain,
-    get_mailbox,
-    get_mailboxes,
     login_for_access_token,
     mailboxes,
-    post_alias,
-    post_mailbox,
 ]
