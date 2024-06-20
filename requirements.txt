@@ -11,6 +11,6 @@ passlib==1.7.4
 argon2-cffi==23.1.0
 python-multipart==0.0.9
 PyJWT==2.8.0
-testcontainers[mysql]==4.5.1
+testcontainers[mysql]==4.6.0
 docker==7.1.0 # https://github.com/docker/docker-py/issues/3256
 python-on-whales==0.71.0
