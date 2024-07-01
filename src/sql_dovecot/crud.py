@@ -7,6 +7,10 @@ def get_user(db: orm.Session, username: str, domain: str):
     return db.get(models.ImapUser, {"username": username, "domain": domain})
 
 
+def get_users(db: orm.Session, domain_name: str):
+    return db.query(models.ImapUser).filter(models.ImapUser.domain == domain_name).all()
+
+
 def create_user(db: orm.Session, username: str, domain: str, password: str):
     imap_user = models.ImapUser(
         username=username,

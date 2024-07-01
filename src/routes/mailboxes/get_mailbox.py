@@ -3,13 +3,14 @@ import uuid
 
 import fastapi
 
-from .. import auth, oxcli, sql_dovecot, utils, web_models
-from . import DependsDovecotDb, mailboxes
+from src import auth, oxcli, sql_dovecot, utils, web_models
+from ..dependencies import DependsDovecotDb
+from . import router
 
 # uuid_re = re.compile("^[0-9a-f-]{32,36}$")
 
 
-@mailboxes.get(
+@router.get(
     "/{mailbox_id}",
     responses={
         200: {"description": "Get a mailbox from their e-mail"},
@@ -58,9 +59,7 @@ async def get_mailbox(
     log.info(f"Cette adresse est sur le domaine {domain}")
 
     if domain is None:
-        log.error(
-            "Comment ca le domaine n'est pas defini alors que ca match la regexp ?"
-        )
+        log.error("Comment ca le domaine n'est pas defini alors que ca match la regexp ?")
         raise fastapi.HTTPException(status_code=422, detail="Invalid email address")
 
     if not perms.can_read(domain):
