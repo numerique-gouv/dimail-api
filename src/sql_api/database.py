@@ -18,7 +18,11 @@ def init_db(config: str):
     global maker
     url = config
     engine = sa.create_engine(url)
-    maker = orm.sessionmaker(autocommit=False, autoflush=False, bind=engine, info={}, close_resets_only=False)
+    maker = orm.sessionmaker(autocommit=False,
+                             autoflush=False,
+                             bind=engine,
+                             info={},
+                             close_resets_only=False)
 
 
 def get_db():
@@ -29,6 +33,7 @@ def get_db():
         db = maker()
         atexit.register(lambda: db.close())
     return db
+
 
 def get_maker():
     global maker

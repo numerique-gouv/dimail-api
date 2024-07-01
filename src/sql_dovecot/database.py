@@ -22,7 +22,12 @@ def init_db(config: str):
     global maker
     url = config
     engine = sa.create_engine(url)
-    maker = orm.sessionmaker(autocommit=False, autoflush=False, bind=engine, info={}, close_resets_only=False)
+    maker = orm.sessionmaker(autocommit=False,
+                             autoflush=False,
+                             bind=engine,
+                             info={},
+                             close_resets_only=False)
+
 
 def get_maker() -> orm.sessionmaker:
     global maker
