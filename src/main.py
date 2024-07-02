@@ -1,4 +1,5 @@
 import fastapi
+from fastapi.middleware.cors import CORSMiddleware
 
 from . import admin_routes, config, oxcli, routes, sql_api, sql_dovecot, sql_postfix
 
@@ -18,6 +19,16 @@ app = fastapi.FastAPI(
         404: {"description": "Not found"},
     },
 )
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 
 app.include_router(admin_routes.users)
 app.include_router(admin_routes.domains)

@@ -68,6 +68,12 @@ async def get_mailbox(
 
     ox_cluster = oxcli.OxCluster()
     ctx = ox_cluster.get_context_by_domain(domain)
+    # needed because ox_user value is set within if:76
+    my_ox_user = {
+        "givenName": None,
+        "surName": None,
+        "displayName": None
+    }
     if ctx is None:
         log.info("Aucun context ne gere le domaine chez OX")
     else:
@@ -75,6 +81,11 @@ async def get_mailbox(
         if ox_user is None:
             log.info("Le contexte ne connait pas cet email")
         else:
+            my_ox_user = {
+                "givenName": ox_user.givenName,
+                "surName": ox_user.surName,
+                "displayName": ox_user.displayName
+            }
             log.info(f"J'ai trouve le user chez OX: {ox_user}")
 
     imap = sql_dovecot.get_user(db, username, domain)
@@ -82,14 +93,18 @@ async def get_mailbox(
         log.info("La base dovecot ne contient pas cette adresse.")
         raise fastapi.HTTPException(status_code=404, detail="Mailbox not found")
 
+    status = "ok"
+    if my_ox_user["givenName"] is None:
+        status = "broken"
+
     log.info("On a trouve l'adresse.")
     return web_models.Mailbox(
         type="mailbox",
-        status="ok",
+        status=status,
         email=imap.username + "@" + imap.domain,
-        givenName=None,
-        surName=None,
-        displayName=None,
+        givenName=my_ox_user["givenName"],
+        surName=my_ox_user["surName"],
+        displayName=my_ox_user["displayName"],
         username=imap.username,
         domain=imap.domain,
         uuid=uuid.uuid4(),

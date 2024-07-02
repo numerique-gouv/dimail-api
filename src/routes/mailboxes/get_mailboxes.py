@@ -62,5 +62,19 @@ async def get_mailboxes(
         log.error(f"Le domaine {domain_name} est inconnu du cluster OX")
         raise Exception("Le domaine est connu de la base API, mais pas de OX")
 
-    dovecot_users = sql_dovecot.get_users(db, domain_name)
-    return [web_models.Mailbox.from_db(mailbox, mailbox.username) for mailbox in dovecot_users]
+    ox_users = ctx.list_users()
+    db_users = sql_dovecot.get_users(db, domain_name)
+
+    emails = set([user.email for user in ox_users] + [user.email() for user in db_users])
+    ox_users_dict = {user.email: user for user in ox_users}
+    db_users_dict = {user.email(): user for user in db_users}
+
+    my_mailboxes = [
+        web_models.Mailbox.from_both_users(
+            ox_users_dict.get(email),
+            db_users_dict.get(email),
+        )
+        for email in emails
+    ]
+
+    return my_mailboxes
