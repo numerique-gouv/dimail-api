@@ -1,3 +1,5 @@
+import typing
+
 import fastapi.testclient
 import pytest
 
@@ -6,8 +8,14 @@ from .. import main, sql_api, sql_dovecot
 client = fastapi.testclient.TestClient(main.app)
 
 
+class TestData(typing.NamedTuple):
+    user: str
+    domains: list[str]
+    token: str
+
+
 @pytest.fixture(scope="function")
-def my_user(ox_cluster, db_api, log):
+def my_user(ox_cluster, db_api, log) -> typing.Generator[TestData, None, None]:
     user = "bidibule"
     domain = "tutu.net"
 
@@ -52,11 +60,11 @@ def my_user(ox_cluster, db_api, log):
     assert res.status_code == 200
 
     token = res.json()["access_token"]
-    yield {"user": user, "domains": [domain], "token": token}
+    yield TestData(user=user, domains=[domain], token=token)
 
 
 def test_create_mailbox(ox_cluster, my_user, db_dovecot_session):
-    token = my_user["token"]
+    token = my_user.token
 
     response = client.post(
         "/domains/{domain_name}/mailboxes",
@@ -83,7 +91,7 @@ def test_create_mailbox(ox_cluster, my_user, db_dovecot_session):
 
 
 def test_alias__creates_and_fetch_an_alias(my_user, db_postfix):
-    token = my_user["token"]
+    token = my_user.token
 
     response = client.get(
         "/domains/tutu.net/aliases",
@@ -184,7 +192,7 @@ def test_alias__creates_and_fetch_an_alias(my_user, db_postfix):
 
 
 def test_permissions(db_api, db_dovecot, my_user, log):
-    token = my_user["token"]
+    token = my_user.token
     log.info(f"Using token {token}")
 
     response = client.get(
@@ -204,7 +212,7 @@ def test_permissions(db_api, db_dovecot, my_user, log):
 def test_domains__get_domain_allowed_user(db_api, db_dovecot, my_user, log):
     """When being a domain owner, use can get domains details."""
 
-    token = my_user["token"]
+    token = my_user.token
     domain_name = "tutu.net"
 
     # Get domain
@@ -225,7 +233,7 @@ def test_domains__get_domain_allowed_user(db_api, db_dovecot, my_user, log):
 def test_domains__get_domain_not_authorized(db_api_session, db_dovecot, my_user):
     """Cannot access details to a domain to which you have no allows."""
 
-    token = my_user["token"]
+    token = my_user.token
     domain = sql_api.create_domain(
         db_api_session,
         name="example.com",
