@@ -62,21 +62,24 @@ async def get_mailbox(
         raise fastapi.HTTPException(status_code=422, detail="Invalid email address")
 
     if not perms.can_read(domain):
-        log.info(f"Permission denied on domain {domain} for curent user")
+        log.info(f"Permission denied on domain {domain} for current user")
         raise fastapi.HTTPException(status_code=403, detail="Permission denied")
 
     ox_cluster = oxcli.OxCluster()
     ctx = ox_cluster.get_context_by_domain(domain)
 
     if ctx is None:
-        log.info("Aucun context ne gere le domaine chez OX")
+        log.info("Aucun contexte ne gère le domaine chez OX")
 
     ox_user = ctx.get_user_by_email(mailbox_id) if ctx else None
-    if ox_user is None:
-        log.info("Le contexte OX ne connait pas cet email")
-
     imap = sql_dovecot.get_user(db, username, domain)
+
+    if ox_user is None and imap is None:
+        log.error(f"Boite aux lettres introuvable : '{mailbox_id}'")
+        raise fastapi.HTTPException(status_code=404, detail="Mailbox not found")
+    if ox_user is None:
+        log.warning("Le contexte OX ne connait pas cet email")
     if imap is None:
-        log.info("La base dovecot ne contient pas cette adresse.")
+        log.warning("La base dovecot ne contient pas cette adresse.")
 
     return web_models.Mailbox.from_both_users(ox_user, imap)
