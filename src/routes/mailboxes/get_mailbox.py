@@ -1,5 +1,4 @@
 import logging
-import uuid
 
 import fastapi
 
@@ -68,53 +67,16 @@ async def get_mailbox(
 
     ox_cluster = oxcli.OxCluster()
     ctx = ox_cluster.get_context_by_domain(domain)
-    # needed because ox_user value is set within if:76
-    my_ox_user = {
-        "givenName": None,
-        "surName": None,
-        "displayName": None
-    }
+
     if ctx is None:
         log.info("Aucun context ne gere le domaine chez OX")
-    else:
-        ox_user = ctx.get_user_by_email(mailbox_id)
-        if ox_user is None:
-            log.info("Le contexte ne connait pas cet email")
-        else:
-            my_ox_user = {
-                "givenName": ox_user.givenName,
-                "surName": ox_user.surName,
-                "displayName": ox_user.displayName
-            }
-            log.info(f"J'ai trouve le user chez OX: {ox_user}")
+
+    ox_user = ctx.get_user_by_email(mailbox_id) if ctx else None
+    if ox_user is None:
+        log.info("Le contexte OX ne connait pas cet email")
 
     imap = sql_dovecot.get_user(db, username, domain)
     if imap is None:
         log.info("La base dovecot ne contient pas cette adresse.")
-        raise fastapi.HTTPException(status_code=404, detail="Mailbox not found")
 
-    status = "ok"
-    if my_ox_user["givenName"] is None:
-        status = "broken"
-
-    log.info("On a trouve l'adresse.")
-    return web_models.Mailbox(
-        type="mailbox",
-        status=status,
-        email=imap.username + "@" + imap.domain,
-        givenName=my_ox_user["givenName"],
-        surName=my_ox_user["surName"],
-        displayName=my_ox_user["displayName"],
-        username=imap.username,
-        domain=imap.domain,
-        uuid=uuid.uuid4(),
-    )
-
-
-#    if (
-#        mailbox_id != "toto@example.com"
-#        and mailbox_id != "d437abd5-2b49-47db-be49-05f79f1cc242"
-#    ):
-#        raise fastapi.HTTPException(status_code=404, detail="Mailbox not found")
-#
-#    return mailbox
+    return web_models.Mailbox.from_both_users(ox_user, imap)
