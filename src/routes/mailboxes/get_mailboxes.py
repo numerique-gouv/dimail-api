@@ -45,13 +45,12 @@ async def get_mailboxes(
 
     perms = user.get_creds()
 
+    # FIXME To be removed
     if domain_name in ["all", "example.com"]:
         if "example.com" not in perms.domains:
             return []
         return example_users
 
-    # if domain_db is None:
-    #     raise fastapi.HTTPException(status_code=404, detail="Domain not found")
     if not perms.can_read(domain_name):
         raise fastapi.HTTPException(status_code=403, detail="Permission denied")
 
@@ -62,7 +61,10 @@ async def get_mailboxes(
         log.error(f"Le domaine {domain_name} est inconnu du cluster OX")
         raise Exception("Le domaine est connu de la base API, mais pas de OX")
 
-    ox_users = ctx.list_users()
+    ox_users = []
+    if ctx:
+        ox_users = ctx.list_users()
+
     db_users = sql_dovecot.get_users(db, domain_name)
 
     emails = set([user.email for user in ox_users] + [user.email() for user in db_users])

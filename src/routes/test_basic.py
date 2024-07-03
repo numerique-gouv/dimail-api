@@ -59,7 +59,7 @@ def test_create_mailbox(ox_cluster, my_user, db_dovecot_session):
     token = my_user["token"]
 
     response = client.post(
-        "/domains/{domain_name}/mailboxes",
+        "/domains/tutu.net/mailboxes",
         json={
             "email": "address@tutu.net",
             "surName": "Essai",
@@ -188,14 +188,20 @@ def test_permissions(db_api, db_dovecot, my_user, log):
     log.info(f"Using token {token}")
 
     response = client.get(
-        "/domains/{domain_name}/mailboxes/toto@tutu.net",
+        "/domains/pas-un-domaine/mailboxes/toto@something.net",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 412
+
+    response = client.get(
+        "/domains/tutu.net/mailboxes/toto@tutu.net",
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 404
     assert response.json() == {"detail": "Mailbox not found"}
 
     response = client.get(
-        "/domains/{domain_name}/mailboxes/toto@example.com",
+        "/domains/example.com/mailboxes/toto@example.com",
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 403

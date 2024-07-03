@@ -24,6 +24,9 @@ async def post_mailbox(
         log.info("Failed to split the email address")
         raise fastapi.HTTPException(status_code=422, detail="Invalid email address")
 
+    if domain_name != domain:
+        raise fastapi.HTTPException(status_code=412, detail="Inconsistent domain name")
+
     perms = user.get_creds()
     if not perms.can_read(domain):
         log.info(f"Cet utilisateur ne peut pas traiter le domaine {domain}")

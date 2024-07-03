@@ -31,16 +31,16 @@ class Mailbox(pydantic.BaseModel):
     @classmethod
     def from_db(cls, in_db: sql_dovecot.ImapUser, username: str):
         return cls(
-            type="mailbox",
-            status="unknown" if in_db.active == "Y" else "ko",
+            type=MailboxType.Mailbox,
+            status=MailboxStatus.Unknown if in_db.active == "Y" else MailboxStatus.Broken,
             email=f"{in_db.username}@{in_db.domain}",
         )
 
     @classmethod
     def from_ox_user(cls, in_user: oxcli.OxUser):
         return cls(
-            type="mailbox",
-            status="unknown",
+            type=MailboxType.Mailbox,
+            status=MailboxStatus.Unknown,
             email=in_user.email,
             givenName=in_user.givenName,
             surName=in_user.surName,
@@ -52,15 +52,27 @@ class Mailbox(pydantic.BaseModel):
     def from_both_users(
             cls, in_ox_user: oxcli.OxUser | None,
             in_db_user: sql_dovecot.ImapUser | None):
-        return cls(
-            type="mailbox",
-            status="ok" if in_db_user and in_ox_user else "broken",
-            email=in_ox_user.email if in_ox_user else in_db_user.email(),
-            givenName=in_ox_user.givenName if in_ox_user else None,
-            surName=in_ox_user.surName if in_ox_user else None,
-            displayName=in_ox_user.displayName if in_ox_user else None,
-            username=in_db_user.username if in_db_user else None,
+        if in_ox_user is None and in_db_user is None:
+            raise Exception("At least one of DB or OX user must be provided")
+        email = ""
+        if in_ox_user:
+            email = in_ox_user.email
+        else:
+            email = in_db_user.email()
+        self = cls(
+            type=MailboxType.Mailbox,
+            status=MailboxStatus.Broken,
+            email=email,
         )
+        if in_ox_user:
+            self.givenName = in_ox_user.givenName
+            self.surName = in_ox_user.surName
+            self.displayName = in_ox_user.displayName
+            self.username = in_db_user.username
+
+        if in_db_user and in_ox_user:
+            self.status = MailboxStatus.OK
+        return self
 
     def __eq__(self, other):
         return isinstance(self, Mailbox) and self.email == other.email

@@ -21,6 +21,7 @@ from . import router
 )
 async def get_mailbox(
     mailbox_id: str,
+    domain_name: str,
     user: auth.DependsTokenUser,
     db: DependsDovecotDb,
     # alias_db: typing.Annotated[typing.Any, fastapi.Depends(sql_alias.get_alias_db)],
@@ -61,6 +62,10 @@ async def get_mailbox(
         log.error("Comment ca le domaine n'est pas defini alors que ca match la regexp ?")
         raise fastapi.HTTPException(status_code=422, detail="Invalid email address")
 
+    if domain != domain_name:
+        log.error("C'est pas le meme domaine...")
+        raise fastapi.HTTPException(status_code=412, detail="Inconsistent domain name")
+
     if not perms.can_read(domain):
         log.info(f"Permission denied on domain {domain} for current user")
         raise fastapi.HTTPException(status_code=403, detail="Permission denied")
@@ -71,15 +76,18 @@ async def get_mailbox(
     if ctx is None:
         log.info("Aucun contexte ne gère le domaine chez OX")
 
-    ox_user = ctx.get_user_by_email(mailbox_id) if ctx else None
-    imap = sql_dovecot.get_user(db, username, domain)
+    ox_user = None
+    if ctx:
+        ox_user = ctx.get_user_by_email(mailbox_id)
 
-    if ox_user is None and imap is None:
-        log.error(f"Boite aux lettres introuvable : '{mailbox_id}'")
-        raise fastapi.HTTPException(status_code=404, detail="Mailbox not found")
     if ox_user is None:
-        log.warning("Le contexte OX ne connait pas cet email")
-    if imap is None:
-        log.warning("La base dovecot ne contient pas cette adresse.")
+        log.info("Le contexte OX ne connait pas cet email")
 
-    return web_models.Mailbox.from_both_users(ox_user, imap)
+    db_user = sql_dovecot.get_user(db, username, domain)
+    if db_user is None:
+        log.info("La base dovecot ne contient pas cette adresse.")
+
+    if db_user is None and ox_user is None:
+        raise fastapi.HTTPException(status_code=404, detail="Mailbox not found")
+
+    return web_models.Mailbox.from_both_users(ox_user, db_user)
