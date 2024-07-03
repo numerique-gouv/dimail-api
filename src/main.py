@@ -1,4 +1,5 @@
 import fastapi
+from fastapi.middleware.cors import CORSMiddleware
 
 from . import admin_routes, config, oxcli, routes, sql_api, sql_dovecot, sql_postfix
 
@@ -19,11 +20,21 @@ app = fastapi.FastAPI(
     },
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+
 app.include_router(admin_routes.users)
 app.include_router(admin_routes.domains)
 app.include_router(admin_routes.allows)
 
 app.include_router(routes.domains)
 app.include_router(routes.token)
-app.include_router(routes.mailboxes)
-app.include_router(routes.aliases)
+app.include_router(routes.mailboxes.router)
+app.include_router(routes.aliases.router)

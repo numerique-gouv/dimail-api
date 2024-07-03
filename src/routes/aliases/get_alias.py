@@ -2,11 +2,12 @@ import logging
 
 import fastapi
 
-from .. import auth, sql_postfix, web_models
-from . import DependsPostfixDb, aliases
+from src import auth, sql_postfix, web_models
+from ..dependencies import DependsPostfixDb
+from . import router
 
 
-@aliases.get("/", description="Gets an exact alias")
+@router.get("/", description="Gets an exact alias")
 async def get_alias(
     domain: str,
     user: auth.DependsTokenUser,
@@ -22,17 +23,13 @@ async def get_alias(
         raise fastapi.HTTPException(status_code=403, detail="Permission denied")
 
     if username == "" and destination == "":
-        log.info(
-            "Pas de username, pas de destination, on cherche tous les alias du domaine"
-        )
+        log.info("Pas de username, pas de destination, on cherche tous les alias du domaine")
         db_aliases = sql_postfix.get_aliases_by_domain(db, domain)
         return [web_models.Alias.from_db(x) for x in db_aliases]
 
     name = username + "@" + domain
     if destination == "":
-        log.info(
-            "Pas de destination, on cherche toutes les destinations pour une adresse mail"
-        )
+        log.info("Pas de destination, on cherche toutes les destinations pour une adresse mail")
         db_aliases = sql_postfix.get_aliases_by_name(db, name)
         return [web_models.Alias.from_db(x) for x in db_aliases]
 

@@ -29,6 +29,8 @@ class ImapUser(database.Dovecot):
             raise Exception("This password was not encoded by me, i can't check it")
         return passlib.hash.argon2.verify(password, self.password[len("{ARGON2ID}") :])
 
+    def email(self) -> str:
+        return self.username + "@" + self.domain
 
 # CREATE TABLE `users` (
 #   `username` varchar(128) NOT NULL,

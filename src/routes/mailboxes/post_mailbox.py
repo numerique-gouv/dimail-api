@@ -4,15 +4,17 @@ import uuid
 
 import fastapi
 
-from .. import auth, oxcli, sql_dovecot, utils, web_models
-from . import DependsDovecotDb, mailboxes
+from src import auth, oxcli, sql_dovecot, utils, web_models
+from ..dependencies import DependsDovecotDb
+from . import router
 
 
-@mailboxes.post("/", description="Create a mailbox in dovecot and OX", status_code=201)
+@router.post("/", description="Create a mailbox in dovecot and OX", status_code=201)
 async def post_mailbox(
     mailbox: web_models.CreateMailbox,
     user: auth.DependsTokenUser,
     db: DependsDovecotDb,
+    domain_name: str,
 ) -> web_models.NewMailbox:
     log = logging.getLogger(__name__)
 
@@ -21,6 +23,9 @@ async def post_mailbox(
     except Exception:
         log.info("Failed to split the email address")
         raise fastapi.HTTPException(status_code=422, detail="Invalid email address")
+
+    if domain_name != domain:
+        raise fastapi.HTTPException(status_code=412, detail="Inconsistent domain name")
 
     perms = user.get_creds()
     if not perms.can_read(domain):

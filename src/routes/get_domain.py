@@ -1,6 +1,7 @@
 import fastapi
 from .. import auth, sql_api, web_models
-from . import DependsApiDb, domains
+from src.admin_routes import DependsApiDb
+from . import domains
 import logging
 
 

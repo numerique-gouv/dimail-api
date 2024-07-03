@@ -59,7 +59,7 @@ def test_create_mailbox(ox_cluster, my_user, db_dovecot_session):
     token = my_user["token"]
 
     response = client.post(
-        "/mailboxes",
+        "/domains/tutu.net/mailboxes",
         json={
             "email": "address@tutu.net",
             "surName": "Essai",
@@ -86,7 +86,7 @@ def test_alias__creates_and_fetch_an_alias(my_user, db_postfix):
     token = my_user["token"]
 
     response = client.get(
-        "/aliases",
+        "/domains/tutu.net/aliases",
         params={
             "username": "from",
             "domain": "tutu.net",
@@ -97,7 +97,7 @@ def test_alias__creates_and_fetch_an_alias(my_user, db_postfix):
     assert response.status_code == 404
 
     response = client.post(
-        "/aliases",
+        "/domains/tutu.net/aliases",
         json={
             "username": "from",
             "domain": "tutu.net",
@@ -113,7 +113,7 @@ def test_alias__creates_and_fetch_an_alias(my_user, db_postfix):
     }
 
     response = client.get(
-        "/aliases/",
+        "/domains/tutu.net/aliases/",
         params={
             "username": "from",
             "domain": "tutu.net",
@@ -131,7 +131,7 @@ def test_alias__creates_and_fetch_an_alias(my_user, db_postfix):
     ]
 
     response = client.post(
-        "/aliases/",
+        "/domains/tutu.net/aliases/",
         json={
             "username": "from",
             "domain": "tutu.net",
@@ -147,7 +147,7 @@ def test_alias__creates_and_fetch_an_alias(my_user, db_postfix):
     }
 
     response = client.post(
-        "/aliases/",
+        "/domains/tutu.net/aliases/",
         json={
             "username": "old.chap",
             "domain": "tutu.net",
@@ -158,7 +158,7 @@ def test_alias__creates_and_fetch_an_alias(my_user, db_postfix):
     assert response.status_code == 200
 
     response = client.get(
-        "/aliases/",
+        "/domains/tutu.net/aliases/",
         params={
             "domain": "tutu.net",
         },
@@ -168,7 +168,7 @@ def test_alias__creates_and_fetch_an_alias(my_user, db_postfix):
     assert len(response.json()) == 3
 
     response = client.get(
-        "/aliases/",
+        "/domains/tutu.net/aliases/",
         params={
             "domain": "tutu.net",
             "username": "from",
@@ -188,13 +188,21 @@ def test_permissions(db_api, db_dovecot, my_user, log):
     log.info(f"Using token {token}")
 
     response = client.get(
-        "/mailboxes/toto@tutu.net", headers={"Authorization": f"Bearer {token}"}
+        "/domains/pas-un-domaine/mailboxes/toto@something.net",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 412
+
+    response = client.get(
+        "/domains/tutu.net/mailboxes/toto@tutu.net",
+        headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 404
     assert response.json() == {"detail": "Mailbox not found"}
 
     response = client.get(
-        "/mailboxes/toto@example.com", headers={"Authorization": f"Bearer {token}"}
+        "/domains/example.com/mailboxes/toto@example.com",
+        headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 403
 
@@ -206,9 +214,7 @@ def test_domains__get_domain_allowed_user(db_api, db_dovecot, my_user, log):
     domain_name = "tutu.net"
 
     # Get domain
-    response = client.get(
-        f"/domains/{domain_name}/", headers={"Authorization": f"Bearer {token}"}
-    )
+    response = client.get(f"/domains/{domain_name}/", headers={"Authorization": f"Bearer {token}"})
 
     assert response.status_code == fastapi.status.HTTP_200_OK
     assert response.json() == {
@@ -233,9 +239,7 @@ def test_domains__get_domain_not_authorized(db_api_session, db_dovecot, my_user)
     )
     # Access is not granted to this user
 
-    response = client.get(
-        f"/domains/{domain.name}/", headers={"Authorization": f"Bearer {token}"}
-    )
+    response = client.get(f"/domains/{domain.name}/", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == fastapi.status.HTTP_401_UNAUTHORIZED
     assert response.json() == {"detail": "Not authorized."}
 
@@ -244,9 +248,7 @@ def test_domains__get_domain_admin_always_authorized(db_api_session):
     """Admin can access details to all domains."""
 
     # Create admin user and domain
-    sql_api.create_user(
-        db_api_session, name="admin", password="admin_password", is_admin=True
-    )
+    sql_api.create_user(db_api_session, name="admin", password="admin_password", is_admin=True)
     response = client.get("/token/", auth=("admin", "admin_password"))
     token = response.json()["access_token"]
 
@@ -257,9 +259,7 @@ def test_domains__get_domain_admin_always_authorized(db_api_session):
     )
     # Admin user is not given allows to any domain
 
-    response = client.get(
-        f"/domains/{domain.name}/", headers={"Authorization": f"Bearer {token}"}
-    )
+    response = client.get(f"/domains/{domain.name}/", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == fastapi.status.HTTP_200_OK
     assert response.json() == {
         "name": domain.name,
