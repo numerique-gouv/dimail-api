@@ -1,12 +1,15 @@
 import fastapi
 
-from src import auth, sql_api
-from src.admin_routes import DependsApiDb, allows
+from ... import auth, sql_api
+from .. import dependencies, routers
 
 
-@allows.delete("/{domain_name}/{user_name}", status_code=204)
+@routers.allows.delete("/{domain_name}/{user_name}", status_code=204)
 async def delete_allow(
-    db: DependsApiDb, user: auth.DependsBasicAdmin, domain_name: str, user_name: str
+    db: dependencies.DependsApiDb,
+    user: auth.DependsBasicAdmin,
+    domain_name: str,
+    user_name: str,
 ) -> None:
     """Remove user ownership of a domain."""
 

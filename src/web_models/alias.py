@@ -21,3 +21,7 @@ class Alias(pydantic.BaseModel):
             domain=dbAlias.domain,
             username=username,
         )
+
+class CreateAlias(pydantic.BaseModel):
+    user_name: str
+    destination: str

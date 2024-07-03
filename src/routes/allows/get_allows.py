@@ -1,10 +1,10 @@
-from .. import auth, sql_api, web_models
-from . import DependsApiDb, allows
+from ... import auth, sql_api, web_models
+from .. import dependencies, routers
 
 
-@allows.get("/")
+@routers.allows.get("/")
 async def get_allows(
-    db: DependsApiDb,
+    db: dependencies.DependsApiDb,
     user: auth.DependsBasicAdmin,
     username: str = "",
     domain: str = "",

@@ -1,12 +1,12 @@
 import fastapi
 
-from .. import auth, oxcli, sql_api, web_models
-from . import DependsApiDb, domains
+from ... import auth, oxcli, sql_api, web_models
+from .. import dependencies, routers
 
 
-@domains.post("/", status_code=201)
+@routers.domains.post("/", status_code=201)
 async def post_domain(
-    db: DependsApiDb,
+    db: dependencies.DependsApiDb,
     user: auth.DependsBasicAdmin,
     domain: web_models.Domain,
 ) -> web_models.Domain:

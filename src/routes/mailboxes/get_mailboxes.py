@@ -1,31 +1,13 @@
 import uuid
 import logging
 
-
 import fastapi
-from ..dependencies import DependsDovecotDb
 
-from src import auth, web_models, sql_dovecot, oxcli
-from . import router
-
-
-example_users = [
-    web_models.Mailbox(
-        type="mailbox",
-        status="broken",
-        email="those users are faked in code",
-        uuid=uuid.uuid4(),
-    ),
-    web_models.Mailbox(
-        type="mailbox", status="broken", email="toto@example.com", uuid=uuid.uuid4()
-    ),
-    web_models.Mailbox(
-        type="mailbox", status="broken", email="titi@example.com", uuid=uuid.uuid4()
-    ),
-]
+from ... import auth, oxcli, sql_dovecot, web_models
+from .. import dependencies, routers
 
 
-@router.get(
+@routers.mailboxes.get(
     "/",
     responses={
         200: {"description": "Get users from query request"},
@@ -34,7 +16,7 @@ example_users = [
     },
 )
 async def get_mailboxes(
-    db: DependsDovecotDb,
+    db: dependencies.DependsDovecotDb,
     user: auth.DependsTokenUser,
     domain_name: str,
     #  page_size: int = 20,
@@ -44,12 +26,6 @@ async def get_mailboxes(
     log.info(f"Searching mailboxes in domain {domain_name}\n")
 
     perms = user.get_creds()
-
-    # FIXME To be removed
-    if domain_name in ["all", "example.com"]:
-        if "example.com" not in perms.domains:
-            return []
-        return example_users
 
     if not perms.can_read(domain_name):
         raise fastapi.HTTPException(status_code=403, detail="Permission denied")

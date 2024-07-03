@@ -1,12 +1,12 @@
 import fastapi
 
-from .. import auth, sql_api, web_models
-from . import DependsApiDb, users
+from ... import auth, sql_api, web_models
+from .. import dependencies, routers
 
 
-@users.post("/", status_code=201)
+@routers.users.post("/", status_code=201)
 async def post_user(
-    db: DependsApiDb,
+    db: dependencies.DependsApiDb,
     admin: auth.DependsBasicAdmin,
     user: web_models.CreateUser,
 ) -> web_models.User:

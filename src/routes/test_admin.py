@@ -7,11 +7,11 @@ client = fastapi.testclient.TestClient(main.app)
 
 def test_users__create(db_api, ox_cluster, log):
     # At the beginning of time, databse is empty, random users accepted and are admins
-    response = client.get("/admin/users", auth=("useless", "useless"))
+    response = client.get("/users", auth=("useless", "useless"))
     assert response.status_code == 200
     assert response.json() == []
     response = client.post(
-        "/admin/users",
+        "/users",
         json={"name": "first_admin", "password": "toto", "is_admin": True},
         auth=("useless", "useless"),
     )
@@ -21,20 +21,20 @@ def test_users__create(db_api, ox_cluster, log):
     assert response.json() == {"name": "first_admin", "uuid": uuid, "is_admin": True}
 
     # Database is not empty anymore, only admins can do admin requests
-    response = client.get("/admin/users", auth=("first_admin", "toto"))
+    response = client.get("/users", auth=("first_admin", "toto"))
     assert response.status_code == 200
     assert response.json() == [{"name": "first_admin", "uuid": uuid, "is_admin": True}]
 
     # without auth, we got a 401 error
     response = client.post(
-        "/admin/users",
+        "/users",
         json={"name": "testing", "password": "titi", "is_admin": False},
     )
     assert response.status_code == 401
 
     # With auth, but with the wrong password, still fails
     response = client.post(
-        "/admin/users",
+        "/users",
         json={"name": "testing", "password": "titi", "is_admin": False},
         auth=("first_admin", "wrong_password"),
     )
@@ -43,7 +43,7 @@ def test_users__create(db_api, ox_cluster, log):
     # With auth, but creating a user that already exists (and is myself, by the way)
     # will fail
     response = client.post(
-        "/admin/users",
+        "/users",
         json={"name": "first_admin", "password": "toto", "is_admin": False},
         auth=("first_admin", "toto"),
     )
@@ -55,7 +55,7 @@ def test_domains__create_fails_no_name(db_api_session, log):
     """Cannot create domain with no name."""
 
     response = client.post(
-        "/admin/domains",
+        "/domains",
         json={
             "context_name": "context",
             "name": None,
@@ -80,7 +80,7 @@ def test_domains__create_successful(db_api_session, log):
     """Succesfully create domain."""
 
     response = client.post(
-        "/admin/domains",
+        "/domains",
         json={
             "context_name": "context",
             "name": "domain",
@@ -117,14 +117,14 @@ def test_allows__create_allows(db_api_session, log):
 
     # Create allows for this user on this domain
     response = client.post(
-        "/admin/allows/", json={"domain": domain.name, "user": user.name}, auth=auth
+        "/allows/", json={"domain": domain.name, "user": user.name}, auth=auth
     )
 
     assert response.status_code == fastapi.status.HTTP_201_CREATED
     assert response.json() == {"user": user.name, "domain": domain.name}
 
     # GET list of "allows" should return 1 result
-    assert len(client.get("/admin/allows/", auth=auth).json()) == 1
+    assert len(client.get("/allows/", auth=auth).json()) == 1
 
 
 def test_allows__delete_allows(db_api_session, log):
@@ -148,6 +148,6 @@ def test_allows__delete_allows(db_api_session, log):
     )
 
     # Delete allows
-    response = client.delete(f"/admin/allows/{domain.name}/{user.name}", auth=auth)
+    response = client.delete(f"/allows/{domain.name}/{user.name}", auth=auth)
     assert response.status_code == fastapi.status.HTTP_204_NO_CONTENT
     assert response.content == b""

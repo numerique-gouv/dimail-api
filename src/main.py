@@ -1,7 +1,7 @@
 import fastapi
 from fastapi.middleware.cors import CORSMiddleware
 
-from . import admin_routes, config, oxcli, routes, sql_api, sql_dovecot, sql_postfix
+from . import config, oxcli, routes, sql_api, sql_dovecot, sql_postfix
 
 sql_api.init_db(config.settings.api_db_url)
 sql_dovecot.init_db(config.settings.imap_db_url)
@@ -29,12 +29,11 @@ app.add_middleware(
 )
 
 
+app.include_router(routes.routers.users)
+app.include_router(routes.routers.domains)
+app.include_router(routes.routers.allows)
+app.include_router(routes.routers.token)
+app.include_router(routes.routers.mailboxes)
+app.include_router(routes.routers.aliases)
 
-app.include_router(admin_routes.users)
-app.include_router(admin_routes.domains)
-app.include_router(admin_routes.allows)
 
-app.include_router(routes.domains)
-app.include_router(routes.token)
-app.include_router(routes.mailboxes.router)
-app.include_router(routes.aliases.router)

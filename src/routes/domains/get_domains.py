@@ -1,10 +1,10 @@
-from .. import auth, sql_api, web_models
-from . import DependsApiDb, domains
+from ... import auth, sql_api, web_models
+from .. import dependencies, routers
 
 
-@domains.get("/")
+@routers.domains.get("/")
 async def get_domains(
-    db: DependsApiDb,
+    db: dependencies.DependsApiDb,
     user: auth.DependsBasicAdmin,
 ) -> list[web_models.Domain]:
     domains = sql_api.get_domains(db)

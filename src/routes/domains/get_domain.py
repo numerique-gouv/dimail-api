@@ -1,13 +1,14 @@
-import fastapi
-from .. import auth, sql_api, web_models
-from src.admin_routes import DependsApiDb
-from . import domains
 import logging
 
+import fastapi
 
-@domains.get("/{domain_name}")
+from ... import auth, sql_api, web_models
+from .. import dependencies, routers
+
+
+@routers.domains.get("/{domain_name}")
 async def get_domain(
-    db: DependsApiDb,
+    db: dependencies.DependsApiDb,
     user: auth.DependsTokenUser,
     domain_name: str,
 ) -> web_models.Domain:

@@ -82,7 +82,6 @@ class Mailbox(pydantic.BaseModel):
 
 
 class CreateMailbox(pydantic.BaseModel):
-    email: str
     givenName: str
     surName: str
     displayName: str
