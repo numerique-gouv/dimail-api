@@ -1,12 +1,12 @@
 import fastapi
 
-from .. import auth, sql_api, web_models
-from . import DependsApiDb, users
+from ... import auth, sql_api, web_models
+from .. import dependencies, routers
 
 
-@users.get("/{user_name}")
+@routers.users.get("/{user_name}")
 async def get_user(
-    db: DependsApiDb,
+    db: dependencies.DependsApiDb,
     user: auth.DependsBasicAdmin,
     user_name: str,
 ) -> web_models.User:

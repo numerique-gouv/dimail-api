@@ -13,7 +13,7 @@ def my_user(ox_cluster, db_api, log):
 
     # Database is empty, fake auth, creating the first admin
     res = client.post(
-        "/admin/users",
+        "/users",
         json={"name": "admin", "password": "admin", "is_admin": True},
         auth=("useless", "useless"),
     )
@@ -21,14 +21,14 @@ def my_user(ox_cluster, db_api, log):
 
     # Now, we can create our non-admin user
     res = client.post(
-        "/admin/users/",
+        "/users/",
         json={"name": user, "password": "toto", "is_admin": False},
         auth=("admin", "admin"),
     )
     assert res.status_code == fastapi.status.HTTP_201_CREATED
 
     res = client.post(
-        "/admin/domains/",
+        "/domains/",
         json={
             "name": domain,
             "features": ["webmail", "mailbox"],
@@ -42,7 +42,7 @@ def my_user(ox_cluster, db_api, log):
     assert domain in ctx.domains
 
     res = client.post(
-        "/admin/allows/",
+        "/allows/",
         json={"user": user, "domain": domain},
         auth=("admin", "admin"),
     )
@@ -85,10 +85,9 @@ def test_alias__creates_and_fetch_an_alias(my_user, db_postfix):
     token = my_user["token"]
 
     response = client.get(
-        "/domains/tutu.net/aliases",
+        "/domains/tutu.net/aliases/",
         params={
-            "username": "from",
-            "domain": "tutu.net",
+            "user_name": "from",
             "destination": "anything@example.com",
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -96,10 +95,9 @@ def test_alias__creates_and_fetch_an_alias(my_user, db_postfix):
     assert response.status_code == 404
 
     response = client.post(
-        "/domains/tutu.net/aliases",
+        "/domains/tutu.net/aliases/",
         json={
-            "username": "from",
-            "domain": "tutu.net",
+            "user_name": "from",
             "destination": "anything@example.com",
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -114,8 +112,7 @@ def test_alias__creates_and_fetch_an_alias(my_user, db_postfix):
     response = client.get(
         "/domains/tutu.net/aliases/",
         params={
-            "username": "from",
-            "domain": "tutu.net",
+            "user_name": "from",
             "destination": "anything@example.com",
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -132,8 +129,7 @@ def test_alias__creates_and_fetch_an_alias(my_user, db_postfix):
     response = client.post(
         "/domains/tutu.net/aliases/",
         json={
-            "username": "from",
-            "domain": "tutu.net",
+            "user_name": "from",
             "destination": "other@example.com",
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -148,8 +144,7 @@ def test_alias__creates_and_fetch_an_alias(my_user, db_postfix):
     response = client.post(
         "/domains/tutu.net/aliases/",
         json={
-            "username": "old.chap",
-            "domain": "tutu.net",
+            "user_name": "old.chap",
             "destination": "new.name@company.example.com",
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -159,7 +154,6 @@ def test_alias__creates_and_fetch_an_alias(my_user, db_postfix):
     response = client.get(
         "/domains/tutu.net/aliases/",
         params={
-            "domain": "tutu.net",
         },
         headers={"Authorization": f"Bearer {token}"},
     )
@@ -169,8 +163,7 @@ def test_alias__creates_and_fetch_an_alias(my_user, db_postfix):
     response = client.get(
         "/domains/tutu.net/aliases/",
         params={
-            "domain": "tutu.net",
-            "username": "from",
+            "user_name": "from",
         },
         headers={"Authorization": f"Bearer {token}"},
     )

@@ -1,8 +1,8 @@
 from .. import auth, web_models
-from . import token
+from . import routers
 
 
-@token.get("/")
+@routers.token.get("/")
 async def login_for_access_token(
     user: auth.DependsBasicUser,
 ) -> web_models.Token:
