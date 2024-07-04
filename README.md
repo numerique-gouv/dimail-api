@@ -149,11 +149,11 @@ Pour lancer les tests avec un rapport complet en HTML sur la couverture des test
 (toujours, dans le répertoire `src`):
 
 ```bash
-pytest --cov --cov-report=html:../coverage_re
+pytest --cov --cov-report=html
 ```
 
-Ça produit un répertoire `coverage_re` à côté de `src`, qui contient toutes les
-informations sur ce qui est testé et ce qui ne l'est pas. Le fichier `.coveragerc`
+Ça produit un répertoire `coverage` à côté de `src`, qui contient toutes les
+informations sur ce qui est testé et ce qui ne l'est pas. Le fichier `src/.coveragerc`
 fixe quelques paramètres sur le calcul de la couverture de test (par exemple, ne
 pas chercher à tester les tests, ou fixer quelques cas dont on sait qu'ils ne sont
 pas couverts et que c'est pas bien grave).
