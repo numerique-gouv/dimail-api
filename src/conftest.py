@@ -495,7 +495,7 @@ def domain_web(log, client, admin, normal_user, ox_cluster, request):
     log.info("- check the domain is declared in the context")
     ctx = ox_cluster.get_context_by_name(context_name)
     assert name in ctx.domains
-    
+
     yield {"name": name, "features": features, "context_name": context_name}
     log.info(f"TEARDOWN domain {name}")
 
