@@ -1,12 +1,17 @@
 import fastapi.testclient
 
-from src import sql_api
+from .. import sql_api
 
 def test_users__create(db_api, ox_cluster, client, log):
     # At the beginning of time, database is empty, random users accepted and are admins
     response = client.get("/users", auth=("useless", "useless"))
     assert response.status_code == 200
     assert response.json() == []
+
+    # If we GET the user, it is not found
+    response = client.get("/users/first_admin", auth=("useless", "useless"))
+    assert response.status_code == 404
+
     response = client.post(
         "/users",
         json={"name": "first_admin", "password": "toto", "is_admin": True},
@@ -21,6 +26,15 @@ def test_users__create(db_api, ox_cluster, client, log):
     response = client.get("/users", auth=("first_admin", "toto"))
     assert response.status_code == 200
     assert response.json() == [{"name": "first_admin", "uuid": uuid, "is_admin": True}]
+
+    # Check we can get the user we newly created
+    response = client.get("/users/first_admin", auth=("first_admin", "toto"))
+    assert response.status_code == 200
+    assert response.json() == {"name": "first_admin", "uuid": uuid, "is_admin": True}
+
+    # If we GET a user that does not exist
+    response = client.get("/users/nobody", auth=("first_admin", "toto"))
+    assert response.status_code == 404
 
     # without auth, we got a 401 error
     response = client.post(
