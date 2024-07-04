@@ -1,0 +1,11 @@
+[run]
+branch = True
+omit = test_*.py, alembic/*, __init__.py
+
+[report]
+format = total
+skip_empty = true
+
+[html]
+directory = ../coverage
+
