@@ -19,6 +19,22 @@ source .venv/bin/activate
 deactivate
 ```
 
+### Installation et utilisation de pre-commit
+
+[Pre-commit](https://pre-commit.com/) permet de linter et formatter votre code avant chaque commit. 
+Un code linté selon les mêmes règles est plus simple à comprendre. 
+Par défaut ici, tout est géré par [ruff](https://docs.astral.sh/ruff/)
+
+Pour l'installer :
+```bash
+pre-commit install
+```
+
+Vous pouvez effectuer un premier passage sur tous les fichiers du repo avec :
+```bash
+pre-commit run --all-files
+```
+
 ## Les outils pour tester
 
 ### A propos des tests et des bases de données
@@ -119,18 +135,27 @@ _exemple :_
 export DIMAIL_TEST_CONTAINERS="cool c est gentil ca"
 ```
 
-### Installation de pre-commit
+## La couverture de test
 
-[Pre-commit](https://pre-commit.com/) permet de linter et formatter votre code avant chaque commit. 
-Un code linté selon les mêmes règles est plus simple à comprendre. 
-Par défaut ici, tout est géré par [ruff](https://docs.astral.sh/ruff/)
+On s'appuie sur `pytest-cov` pour évaluer notre couverture de test. Il faut donc
+l'installer si on veut l'utiliser (ce n'est pas dans dépendances du code, puisque
+le code n'en a pas besoin).
 
-Pour l'installer :
 ```bash
-pre-commit install
+pip install pytest-cov
 ```
 
-Vous pouvez effectuer un premier passage sur tous les fichiers du repo avec :
+Pour lancer les tests avec un rapport complet en HTML sur la couverture des tests
+(toujours, dans le répertoire `src`):
+
 ```bash
-pre-commit run --all-files
+pytest --cov --cov-report=html:../coverage_re
 ```
+
+Ça produit un répertoire `coverage_re` à côté de `src`, qui contient toutes les
+informations sur ce qui est testé et ce qui ne l'est pas. Le fichier `.coveragerc`
+fixe quelques paramètres sur le calcul de la couverture de test (par exemple, ne
+pas chercher à tester les tests, ou fixer quelques cas dont on sait qu'ils ne sont
+pas couverts et que c'est pas bien grave).
+
+
