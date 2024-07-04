@@ -77,6 +77,9 @@ class DBDomain(Api):
         secondary="allowed", back_populates="domains"
     )
 
+    def has_feature(self, feature: str) -> bool:
+        return feature in self.features
+
 
 class DBAllowed(Api):
     __tablename__ = "allowed"

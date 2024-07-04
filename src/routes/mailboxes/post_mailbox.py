@@ -4,7 +4,7 @@ import uuid
 
 import fastapi
 
-from ... import auth, oxcli, sql_dovecot, web_models
+from ... import auth, oxcli, sql_api, sql_dovecot, web_models
 from .. import dependencies, routers
 
 
@@ -17,6 +17,7 @@ async def post_mailbox(
     mailbox: web_models.CreateMailbox,
     user: auth.DependsTokenUser,
     db: dependencies.DependsDovecotDb,
+    db_api: dependencies.DependsApiDb,
     user_name: str,
     domain_name: str,
 ) -> web_models.NewMailbox:
@@ -27,18 +28,20 @@ async def post_mailbox(
         log.info(f"Cet utilisateur ne peut pas traiter le domaine {domain_name}")
         raise fastapi.HTTPException(status_code=403, detail="Permisison denied")
 
-    ox_cluster = oxcli.OxCluster()
-    ctx = ox_cluster.get_context_by_domain(domain_name)
-    if ctx is None:
-        log.info(f"Le domaine {domain_name} est inconnu du cluster OX")
-        raise Exception("Le domaine est connu de la base API, mais pas de OX")
+    domain = sql_api.get_domain(db_api, domain_name)
+    if domain.has_feature(web_models.Feature.Webmail):
+        ox_cluster = oxcli.OxCluster()
+        ctx = ox_cluster.get_context_by_domain(domain_name)
+        if ctx is None:
+            log.error(f"Le domaine {domain_name} est inconnu du cluster OX")
+            raise Exception("Le domaine est connu de la base API, mais pas de OX")
 
-    ctx.create_user(
-        givenName=mailbox.givenName,
-        surName=mailbox.surName,
-        username=user_name,
-        domain=domain_name,
-    )
+        ctx.create_user(
+            givenName=mailbox.givenName,
+            surName=mailbox.surName,
+            username=user_name,
+            domain=domain_name,
+        )
 
     password = secrets.token_urlsafe(12)
     imap_user = sql_dovecot.create_user(db, user_name, domain_name, password)

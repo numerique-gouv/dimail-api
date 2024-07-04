@@ -33,8 +33,7 @@ async def get_mailboxes(
     ox_cluster = oxcli.OxCluster()
     ctx = ox_cluster.get_context_by_domain(domain_name)
     if ctx is None:
-        log.error(f"Le domaine {domain_name} est inconnu du cluster OX")
-        raise Exception("Le domaine est connu de la base API, mais pas de OX")
+        log.info(f"Le domaine {domain_name} est inconnu du cluster OX")
 
     ox_users = []
     if ctx:
