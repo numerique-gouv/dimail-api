@@ -1,4 +1,3 @@
-import fastapi.testclient
 import pytest
 
 @pytest.mark.parametrize(

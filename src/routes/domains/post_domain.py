@@ -27,7 +27,7 @@ async def post_domain(
                 status_code=409,
                 detail=f"The domain is currently mapped to OX context {ctx.name}",
             )
-    
+
         if ctx is None:
             ctx = ox_cluster.get_context_by_name(domain.context_name)
             if ctx is None:
