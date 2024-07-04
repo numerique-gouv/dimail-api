@@ -8,7 +8,11 @@ from ... import auth, oxcli, sql_dovecot, web_models
 from .. import dependencies, routers
 
 
-@routers.mailboxes.post("/{user_name}", description="Create a mailbox in dovecot and OX", status_code=201)
+@routers.mailboxes.post(
+    "/{user_name}",
+    description="Create a mailbox in dovecot and OX",
+    status_code=201,
+)
 async def post_mailbox(
     mailbox: web_models.CreateMailbox,
     user: auth.DependsTokenUser,

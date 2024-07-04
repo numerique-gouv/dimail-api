@@ -27,7 +27,10 @@ async def get_alias(
         return [web_models.Alias.from_db(x) for x in db_aliases]
 
     if user_name == "":
-        raise fastapi.HTTPException(status_code=412, detail="It is forbiden to only provide the destination in a request")
+        raise fastapi.HTTPException(
+            status_code=412,
+            detail="It is forbiden to only provide the destination in a request"
+        )
 
     name = user_name + "@" + domain_name
     if destination == "":
