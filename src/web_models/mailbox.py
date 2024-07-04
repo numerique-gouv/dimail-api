@@ -45,7 +45,6 @@ class Mailbox(pydantic.BaseModel):
             givenName=in_user.givenName,
             surName=in_user.surName,
             displayName=in_user.displayName,
-            username=in_user.username,
         )
 
     @classmethod
@@ -68,7 +67,6 @@ class Mailbox(pydantic.BaseModel):
             self.givenName = in_ox_user.givenName
             self.surName = in_ox_user.surName
             self.displayName = in_ox_user.displayName
-            self.username = in_db_user.username
 
         if in_db_user and in_ox_user:
             self.status = MailboxStatus.OK
