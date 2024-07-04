@@ -80,6 +80,7 @@ export DIMAIL_JWT_SECRET="Not the default secret"
 export DIMAIL_API_DB_URL="mysql+pymysql://api_user:coincoin@localhost:3306/api"
 export DIMAIL_IMAP_DB_URL="mysql+pymysql://dovecot:toto@localhost:3306/dovecot"
 export DIMAIL_POSTFIX_DB_URL="mysql+pymysql://postfix:toto@localhost:3306/dovecot"
+export PYTEST_ADDOPTS="--cov --cov-report=html"
 ```
 
 ### Démarrer mariadb et un serveur OX
