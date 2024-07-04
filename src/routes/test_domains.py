@@ -42,7 +42,7 @@ def test_domains__get_domain_allowed_user(db_api, db_dovecot, log, client, norma
     ["example.com"],
     indirect=True,
 )
-def test_domains__get_domain_not_authorized(db_api_session, db_dovecot, normal_user, domain, client):
+def test_domains__get_domain_not_authorized(db_dovecot, normal_user, domain, client):
     """Cannot access details to a domain to which you have no allows."""
 
     token = normal_user["token"]
