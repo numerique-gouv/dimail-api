@@ -26,7 +26,8 @@ async def get_mailbox(
     # alias_db: typing.Annotated[typing.Any, fastapi.Depends(sql_alias.get_alias_db)],
 ) -> web_models.Mailbox:
     log = logging.getLogger(__name__)
-    log.info(f"Nous cherchons qui est {user_name}@{domain_name}")
+    email = f"{user_name}@{domain_name}"
+    log.info(f"Nous cherchons qui est {email}")
     perms = user.get_creds()
     log.info(f"Nous avons comme permissions: {perms}")
 
@@ -42,7 +43,7 @@ async def get_mailbox(
 
     ox_user = None
     if ctx:
-        ox_user = ctx.get_user_by_email(user_name)
+        ox_user = ctx.get_user_by_email(email)
 
     if ox_user is None:
         log.info("Le contexte OX ne connait pas cet email")
