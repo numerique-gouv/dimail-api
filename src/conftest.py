@@ -4,6 +4,8 @@ import subprocess
 import time
 import typing
 
+import fastapi
+import fastapi.testclient
 import pytest
 import python_on_whales as pyow
 import sqlalchemy as sa
@@ -13,8 +15,7 @@ import testcontainers.mysql as tc_mysql
 import alembic.command
 import alembic.config
 
-from . import config, oxcli, sql_api, sql_dovecot, sql_postfix
-
+from . import config, main, oxcli, sql_api, sql_dovecot, sql_postfix
 
 def make_db(name: str, conn: sa.Connection) -> str:
     """Utility function, for internal use. Ensure a database, named 'name'
@@ -383,3 +384,118 @@ def dimail_test_network(log) -> typing.Generator:
             yield dimail_test_network
         finally:
             log.info("TEARDOWN network for containers")
+
+
+@pytest.fixture(scope="session", name="client")
+def get_api_client(log, scope="session") -> typing.Generator:
+    """Fixture to get the API client"""
+    log.info("SETUP the api client")
+    client = fastapi.testclient.TestClient(main.app)
+    yield client
+    log.info("TEARDOWN the api client")
+
+
+@pytest.fixture(scope="function", name="admin")
+def first_admin_user(db_api, log, client):
+    # Database is empty, fake auth, creating the first admin
+    user = "admin"
+    password = "admin"
+    res = client.post(
+        "/users/",
+        json={"name": user, "password": password, "is_admin": True},
+        auth=("useless", "useless"),
+    )
+    assert res.status_code == fastapi.status.HTTP_201_CREATED
+
+    log.info("SETUP admin api user")
+    yield {"user": user, "password": password}
+    log.info("TEARDOWN admin api user")
+
+
+@pytest.fixture(scope="function")
+def normal_user(log, client, admin, request):
+    login, password = request.param.split(':',1)
+
+    log.info(f"SETUP api user {login}")
+    log.info(f"- creating the user {login}")
+    res = client.post(
+        "/users/",
+        json={"name": login, "password": password, "is_admin": False},
+        auth=(admin["user"], admin["password"]),
+    )
+    assert res.status_code == fastapi.status.HTTP_201_CREATED
+
+    log.info(f"- creating a token for user {login}")
+    res = client.get("/token/", auth=(login, password))
+    assert res.status_code == 200
+    token = res.json()["access_token"]
+
+    yield {"user": login, "token": token}
+    log.info(f"TEARDOWN api user {login}")
+
+def _make_domain(
+    log, client, admin,
+    name: str,
+    features: list[str],
+    user: str | None = None,
+    context_name: str = "useless",
+):
+
+    log.info("- creating the domain")
+    res = client.post(
+        "/domains/",
+        json = {
+            "name": name,
+            "features": features,
+            "context_name": context_name,
+        },
+        auth = (admin["user"], admin["password"]),
+    )
+    assert res.status_code == fastapi.status.HTTP_201_CREATED
+
+    if user is not None:
+        res = client.post(
+            "/allows/",
+            json={"user": user, "domain": name},
+            auth=(admin["user"], admin["password"]),
+        )
+        assert res.status_code == fastapi.status.HTTP_201_CREATED
+
+@pytest.fixture(scope="function")
+def domain(log, client, admin, request):
+    name = request.param
+    features = []
+
+    log.info(f"SETUP domain {name}, no features, no allowed users")
+    _make_domain(log, client, admin, name, features, None)
+
+    yield {"name": name, "features": features}
+    log.info(f"TEARDOWN domain {name}")
+
+@pytest.fixture(scope="function")
+def domain_mail(log, client, admin, normal_user, request):
+    name = request.param
+    login = normal_user["user"]
+    features = ["mailbox"]
+
+    log.info(f"SETUP domain {name}, allowed for user {login}, features: mailbox only")
+    _make_domain(log, client, admin, name, features, login)
+
+    yield {"name": name, "features": features}
+    log.info(f"TEARDOWN domain {name}")
+
+@pytest.fixture(scope="function")
+def domain_web(log, client, admin, normal_user, ox_cluster, request):
+    name, context_name = request.param.split(":",1)
+    features = ["mailbox", "webmail"]
+    login = normal_user["user"]
+
+    log.info(f"SETUP domain {name}, allowed for user {login}, feature: mailbox and webmail")
+    _make_domain(log, client, admin, name, features, login, context_name)
+    log.info("- check the domain is declared in the context")
+    ctx = ox_cluster.get_context_by_name(context_name)
+    assert name in ctx.domains
+    
+    yield {"name": name, "features": features, "context_name": context_name}
+    log.info(f"TEARDOWN domain {name}")
+

@@ -1,12 +1,9 @@
 import fastapi.testclient
 
-from src import main, sql_api
+from src import sql_api
 
-client = fastapi.testclient.TestClient(main.app)
-
-
-def test_users__create(db_api, ox_cluster, log):
-    # At the beginning of time, databse is empty, random users accepted and are admins
+def test_users__create(db_api, ox_cluster, client, log):
+    # At the beginning of time, database is empty, random users accepted and are admins
     response = client.get("/users", auth=("useless", "useless"))
     assert response.status_code == 200
     assert response.json() == []
@@ -51,7 +48,7 @@ def test_users__create(db_api, ox_cluster, log):
     assert response.json() == {"detail": "User already exists"}
 
 
-def test_domains__create_fails_no_name(db_api_session, log):
+def test_domains__create_fails_no_name(db_api_session, log, client):
     """Cannot create domain with no name."""
 
     response = client.post(
@@ -76,7 +73,7 @@ def test_domains__create_fails_no_name(db_api_session, log):
     }
 
 
-def test_domains__create_successful(db_api_session, log):
+def test_domains__create_successful(db_api_session, log, client):
     """Succesfully create domain."""
 
     response = client.post(
@@ -100,7 +97,7 @@ def test_domains__create_successful(db_api_session, log):
     }
 
 
-def test_allows__create_allows(db_api_session, log):
+def test_allows__create_allows(db_api_session, log, client):
     """Create "allows" object, granting an user management permissions to a domain."""
 
     # Create first admin for later auth
@@ -127,7 +124,7 @@ def test_allows__create_allows(db_api_session, log):
     assert len(client.get("/allows/", auth=auth).json()) == 1
 
 
-def test_allows__delete_allows(db_api_session, log):
+def test_allows__delete_allows(db_api_session, log, client):
     """Delete "allows" object."""
 
     # Create first admin for later auth
