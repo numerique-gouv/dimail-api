@@ -118,6 +118,11 @@ def test_allows__create_allows(db_api_session, log, client):
     auth = ("admin", "admin_password")
     sql_api.create_user(db_api_session, name=auth[0], password=auth[1], is_admin=True)
 
+    # If we GET all the domains, we get an empty list
+    response = client.get("/domains/", auth=("admin", "admin_password"))
+    assert response.status_code == 200
+    assert response.json() == []
+
     # Create user and domain before access
     user = sql_api.create_user(db_api_session, name="user", password="password", is_admin=False)
     domain = sql_api.create_domain(
@@ -125,6 +130,19 @@ def test_allows__create_allows(db_api_session, log, client):
         name="domain",
         features=[],
     )
+
+    # If we GET all the domains, we get the one newly created
+    response = client.get("/domains/", auth=("admin", "admin_password"))
+    assert response.status_code == 200
+    assert response.json() == [{
+        'name': 'domain',
+        'features': [],
+        'mailbox_domain': None,
+        'webmail_domain': None,
+        'imap_domains': None,
+        'smtp_domains': None,
+        'context_name': None,
+    }]
 
     # Create allows for this user on this domain
     response = client.post(
