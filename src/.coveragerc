@@ -1,6 +1,6 @@
 [run]
 branch = True
-omit = test_*.py, alembic/*, __init__.py
+omit = test_*.py, alembic/*, __init__.py, conftest.py
 
 [report]
 format = total
