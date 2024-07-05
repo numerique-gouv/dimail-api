@@ -176,7 +176,20 @@ def test_allows__delete_allows(db_api_session, log, client):
         domain=domain.name,
     )
 
+    # Try to delete allow for an invalid user
+    response = client.delete(f"/allows/{domain.name}/invalid_user", auth=auth)
+    assert response.status_code == fastapi.status.HTTP_404_NOT_FOUND
+
+    # Try to delete allow for an invalid domain
+    response = client.delete(f"/allows/invalid_domain/{user.name}", auth=auth)
+    assert response.status_code == fastapi.status.HTTP_404_NOT_FOUND
+
     # Delete allows
     response = client.delete(f"/allows/{domain.name}/{user.name}", auth=auth)
     assert response.status_code == fastapi.status.HTTP_204_NO_CONTENT
     assert response.content == b""
+
+    # Try to delete an allow that does not exist (but the user and the domain
+    # exist)
+    response = client.delete(f"/allows/{domain.name}/{user.name}", auth=auth)
+    assert response.status_code == fastapi.status.HTTP_404_NOT_FOUND
