@@ -131,7 +131,7 @@ def test_allows__create_allows(db_api_session, log, client):
         features=[],
     )
 
-    # If we GET all the domains, we get the one newly created
+    # If we GET all the domains, we get the one newly created
     response = client.get("/domains/", auth=("admin", "admin_password"))
     assert response.status_code == 200
     assert response.json() == [{
