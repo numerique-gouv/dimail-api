@@ -15,7 +15,13 @@ import pytest
     ["tutu.net"],
     indirect=True,
 )
-def test_alias__creates_and_fetch_an_alias(client, normal_user, virgin_user, domain_mail, db_postfix):
+def test_alias__creates_and_fetch_an_alias(
+        client,
+        normal_user,
+        virgin_user,
+        domain_mail,
+        db_postfix
+    ):
     token = normal_user["token"]
     virgin_token = virgin_user["token"]
     domain_name = domain_mail["name"]
@@ -69,6 +75,28 @@ def test_alias__creates_and_fetch_an_alias(client, normal_user, virgin_user, dom
     )
     assert response.status_code == 409
 
+
+    response = client.get(
+        f"/domains/{domain_name}/aliases/",
+        params={
+            "user_name": "from",
+            "destination": "anything@example.com",
+        },
+        headers={"Authorization": f"Bearer {virgin_token}"},
+    )
+
+    assert response.status_code == 403
+
+    response = client.get(
+        f"/domains/{domain_name}/aliases/",
+        params={
+            "user_name": "",
+            "destination": "anything@example.com",
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 412
 
     # We fetch the alias
     response = client.get(
