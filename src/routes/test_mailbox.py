@@ -4,7 +4,7 @@ import pytest
 from .. import sql_dovecot
 
 
-# Dans la première serie de tests, on travaille sur un domaine avec le webmail.
+# Dans la première serie de tests, on travaille sur un domaine avec le webmail.
 
 @pytest.mark.parametrize(
     "normal_user",
@@ -12,12 +12,18 @@ from .. import sql_dovecot
     indirect=True,
 )
 @pytest.mark.parametrize(
+    "virgin_user",
+    ["bidi:toto"],
+    indirect=True,
+)
+@pytest.mark.parametrize(
     "domain_web",
     ["tutu.net:dimail"],
     indirect=True,
 )
-def test_with_webmail(client, normal_user, domain_web, db_dovecot_session):
+def test_with_webmail(client, normal_user, virgin_user, domain_web, db_dovecot_session):
     token = normal_user["token"]
+    virgin_token = virgin_user["token"]
     domain_name = domain_web["name"]
 
     # On obtient un 404 sur une mailbox qui n'existe pas
@@ -39,6 +45,17 @@ def test_with_webmail(client, normal_user, domain_web, db_dovecot_session):
     assert len(json) == 1
     assert json[0]["email"] == f"oxadmin@{domain_name}"
     assert json[0]["status"] == "broken"
+
+    response = client.post(
+        f"/domains/{domain_name}/mailboxes/address",
+        json={
+            "surName": "Essai",
+            "givenName": "Test",
+            "displayName": "Test Essai",
+        },
+        headers={"Authorization": f"Bearer {virgin_token}"},
+    )
+    assert response.status_code == fastapi.status.HTTP_403_FORBIDDEN
 
     # On crée la mailbox qui n'existait pas à la ligne précédente
     response = client.post(
@@ -78,6 +95,12 @@ def test_with_webmail(client, normal_user, domain_web, db_dovecot_session):
         "displayName": "Test Essai",
     }
 
+    response = client.get(
+        f"/domains/{domain_name}/mailboxes",
+        headers={"Authorization": f"Bearer {virgin_token}"},
+    )
+    assert response.status_code == fastapi.status.HTTP_403_FORBIDDEN
+
     # On get toutes les boites du domaine, on doit remonter notre
     # boite neuve
     response = client.get(
@@ -98,13 +121,25 @@ def test_with_webmail(client, normal_user, domain_web, db_dovecot_session):
     indirect=True,
 )
 @pytest.mark.parametrize(
+    "virgin_user",
+    ["bidi:toto"],
+    indirect=True,
+)
+@pytest.mark.parametrize(
     "domain_mail",
     ["tutu.org"],
     indirect=True,
 )
-def test_without_webmail(client, normal_user, domain_mail, db_dovecot_session):
+def test_without_webmail(client, normal_user, virgin_user, domain_mail, db_dovecot_session):
     token = normal_user["token"]
+    virgin_token = virgin_user["token"]
     domain_name = domain_mail["name"]
+
+    response = client.get(
+        f"/domains/{domain_name}/mailboxes/address",
+        headers={"Authorization": f"Bearer {virgin_token}"},
+    )
+    assert response.status_code == fastapi.status.HTTP_403_FORBIDDEN
 
     # On obtient un 404 sur une mailbox qui n'existe pas
     response = client.get(
