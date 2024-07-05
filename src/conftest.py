@@ -411,12 +411,7 @@ def first_admin_user(db_api, log, client):
     yield {"user": user, "password": password}
     log.info("TEARDOWN admin api user")
 
-
-@pytest.fixture(scope="function")
-def normal_user(log, client, admin, request):
-    login, password = request.param.split(':',1)
-
-    log.info(f"SETUP api user {login}")
+def _make_user(log, client, admin, login, password):
     log.info(f"- creating the user {login}")
     res = client.post(
         "/users/",
@@ -429,6 +424,27 @@ def normal_user(log, client, admin, request):
     res = client.get("/token/", auth=(login, password))
     assert res.status_code == 200
     token = res.json()["access_token"]
+
+    return token
+
+
+@pytest.fixture(scope="function")
+def virgin_user(log, client, admin, request):
+    login, password = request.param.split(":",1)
+
+    log.info(f"SETUP api user {login} (with no permissions)")
+    token = _make_user(log, client, admin, login, password)
+    yield {"user": login, "token": token}
+
+    log.info(f"TEARDOWN api user {login}")
+
+
+@pytest.fixture(scope="function")
+def normal_user(log, client, admin, request):
+    login, password = request.param.split(':',1)
+
+    log.info(f"SETUP api user {login}")
+    token = _make_user(log, client, admin, login, password)
 
     yield {"user": login, "token": token}
     log.info(f"TEARDOWN api user {login}")
