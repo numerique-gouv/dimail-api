@@ -1,6 +1,35 @@
 default_cluster = None
 clusters = {}
 
+old_default = None
+old_clusters = {}
+
+# Quand on veut tester les fonctions de ce fichier, il faut
+# que les variables globales soient "vierges", or pytest aura
+# déjà exécuté le code d'init de main.py. Alors on va faire
+# semblant.
+def begin_test_clusters():
+    global default_cluster
+    global clusters
+    global old_default
+    global old_clusters
+
+    old_default = default_cluster
+    old_clusters = clusters
+
+    default_cluster = None
+    clusters = {}
+
+
+def end_test_clusters():
+    global default_cluster
+    global clusters
+    global old_default
+    global old_clusters
+
+    default_cluster = old_default
+    clusters = old_clusters
+
 
 def declare_cluster(
     name: str,
@@ -26,7 +55,10 @@ def set_default_cluster(name: str):
 
 
 def get_cluster_info(name: str | None = None):
+    global default_cluster
     if name is None:
+        if default_cluster is None:
+            raise Exception("The is no default cluster declared")
         name = default_cluster
 
     if name not in clusters:
