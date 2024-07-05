@@ -82,3 +82,30 @@ def test_domains__get_domain_admin_always_authorized(db_api_session, domain, adm
 
     response = client.get("/domains/unknown_domain/", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == fastapi.status.HTTP_404_NOT_FOUND
+
+@pytest.mark.parametrize(
+    "domain",
+    ["example.com"],
+    indirect=True,
+)
+def test_domains_create_failed(db_api_session, admin, log, client, domain):
+    auth=(admin["user"], admin["password"])
+
+    response = client.post("/domains/",
+                json={"name": "new.com", "features": ["mailbox", "webmail"], "context_name": None},
+                auth=auth
+        )
+
+    assert response.status_code == fastapi.status.HTTP_409_CONFLICT
+
+    response = client.post("/domains/",
+                json={
+                    "name": "example.com",
+                    "features": ["mailbox", "webmail"],
+                    "context_name": "dimail"
+                },
+                auth=auth
+           )
+
+    assert response.status_code == fastapi.status.HTTP_409_CONFLICT
+
