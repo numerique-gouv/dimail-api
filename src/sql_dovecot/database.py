@@ -1,19 +1,11 @@
 import inspect
-import atexit
 
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
 
-# url: str
-# engine: sa.Engine
 maker: orm.sessionmaker | None = None
-db: orm.Session
 
 Dovecot = orm.declarative_base()
-
-
-def close_db(db):
-    db.close()
 
 
 def init_db(config: str):
@@ -40,14 +32,3 @@ def get_maker() -> orm.sessionmaker:
     maker.kw["info"]["file"] = f"{file}:{line}"
     return maker
 
-
-def get_db() -> orm.Session:
-    global db
-    global maker
-    raise Exception("Deprecated")
-    if db is None:
-        if maker is None:
-            raise Exception("Please init the database by giving me an url...")
-        db = maker()
-        atexit.register(lambda: close_db(db))
-    return db
