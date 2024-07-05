@@ -6,12 +6,18 @@ import pytest
     indirect=True,
 )
 @pytest.mark.parametrize(
+    "virgin_user",
+    ["virgin:empty"],
+    indirect=True,
+)
+@pytest.mark.parametrize(
     "domain_mail",
     ["tutu.net"],
     indirect=True,
 )
-def test_alias__creates_and_fetch_an_alias(client, normal_user, domain_mail, db_postfix):
+def test_alias__creates_and_fetch_an_alias(client, normal_user, virgin_user, domain_mail, db_postfix):
     token = normal_user["token"]
+    virgin_token = virgin_user["token"]
     domain_name = domain_mail["name"]
 
     # The alias does not exist
@@ -24,6 +30,17 @@ def test_alias__creates_and_fetch_an_alias(client, normal_user, domain_mail, db_
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 404
+
+    # The virgin user cannot create the alias
+    response = client.post(
+        f"/domains/{domain_name}/aliases/",
+        json={
+            "user_name": "from",
+            "destination": "anything@example.com",
+        },
+        headers={"Authorization": f"Bearer {virgin_token}"},
+    )
+    assert response.status_code == 403
 
     # We create the alias
     response = client.post(
