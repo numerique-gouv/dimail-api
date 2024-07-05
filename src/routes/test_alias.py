@@ -14,6 +14,7 @@ def test_alias__creates_and_fetch_an_alias(client, normal_user, domain_mail, db_
     token = normal_user["token"]
     domain_name = domain_mail["name"]
 
+    # The alias does not exist
     response = client.get(
         f"/domains/{domain_name}/aliases/",
         params={
@@ -24,6 +25,7 @@ def test_alias__creates_and_fetch_an_alias(client, normal_user, domain_mail, db_
     )
     assert response.status_code == 404
 
+    # We create the alias
     response = client.post(
         f"/domains/{domain_name}/aliases/",
         json={
@@ -39,6 +41,19 @@ def test_alias__creates_and_fetch_an_alias(client, normal_user, domain_mail, db_
         "destination": "anything@example.com",
     }
 
+    # We try to create the alias again (should fail)
+    response = client.post(
+        f"/domains/{domain_name}/aliases/",
+        json={
+            "user_name": "from",
+            "destination": "anything@example.com",
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 409
+
+
+    # We fetch the alias
     response = client.get(
         f"/domains/{domain_name}/aliases/",
         params={
@@ -56,6 +71,7 @@ def test_alias__creates_and_fetch_an_alias(client, normal_user, domain_mail, db_
         }
     ]
 
+    # We add a new destination to the alias
     response = client.post(
         f"/domains/{domain_name}/aliases/",
         json={
@@ -71,6 +87,7 @@ def test_alias__creates_and_fetch_an_alias(client, normal_user, domain_mail, db_
         "destination": "other@example.com",
     }
 
+    # We create another alia
     response = client.post(
         f"/domains/{domain_name}/aliases/",
         json={
@@ -81,6 +98,8 @@ def test_alias__creates_and_fetch_an_alias(client, normal_user, domain_mail, db_
     )
     assert response.status_code == 200
 
+    # We fetch all the aliases for the domain, we have 2 aliases,
+    # one being for 2 destinations (so, 3 lines)
     response = client.get(
         f"/domains/{domain_name}/aliases/",
         params={
@@ -90,6 +109,8 @@ def test_alias__creates_and_fetch_an_alias(client, normal_user, domain_mail, db_
     assert response.status_code == 200
     assert len(response.json()) == 3
 
+    # We feth the alias having 2 destinations and check the destinations
+    # are correct
     response = client.get(
         f"/domains/{domain_name}/aliases/",
         params={
