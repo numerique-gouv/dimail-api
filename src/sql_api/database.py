@@ -1,17 +1,11 @@
-import atexit
 import inspect
 
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
 
 maker: orm.sessionmaker | None = None
-db: orm.Session | None = None
 
 Api = orm.declarative_base()
-
-
-def close_db(db):
-    db.close()
 
 
 def init_db(config: str):
@@ -23,16 +17,6 @@ def init_db(config: str):
                              bind=engine,
                              info={},
                              close_resets_only=False)
-
-
-def get_db():
-    global db
-    raise Exception("Deprecated")
-    if db is None:
-        maker = get_maker()
-        db = maker()
-        atexit.register(lambda: db.close())
-    return db
 
 
 def get_maker():
