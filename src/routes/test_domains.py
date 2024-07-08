@@ -63,11 +63,12 @@ def test_domains__get_domain_admin_always_authorized(db_api_session, domain, adm
     domain_name = domain["name"]
     domain_features = domain["features"]
 
-    # Create admin user and domain
+    # Get a token for the admin user
     response = client.get("/token/", auth=(admin["user"], admin["password"]))
     token = response.json()["access_token"]
 
-    # Admin user is not given allows to any domain
+    # Admin user is not given allows to any domain, but still can get
+    # access to the details of the domain
     response = client.get(f"/domains/{domain_name}/", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == fastapi.status.HTTP_200_OK
     assert response.json() == {
@@ -80,6 +81,7 @@ def test_domains__get_domain_admin_always_authorized(db_api_session, domain, adm
         "context_name": None,
     }
 
+    # If the domain does not exist -> not found
     response = client.get("/domains/unknown_domain/", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == fastapi.status.HTTP_404_NOT_FOUND
 
@@ -91,13 +93,14 @@ def test_domains__get_domain_admin_always_authorized(db_api_session, domain, adm
 def test_domains_create_failed(db_api_session, admin, log, client, domain):
     auth=(admin["user"], admin["password"])
 
+    # A domain with the feature 'webmail' MUST have a context_name
     response = client.post("/domains/",
                 json={"name": "new.com", "features": ["mailbox", "webmail"], "context_name": None},
                 auth=auth
         )
-
     assert response.status_code == fastapi.status.HTTP_409_CONFLICT
 
+    # If the domain already exists -> conflict
     response = client.post("/domains/",
                 json={
                     "name": "example.com",
@@ -106,6 +109,5 @@ def test_domains_create_failed(db_api_session, admin, log, client, domain):
                 },
                 auth=auth
            )
-
     assert response.status_code == fastapi.status.HTTP_409_CONFLICT
 

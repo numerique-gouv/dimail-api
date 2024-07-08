@@ -64,7 +64,7 @@ def test_alias__creates_and_fetch_an_alias(
         "destination": "anything@example.com",
     }
 
-    # We try to create the alias again (should fail)
+    # We try to create the alias again (should fail, duplicate)
     response = client.post(
         f"/domains/{domain_name}/aliases/",
         json={
@@ -75,7 +75,7 @@ def test_alias__creates_and_fetch_an_alias(
     )
     assert response.status_code == 409
 
-
+    # Permission denied for virgin_user when he tries to GET
     response = client.get(
         f"/domains/{domain_name}/aliases/",
         params={
@@ -84,9 +84,11 @@ def test_alias__creates_and_fetch_an_alias(
         },
         headers={"Authorization": f"Bearer {virgin_token}"},
     )
-
     assert response.status_code == 403
 
+    # One cannot GET an alias with detination and no user_name
+    # (that would mean listing all the aliases which contains "destination",
+    # which is not a reasonable request)
     response = client.get(
         f"/domains/{domain_name}/aliases/",
         params={
