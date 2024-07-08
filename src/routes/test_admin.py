@@ -3,14 +3,15 @@ import fastapi.testclient
 from .. import sql_api
 
 def test_users__create(db_api, ox_cluster, client, log):
-    # At the beginning of time, database is empty, random users accepted and are admins
+    # At the beginning of time, database is empty, random users are
+    # accepted and are admins
     response = client.get("/users", auth=("useless", "useless"))
-    assert response.status_code == 200
+    assert response.status_code == fastapi.status.HTTP_200_OK
     assert response.json() == []
 
     # If we GET the user, it is not found
     response = client.get("/users/first_admin", auth=("useless", "useless"))
-    assert response.status_code == 404
+    assert response.status_code == fastapi.status.HTTP_404_NOT_FOUND
 
     response = client.post(
         "/users",
@@ -24,24 +25,24 @@ def test_users__create(db_api, ox_cluster, client, log):
 
     # Database is not empty anymore, only admins can do admin requests
     response = client.get("/users", auth=("first_admin", "toto"))
-    assert response.status_code == 200
+    assert response.status_code == fastapi.status.HTTP_200_OK
     assert response.json() == [{"name": "first_admin", "uuid": uuid, "is_admin": True}]
 
     # Check we can get the user we newly created
     response = client.get("/users/first_admin", auth=("first_admin", "toto"))
-    assert response.status_code == 200
+    assert response.status_code == fastapi.status.HTTP_200_OK
     assert response.json() == {"name": "first_admin", "uuid": uuid, "is_admin": True}
 
     # If we GET a user that does not exist
     response = client.get("/users/nobody", auth=("first_admin", "toto"))
-    assert response.status_code == 404
+    assert response.status_code == fastapi.status.HTTP_404_NOT_FOUND
 
     # without auth, we got a 401 error
     response = client.post(
         "/users",
         json={"name": "testing", "password": "titi", "is_admin": False},
     )
-    assert response.status_code == 401
+    assert response.status_code == fastapi.status.HTTP_401_UNAUTHORIZED
 
     # With auth, but with the wrong password, still fails
     response = client.post(
@@ -49,7 +50,7 @@ def test_users__create(db_api, ox_cluster, client, log):
         json={"name": "testing", "password": "titi", "is_admin": False},
         auth=("first_admin", "wrong_password"),
     )
-    assert response.status_code == 401
+    assert response.status_code == fastapi.status.HTTP_401_UNAUTHORIZED
 
     # With auth, but creating a user that already exists (and is myself, by the way)
     # will fail
@@ -58,7 +59,7 @@ def test_users__create(db_api, ox_cluster, client, log):
         json={"name": "first_admin", "password": "toto", "is_admin": False},
         auth=("first_admin", "toto"),
     )
-    assert response.status_code == 409
+    assert response.status_code == fastapi.status.HTTP_409_CONFLICT
     assert response.json() == {"detail": "User already exists"}
 
 
@@ -120,7 +121,7 @@ def test_allows__create_allows(db_api_session, log, client):
 
     # If we GET all the domains, we get an empty list
     response = client.get("/domains/", auth=("admin", "admin_password"))
-    assert response.status_code == 200
+    assert response.status_code == fastapi.status.HTTP_200_OK
     assert response.json() == []
 
     # Create user and domain before access
@@ -133,7 +134,7 @@ def test_allows__create_allows(db_api_session, log, client):
 
     # If we GET all the domains, we get the one newly created
     response = client.get("/domains/", auth=("admin", "admin_password"))
-    assert response.status_code == 200
+    assert response.status_code == fastapi.status.HTTP_200_OK
     assert response.json() == [{
         'name': 'domain',
         'features': [],
