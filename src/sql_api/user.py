@@ -36,6 +36,32 @@ def create_user(db: orm.Session, name: str, password: str, is_admin: bool):
     return db_user
 
 
+def update_user_password(db: orm.Session, name: str, password: str):
+    db_user = get_user(db, name)
+    db_user.set_password(password)
+    try:
+        db.flush()
+        db.commit()
+    except Exception as e:
+        print(str(e))
+        db.rollback()
+    db.refresh(db_user)
+    return db_user
+
+
+def update_user_is_admin(db: orm.Session, name: str, is_admin: bool):
+    db_user = get_user(db, name)
+    db_user.is_admin = is_admin
+    try:
+        db.flush()
+        db.commit()
+    except Exception as e:
+        print(str(e))
+        db.rollback()
+    db.refresh(db_user)
+    return db_user
+
+
 def delete_user(db: orm.Session, user_name: str):
     db_user = db.query(models.DBUser).filter(models.DBUser.name == user_name).first()
     if db_user is not None:

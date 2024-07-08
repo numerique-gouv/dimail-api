@@ -63,6 +63,92 @@ def test_users__create(db_api, ox_cluster, client, log):
     assert response.json() == {"detail": "User already exists"}
 
 
+def test__update_a_user(log, client, admin):
+    auth=(admin["user"], admin["password"])
+
+    # If patch a user without the correct creds -> forbidden
+    response = client.patch(
+        "/users/does-not-exist",
+        json={"password": "something"},
+        auth=("not-a-user", "not-a-password"),
+    )
+    assert response.status_code == fastapi.status.HTTP_403_FORBIDDEN
+
+    # If patch a user that does not exist -> not found
+    response = client.patch(
+        "/users/does-not-exist",
+        json={"password": "burps"},
+        auth=auth,
+    )
+    assert response.status_code == fastapi.status.HTTP_404_NOT_FOUND
+
+    # We create a normal user, so that we can modify it later
+    response = client.post(
+        "/users/",
+        json={
+            "name": "normal",
+            "password": "toto",
+            "is_admin": False,
+        },
+        auth=auth,
+    )
+    assert response.status_code == fastapi.status.HTTP_201_CREATED
+
+    # Vérifier que l'utilisateur n'est pas admin
+    response = client.get(
+        "/users/normal",
+        auth=auth,
+    )
+    assert response.status_code == fastapi.status.HTTP_200_OK
+    assert response.json()["is_admin"] == False
+
+    # We can change the is_admin
+    response = client.patch(
+        "/users/normal",
+        json={"is_admin": True},
+        auth=auth,
+    )
+    assert response.status_code == fastapi.status.HTTP_200_OK
+
+    # Vérifier que l'utilisateur est bien devenu admin
+    response = client.get(
+        "/users/normal",
+        auth=auth,
+    )
+    assert response.status_code == fastapi.status.HTTP_200_OK
+    assert response.json()["is_admin"] == True
+
+    # On lui retire ses droits d'admin
+    response = client.patch(
+        "/users/normal",
+        json={"is_admin": False},
+        auth=auth,
+    )
+    assert response.status_code == fastapi.status.HTTP_200_OK
+
+    # Verifier qu'on peut obtenir un token avec l'ancien mot de passe
+    response = client.get(
+        "/token",
+        auth=("normal", "toto"),
+    )
+    assert response.status_code == fastapi.status.HTTP_200_OK
+
+    # We can set a new password
+    response = client.patch(
+        "/users/normal",
+        json={"password": "coincoin"},
+        auth=auth,
+    )
+    assert response.status_code == fastapi.status.HTTP_200_OK
+
+    # Verifier qu'on peut obtenir un token avec le nouveau mot de passe
+    response = client.get(
+        "/token",
+        auth=("normal", "coincoin"),
+    )
+    assert response.status_code == fastapi.status.HTTP_200_OK
+
+
 def test_domains__create_fails_no_name(db_api_session, log, client):
     """Cannot create domain with no name."""
 
