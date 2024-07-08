@@ -21,13 +21,12 @@ class BasicAdmin(BasicUser):
         except Exception as e:
             log.info(f"Failed super with exception {e}, so failed auth.")
             raise e
-        if not user:
-            log.info("There is no user, failed auth.")
-            raise err.PermissionDenied()
+        # La classe de base BasicUser nous garanti que nous avons un user,
+        # sinon elle aura levé une exception.
+        assert user
         if not user.is_admin:
-            log.error("This user is not an admin. Failed auth.")
+            log.info("This user is not an admin. Failed auth.")
             raise err.PermissionDenied()
         yield user
-
 
 DependsBasicAdmin = typing.Annotated[sql_api.DBUser, fastapi.Depends(BasicAdmin())]

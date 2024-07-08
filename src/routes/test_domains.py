@@ -85,6 +85,7 @@ def test_domains__get_domain_admin_always_authorized(db_api_session, domain, adm
     response = client.get("/domains/unknown_domain/", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == fastapi.status.HTTP_404_NOT_FOUND
 
+
 @pytest.mark.parametrize(
     "domain",
     ["example.com"],

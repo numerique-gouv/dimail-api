@@ -446,7 +446,7 @@ def normal_user(log, client, admin, request):
     log.info(f"SETUP api user {login}")
     token = _make_user(log, client, admin, login, password)
 
-    yield {"user": login, "token": token}
+    yield {"user": login, "token": token, "password": password}
     log.info(f"TEARDOWN api user {login}")
 
 def _make_domain(
