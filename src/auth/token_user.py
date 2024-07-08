@@ -15,8 +15,8 @@ class TokenUser(fastapi.security.HTTPBearer):
     the JWT provided by the user, controls the signature, decode it, fetch from the
     API database the credentials for this user, and yields an sql_api.Creds object."""
 
-    def __init__(self, auto_error: bool = True):
-        super(TokenUser, self).__init__(auto_error=auto_error)
+    def __init__(self):
+        super(TokenUser, self).__init__(auto_error=True)
 
     async def __call__(self, request: fastapi.Request):
         log = logging.getLogger(__name__)
@@ -27,12 +27,12 @@ class TokenUser(fastapi.security.HTTPBearer):
         except Exception as e:
             log.info(f"Failed super raising {e}, so failed auth.")
             raise e
-        if not credentials:
-            log.info("There are no creds, failed auth.")
-            raise err.PermissionDenied()
-        if not credentials.scheme == "Bearer":
-            log.info("Creds are not Bearer, failed auth.")
-            raise err.PermissionDenied()
+        # On utilise les paramètres par défaut, et donc auto_error = True, donc
+        # si on arrive ici sans exception, la variable 'credentials' est définie,
+        # et le scheme est forcément "Bearer"
+        assert credentials
+        assert credentials.scheme == "Bearer"
+
         token = self.verify_jwt(log, credentials.credentials)
         username = token["sub"]
         log.info(f"Greetings user {username}")
@@ -44,7 +44,11 @@ class TokenUser(fastapi.security.HTTPBearer):
         except Exception as e:
             log.error(f"Failed to get user: {e}")
             session.close()
-            raise
+            raise e
+        if not user:
+            log.info("User not found in database")
+            session.close()
+            raise err.PermissionDenied()
         log.info(f"Got the user in db: {user}")
         # We need to keep the orm session running, so that the user object is
         # usable (it needs its orm session for some operations)
