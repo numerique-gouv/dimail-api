@@ -88,9 +88,10 @@ def test_domains__create_fails_no_name(db_api_session, log, client):
     }
 
 
-def test_domains__create_successful(db_api_session, log, client):
+def test_domains__create_successful(db_api_session, log, client, admin):
     """Succesfully create domain."""
 
+    # La creation d'un domaine par un admin fonctionne.
     response = client.post(
         "/domains",
         json={
@@ -98,7 +99,7 @@ def test_domains__create_successful(db_api_session, log, client):
             "name": "domain",
             "features": ["mailbox", "webmail", "alias"],
         },
-        auth=("", ""),
+        auth=(admin["user"], admin["password"]),
     )
     assert response.status_code == fastapi.status.HTTP_201_CREATED
     assert response.json() == {
@@ -110,6 +111,21 @@ def test_domains__create_successful(db_api_session, log, client):
         "smtp_domains": None,
         "context_name": "context",
     }
+
+    # La creation d'un deuxieme domaine par un admin, dans le même contexte
+    # fonctionne aussi (le second domaine ne suit pas le même chemin de code,
+    # car le contexte existe déjà)
+    response = client.post(
+        "/domains",
+        json={
+            "context_name": "context",
+            "name": "domain2",
+            "features": ["mailbox", "webmail", "alias"],
+        },
+        auth=(admin["user"], admin["password"]),
+    )
+    assert response.status_code == fastapi.status.HTTP_201_CREATED
+
 
 
 def test_allows__create_allows(db_api_session, log, client):
