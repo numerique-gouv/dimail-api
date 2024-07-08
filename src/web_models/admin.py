@@ -37,6 +37,11 @@ class CreateUser(pydantic.BaseModel):
     is_admin: bool
 
 
+class UpdateUser(pydantic.BaseModel):
+    password: str | None = None
+    is_admin: bool | None = None
+
+
 class Domain(pydantic.BaseModel):
     name: str
     features: list[Feature]

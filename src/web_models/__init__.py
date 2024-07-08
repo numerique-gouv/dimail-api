@@ -1,4 +1,4 @@
-from .admin import Allowed, CreateUser, Domain, Feature, Token, User
+from .admin import Allowed, CreateUser, UpdateUser, Domain, Feature, Token, User
 from .alias import Alias, CreateAlias
 from .mailbox import CreateMailbox, Mailbox, MailboxStatus, MailboxType, NewMailbox
 
@@ -16,4 +16,5 @@ __all__ = [
     MailboxStatus,
     MailboxType,
     NewMailbox,
+    UpdateUser,
 ]

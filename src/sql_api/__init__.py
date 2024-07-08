@@ -3,7 +3,15 @@ from .creds import Creds
 from .database import get_maker, init_db
 from .domain import create_domain, get_domain, get_domains
 from .models import DBAllowed, DBDomain, DBUser
-from .user import count_users, create_user, delete_user, get_user, get_users
+from .user import (
+    count_users,
+    create_user,
+    delete_user,
+    get_user,
+    get_users,
+    update_user_password,
+    update_user_is_admin,
+)
 
 __all__ = [
     allow_domain_for_user,
@@ -24,4 +32,6 @@ __all__ = [
     delete_user,
     get_user,
     get_users,
+    update_user_password,
+    update_user_is_admin,
 ]

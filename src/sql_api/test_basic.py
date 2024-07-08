@@ -70,6 +70,32 @@ def test_create_user_bis(db_api_session):
     assert not db_user.verify_password("titi")
 
 
+def test_update_user(db_api_session):
+    db_user = sql_api.create_user(
+        db_api_session,
+        name="tom",
+        password="toto",
+        is_admin=False,
+    )
+    assert isinstance(db_user, sql_api.DBUser)
+    assert db_user.verify_password("toto")
+
+    db_user = sql_api.update_user_is_admin(db_api_session, "tom", True)
+    assert isinstance(db_user, sql_api.DBUser)
+
+    db_user = sql_api.get_user(db_api_session, "tom")
+    assert isinstance(db_user, sql_api.DBUser)
+    assert db_user.is_admin is True
+
+    db_user = sql_api.update_user_password(db_api_session, "tom", "nouvo")
+    assert isinstance(db_user, sql_api.DBUser)
+
+    db_user = sql_api.get_user(db_api_session, "tom")
+    assert isinstance(db_user, sql_api.DBUser)
+    assert db_user.verify_password("nouvo")
+    assert not db_user.verify_password("toto")
+
+
 def test_allows(db_api_session):
     allows = sql_api.get_allows(db_api_session, user="", domain="")
     assert allows == []
