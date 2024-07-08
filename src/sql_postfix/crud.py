@@ -1,3 +1,4 @@
+import sqlalchemy as sa
 import sqlalchemy.orm as orm
 
 from . import models
@@ -34,3 +35,18 @@ def create_alias(
         return None
     db.refresh(db_alias)
     return db_alias
+
+
+def delete_alias(db: orm.Session, alias: str, destination: str) -> int:
+    db_alias = get_alias(db, alias, destination)
+    if db_alias is not None:
+        db.delete(db_alias)
+        db.commit()
+        return 1
+    return 0
+
+
+def delete_aliases_by_name(db: orm.Session, name: str):
+    res = db.execute(sa.delete(models.PostfixAlias).where(models.PostfixAlias.alias == name))
+    db.commit()
+    return res.rowcount
