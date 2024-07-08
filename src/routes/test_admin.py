@@ -50,7 +50,7 @@ def test_users__create(db_api, ox_cluster, client, log):
         json={"name": "testing", "password": "titi", "is_admin": False},
         auth=("first_admin", "wrong_password"),
     )
-    assert response.status_code == fastapi.status.HTTP_401_UNAUTHORIZED
+    assert response.status_code == fastapi.status.HTTP_403_FORBIDDEN
 
     # With auth, but creating a user that already exists (and is myself, by the way)
     # will fail
