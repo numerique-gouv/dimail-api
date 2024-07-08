@@ -1,5 +1,7 @@
 import pytest
 
+import fastapi
+
 @pytest.mark.parametrize(
     "normal_user",
     ["bidibule:toto"],
@@ -35,7 +37,7 @@ def test_alias__creates_and_fetch_an_alias(
         },
         headers={"Authorization": f"Bearer {token}"},
     )
-    assert response.status_code == 404
+    assert response.status_code == fastapi.status.HTTP_404_NOT_FOUND
 
     # The virgin user cannot create the alias
     response = client.post(
@@ -46,7 +48,7 @@ def test_alias__creates_and_fetch_an_alias(
         },
         headers={"Authorization": f"Bearer {virgin_token}"},
     )
-    assert response.status_code == 403
+    assert response.status_code == fastapi.status.HTTP_403_FORBIDDEN
 
     # We create the alias
     response = client.post(
@@ -57,7 +59,7 @@ def test_alias__creates_and_fetch_an_alias(
         },
         headers={"Authorization": f"Bearer {token}"},
     )
-    assert response.status_code == 200
+    assert response.status_code == fastapi.status.HTTP_200_OK
     assert response.json() == {
         "username": "from",
         "domain": domain_name,
@@ -73,7 +75,7 @@ def test_alias__creates_and_fetch_an_alias(
         },
         headers={"Authorization": f"Bearer {token}"},
     )
-    assert response.status_code == 409
+    assert response.status_code == fastapi.status.HTTP_409_CONFLICT
 
     # Permission denied for virgin_user when he tries to GET
     response = client.get(
@@ -84,7 +86,7 @@ def test_alias__creates_and_fetch_an_alias(
         },
         headers={"Authorization": f"Bearer {virgin_token}"},
     )
-    assert response.status_code == 403
+    assert response.status_code == fastapi.status.HTTP_403_FORBIDDEN
 
     # One cannot GET an alias with detination and no user_name
     # (that would mean listing all the aliases which contains "destination",
@@ -97,8 +99,7 @@ def test_alias__creates_and_fetch_an_alias(
         },
         headers={"Authorization": f"Bearer {token}"},
     )
-
-    assert response.status_code == 412
+    assert response.status_code == fastapi.status.HTTP_412_PRECONDITION_FAILED
 
     # We fetch the alias
     response = client.get(
@@ -109,7 +110,7 @@ def test_alias__creates_and_fetch_an_alias(
         },
         headers={"Authorization": f"Bearer {token}"},
     )
-    assert response.status_code == 200
+    assert response.status_code == fastapi.status.HTTP_200_OK
     assert response.json() == [
         {
             "username": "from",
@@ -127,7 +128,7 @@ def test_alias__creates_and_fetch_an_alias(
         },
         headers={"Authorization": f"Bearer {token}"},
     )
-    assert response.status_code == 200
+    assert response.status_code == fastapi.status.HTTP_200_OK
     assert response.json() == {
         "username": "from",
         "domain": domain_name,
@@ -143,7 +144,7 @@ def test_alias__creates_and_fetch_an_alias(
         },
         headers={"Authorization": f"Bearer {token}"},
     )
-    assert response.status_code == 200
+    assert response.status_code == fastapi.status.HTTP_200_OK
 
     # We fetch all the aliases for the domain, we have 2 aliases,
     # one being for 2 destinations (so, 3 lines)
@@ -153,7 +154,7 @@ def test_alias__creates_and_fetch_an_alias(
         },
         headers={"Authorization": f"Bearer {token}"},
     )
-    assert response.status_code == 200
+    assert response.status_code == fastapi.status.HTTP_200_OK
     assert len(response.json()) == 3
 
     # We feth the alias having 2 destinations and check the destinations
@@ -165,7 +166,7 @@ def test_alias__creates_and_fetch_an_alias(
         },
         headers={"Authorization": f"Bearer {token}"},
     )
-    assert response.status_code == 200
+    assert response.status_code == fastapi.status.HTTP_200_OK
     assert len(response.json()) == 2
     for item in response.json():
         assert item["domain"] == domain_name
