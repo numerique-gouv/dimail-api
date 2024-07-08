@@ -157,7 +157,7 @@ def test_alias__creates_and_fetch_an_alias(
     assert response.status_code == fastapi.status.HTTP_200_OK
     assert len(response.json()) == 3
 
-    # We feth the alias having 2 destinations and check the destinations
+    # We fetch the alias having 2 destinations and check the destinations
     # are correct
     response = client.get(
         f"/domains/{domain_name}/aliases/",
@@ -173,4 +173,40 @@ def test_alias__creates_and_fetch_an_alias(
         assert item["username"] == "from"
         assert item["destination"] in ["anything@example.com", "other@example.com"]
 
+    # We remove a destination from an alias, first from an alias that
+    # does not exist
+    response = client.delete(
+        f"/domains/{domain_name}/aliases/pas-un-alias/destination",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == fastapi.status.HTTP_404_NOT_FOUND
+
+    # We remove all the destinations from an alias, for an alias that
+    # does not exist
+    response = client.delete(
+        f"/domains/{domain_name}/aliases/pas-un-alias/all",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == fastapi.status.HTTP_404_NOT_FOUND
+
+    # We remove a destination from an alias which exists
+    response = client.delete(
+        f"/domains/{domain_name}/aliases/old.chap/new.name@company.example.com",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == fastapi.status.HTTP_204_NO_CONTENT
+
+    # We remove all the destinations from an alias which exists
+    response = client.delete(
+        f"/domains/{domain_name}/aliases/from/all",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == fastapi.status.HTTP_204_NO_CONTENT
+
+    # We check that the virgin user cannot delete an alias
+    response = client.delete(
+        f"/domains/{domain_name}/aliases/from/all",
+        headers={"Authorization": f"Bearer {virgin_token}"},
+    )
+    assert response.status_code == fastapi.status.HTTP_403_FORBIDDEN
 
