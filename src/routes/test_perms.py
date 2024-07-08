@@ -25,7 +25,7 @@ def test_permissions(db_api, db_dovecot, log, client, normal_user, domain_mail):
     # Si un utilisateur normal (pas un admin) demande la creation d'un domaine,
     # il échoue -> forbidden
     response = client.post(
-        f"/domains/",
+        "/domains/",
         json = {
             "name": "new.com",
             "features": ["mailbox"]
@@ -37,7 +37,7 @@ def test_permissions(db_api, db_dovecot, log, client, normal_user, domain_mail):
     # Si un utilisateur qui n'existe pas essaye de faire quelque chose, il
     # echoue -> forbidden
     response = client.get(
-        f"/token",
+        "/token",
         auth=("unknown", "mot de passe idiot"),
     )
     assert response.status_code == fastapi.status.HTTP_403_FORBIDDEN
@@ -75,7 +75,7 @@ def test_permissions(db_api, db_dovecot, log, client, normal_user, domain_mail):
     # Si on met un truc qui n'est pas un token, on ne passe pas
     response = client.get(
         "/domains/example.com/mailboxes/toto",
-        headers={"Authorization": f"Bearer not-a-valid-token"},
+        headers={"Authorization": "Bearer not-a-valid-token"},
     )
     assert response.status_code == fastapi.status.HTTP_403_FORBIDDEN
 

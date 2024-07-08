@@ -5,7 +5,7 @@ from .. import oxcli
 
 def test_setup():
     oxcli.begin_test_clusters()
-    
+
     with pytest.raises(Exception) as e:
         oxcli.get_cluster_info("essai")
     assert "The cluster essai does not exist" in str(e.value)
