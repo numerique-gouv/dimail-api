@@ -1,5 +1,11 @@
 import pytest
+
 import fastapi
+import jwt
+import datetime
+
+from .. import config
+
 
 @pytest.mark.parametrize(
     "normal_user",
@@ -72,11 +78,6 @@ def test_permissions(db_api, db_dovecot, log, client, normal_user, domain_mail):
         headers={"Authorization": f"Bearer not-a-valid-token"},
     )
     assert response.status_code == fastapi.status.HTTP_403_FORBIDDEN
-
-
-import jwt
-import datetime
-from .. import config
 
 
 @pytest.mark.parametrize(
