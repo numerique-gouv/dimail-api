@@ -44,9 +44,14 @@ class BasicUser(fastapi.security.HTTPBasic):
         except Exception as e:
             log.info(f"Failed with exception <{e}>, so failed auth.")
             raise e
-        if not creds:
-            log.info("No credentials provided, failed auth.")
-            raise err.PermissionDenied()
+        # On utilise les valeurs par défaut de HTTPBasic, donc auto_error = True,
+        # donc s'il n'y a pas de crédentials dans la requête, c'est le module de
+        # base qui va lever une exception.
+        # Donc, la variable creds est forcément définie.
+        assert creds
+        # if not creds:
+        #    log.info("No credentials provided, failed auth.")
+        #    raise err.PermissionDenied()
 
         maker = sql_api.get_maker()
         session = maker()
