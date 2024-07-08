@@ -46,6 +46,7 @@ def test_with_webmail(client, normal_user, virgin_user, domain_web, db_dovecot_s
     assert json[0]["email"] == f"oxadmin@{domain_name}"
     assert json[0]["status"] == "broken"
 
+    # Le virgin_user ne peut pas créer de mailbox -> forbidden
     response = client.post(
         f"/domains/{domain_name}/mailboxes/address",
         json={
@@ -95,6 +96,7 @@ def test_with_webmail(client, normal_user, virgin_user, domain_web, db_dovecot_s
         "displayName": "Test Essai",
     }
 
+    # Le virgin_user ne peut pas GET de mailbox -> forbidden
     response = client.get(
         f"/domains/{domain_name}/mailboxes",
         headers={"Authorization": f"Bearer {virgin_token}"},
@@ -135,6 +137,7 @@ def test_without_webmail(client, normal_user, virgin_user, domain_mail, db_dovec
     virgin_token = virgin_user["token"]
     domain_name = domain_mail["name"]
 
+    # Le virgin_user ne peut pas GET de mailbox -> forbidden
     response = client.get(
         f"/domains/{domain_name}/mailboxes/address",
         headers={"Authorization": f"Bearer {virgin_token}"},
