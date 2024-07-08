@@ -100,7 +100,7 @@ def test__update_a_user(log, client, admin):
         auth=auth,
     )
     assert response.status_code == fastapi.status.HTTP_200_OK
-    assert response.json()["is_admin"] == False
+    assert not response.json()["is_admin"]
 
     # We can change the is_admin
     response = client.patch(
@@ -116,7 +116,7 @@ def test__update_a_user(log, client, admin):
         auth=auth,
     )
     assert response.status_code == fastapi.status.HTTP_200_OK
-    assert response.json()["is_admin"] == True
+    assert response.json()["is_admin"]
 
     # On lui retire ses droits d'admin
     response = client.patch(
