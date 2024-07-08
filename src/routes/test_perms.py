@@ -28,6 +28,14 @@ def test_permissions(db_api, db_dovecot, log, client, normal_user, domain_mail):
     )
     assert response.status_code == fastapi.status.HTTP_403_FORBIDDEN
 
+    # Si un utilisateur qui n'existe pas essaye de faire quelque chose, il
+    # echoue -> forbidden
+    response = client.get(
+        f"/token",
+        auth=("unknown", "mot de passe idiot"),
+    )
+    assert response.status_code == fastapi.status.HTTP_403_FORBIDDEN
+
     # Sur notre domaine, un user normal a le droit (mais la mailbox n'existe pas)
     # donc 404.
     response = client.get(
