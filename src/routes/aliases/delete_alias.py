@@ -2,7 +2,7 @@ import logging
 
 import fastapi
 
-from ... import auth, sql_postfix, web_models
+from ... import auth, sql_postfix
 from .. import dependencies, routers
 
 
