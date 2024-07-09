@@ -21,9 +21,10 @@ from .. import sql_dovecot
     ["tutu.net:dimail"],
     indirect=True,
 )
-def test_with_webmail(client, normal_user, virgin_user, domain_web, db_dovecot_session):
+def test_with_webmail(client, normal_user, virgin_user, domain_web, db_dovecot_session, admin_token):
     token = normal_user["token"]
     virgin_token = virgin_user["token"]
+    admin_token = admin_token["token"]
     domain_name = domain_web["name"]
 
     # On obtient un 404 sur une mailbox qui n'existe pas
@@ -95,6 +96,76 @@ def test_with_webmail(client, normal_user, virgin_user, domain_web, db_dovecot_s
         "givenName": "Test",
         "displayName": "Test Essai",
     }
+
+    # On modifie la mailbox
+    response = client.patch(
+        f"/domains/{domain_name}/mailboxes/address",
+        json={
+            "givenName": "AutreTest",
+            "surName": "EssaiNouveau",
+            "displayName": "Joli nom affichable",
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == fastapi.status.HTTP_200_OK
+    assert response.json() == {
+        "type": "mailbox",
+        "status": "ok",
+        "email": f"address@{domain_name}",
+        "surName": "EssaiNouveau",
+        "givenName": "AutreTest",
+        "displayName": "Joli nom affichable",
+    }
+
+    # Si on patch sur un domaine qui n'existe pas -> not found
+    # Il faut etre admin pour pouvoir essayer de toucher un domaine qui
+    # n'existe pas, les gens normaux auront un permisison denied.
+    response = client.patch(
+        f"/domains/pas-un-domaine/mailboxes/hop",
+        json={},
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert response.status_code == fastapi.status.HTTP_404_NOT_FOUND
+
+    # Si on patch sur un domaine où on n'a pas les droits (qui n'existe pas,
+    # dans notre cas) -> forbidden
+    response = client.patch(
+        f"/domains/pas-un-domaine/mailboxes/hop",
+        json={},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == fastapi.status.HTTP_403_FORBIDDEN
+
+    # Si on patch sur une mailbox qui n'existe pas -> not found
+    response = client.patch(
+        f"/domains/{domain_name}/mailboxes/pas-une-boite",
+        json={},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == fastapi.status.HTTP_404_NOT_FOUND
+
+    # Si on veut modifier le domaine pour un domaine qui n'existe pas -> not found
+    # Il faut être admin pour pouvoir essayer de toucher un domaine qui
+    # n'existe pas, les gens normaux auront un permission denied.
+    response = client.patch(
+        f"/domains/{domain_name}/mailboxes/pas-une-boite",
+        json={
+            "domain": "pas-un-domaine",
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert response.status_code == fastapi.status.HTTP_404_NOT_FOUND
+
+    # Si on veut modifier le domaine pour un domaine où on n'a pas les
+    # droits (ici, un domaine qui n'existe pas) -> forbidden
+    response = client.patch(
+        f"/domains/{domain_name}/mailboxes/pas-une-boite",
+        json={
+            "domain": "pas-un-domaine",
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == fastapi.status.HTTP_403_FORBIDDEN
 
     # Le virgin_user ne peut pas GET de mailbox -> forbidden
     response = client.get(
