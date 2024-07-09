@@ -1,3 +1,4 @@
+import sqlalchemy as sa
 import sqlalchemy.orm as orm
 
 from . import models
@@ -35,3 +36,10 @@ def deny_domain_for_user(db: orm.Session, user: str, domain: str) -> models.DBAl
         db.delete(db_allowed)
         db.commit()
     return db_allowed
+
+
+def delete_allows_by_user(db: orm.Session, user: str) -> int:
+    """Delete all the allows for this user."""
+    res = db.execute(sa.delete(models.DBAllowed).where(models.DBAllowed.user == user))
+    db.commit()
+    return res.rowcount
