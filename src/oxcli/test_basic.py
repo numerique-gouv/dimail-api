@@ -102,3 +102,18 @@ def test_ox(ox_cluster):
 
     got_user = ctx.get_user_by_name("titi")
     assert got_user is None
+
+    modified_user = oxcli.OxUser(
+        uid=3,
+        username="toto",
+        givenName="newGiven",
+        surName="newSur",
+        displayName="Coin coin",
+        email="toto@tutu.net",
+        ctx=ctx,
+    )
+    my_user = ctx.get_user_by_name("toto")
+    my_user.change(givenName="newGiven", surName="newSur", displayName="Coin coin")
+    my_user = ctx.get_user_by_name("toto")
+    assert my_user == modified_user
+

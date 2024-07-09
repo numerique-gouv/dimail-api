@@ -89,3 +89,12 @@ class NewMailbox(pydantic.BaseModel):
     email: str
     password: str
     uuid: pydantic.UUID4
+
+
+class UpdateMailbox(pydantic.BaseModel):
+    domain: str | None = None
+    user_name: str | None = None
+    givenName: str | None = None
+    surName: str | None = None
+    displayName: str | None = None
+

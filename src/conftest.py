@@ -429,6 +429,16 @@ def _make_user(log, client, admin, login, password):
 
 
 @pytest.fixture(scope="function")
+def admin_token(log, client, admin):
+    log.info("SETUP admin user with token")
+    res = client.get("/token/", auth=(admin["user"], admin["password"]))
+    assert res.status_code == 200
+    token = res.json()["access_token"]
+    yield {**admin, "token": token}
+
+    log.info("TEARDOWN admin user with token")
+
+@pytest.fixture(scope="function")
 def virgin_user(log, client, admin, request):
     login, password = request.param.split(":",1)
 
