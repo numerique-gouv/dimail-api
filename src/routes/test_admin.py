@@ -149,6 +149,128 @@ def test__update_a_user(log, client, admin):
     assert response.status_code == fastapi.status.HTTP_200_OK
 
 
+def test_delete_user(db_api_session, log, client, admin):
+    """Check that we can delete a user and that it will remove all the
+    associated allows."""
+    auth=(admin["user"], admin["password"])
+
+    # FIXME fixture
+    # First, we create a normal user
+    response = client.post(
+        "/users/",
+        json={
+            "name": "normal",
+            "password": "toto",
+            "is_admin": False,
+        },
+        auth=auth,
+    )
+    assert response.status_code == fastapi.status.HTTP_201_CREATED
+
+    # FIXME fixture
+    # We create a firt domain
+    response = client.post(
+        "/domains/",
+        json={
+            "name": "domaine-1",
+            "features": [ "mailbox" ],
+            "context_name": "useless",
+        },
+        auth=auth,
+    )
+    assert response.status_code == fastapi.status.HTTP_201_CREATED
+
+    # FIXME fixture
+    # We create a second domain
+    response = client.post(
+        "/domains/",
+        json={
+            "name": "domaine-2",
+            "features": [ "mailbox" ],
+            "context_name": "useless",
+        },
+        auth=auth,
+    )
+    assert response.status_code == fastapi.status.HTTP_201_CREATED
+
+    # FIXME fixture
+    # Then we allow the user on two domains
+    response = client.post(
+        "/allows/",
+        json={
+            "user": "normal",
+            "domain": "domaine-1",
+        },
+        auth=auth,
+    )
+    assert response.status_code == fastapi.status.HTTP_201_CREATED
+
+    # FIXME fixture
+    # The second domain
+    response = client.post(
+        "/allows/",
+        json={
+            "user": "normal",
+            "domain": "domaine-2",
+        },
+        auth=auth,
+    )
+    assert response.status_code == fastapi.status.HTTP_201_CREATED
+
+    # Check that we can fetch the two allows
+    response = client.get(
+        "/allows/",
+        params={
+            "username": "normal",
+        },
+        auth=auth,
+    )
+    assert response.status_code == fastapi.status.HTTP_200_OK
+    items = response.json()
+    assert len(items) == 2
+    assert {"domain": "domaine-1", "user": "normal"} in items
+    assert {"domain": "domaine-2", "user": "normal"} in items
+
+    # If we try to delete a user without the prems -> forbiden
+    response = client.delete(
+        "/users/normal",
+        auth=("normal", "toto")
+    )
+    assert response.status_code == fastapi.status.HTTP_403_FORBIDDEN
+
+    # If we try to delete a user that does not exist -> not found
+    response = client.delete(
+        "/users/not-a-user",
+        auth=auth,
+    )
+    assert response.status_code == fastapi.status.HTTP_404_NOT_FOUND
+
+    # If we delete the user -> ok, no content
+    response = client.delete(
+        "/users/normal",
+        auth=auth,
+    )
+    assert response.status_code == fastapi.status.HTTP_204_NO_CONTENT
+
+    # And now, if we fetch the user -> not found
+    response = client.get(
+        "/users/normal",
+        auth=auth,
+    )
+    assert response.status_code == fastapi.status.HTTP_404_NOT_FOUND
+
+    # And now, if we fetch the allows -> empty list
+    response = client.get(
+        "/allows",
+        params={
+            "username": "normal",
+        },
+        auth=auth,
+    )
+    assert response.status_code == fastapi.status.HTTP_200_OK
+    assert len(response.json()) == 0
+
+
 def test_domains__create_fails_no_name(db_api_session, log, client):
     """Cannot create domain with no name."""
 

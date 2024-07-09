@@ -154,6 +154,10 @@ def test_allows(db_api_session):
     assert allows[0].user == "toto"
     assert allows[0].domain == "example.net"
 
+    sql_api.delete_allows_by_user(db_api_session, user="toto")
+    allows = sql_api.get_allows(db_api_session, user="toto")
+    assert len(allows) == 0
+
 
 def test_creds(db_api_session):
     user_toto = sql_api.create_user(

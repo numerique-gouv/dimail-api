@@ -1,4 +1,10 @@
-from .allow import allow_domain_for_user, deny_domain_for_user, get_allowed, get_allows
+from .allow import (
+    allow_domain_for_user,
+    delete_allows_by_user,
+    deny_domain_for_user,
+    get_allowed,
+    get_allows,
+)
 from .creds import Creds
 from .database import get_maker, init_db
 from .domain import create_domain, get_domain, get_domains
@@ -15,6 +21,7 @@ from .user import (
 
 __all__ = [
     allow_domain_for_user,
+    delete_allows_by_user,
     deny_domain_for_user,
     get_allowed,
     get_allows,
