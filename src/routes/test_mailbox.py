@@ -16,9 +16,11 @@ from .. import sql_dovecot
     ["bidi:toto"],
     indirect=True,
 )
+# Les domaines tutu.net et target.fr sont dans le CTX dimain
+# Le domaine other.org est dans le CTX ctx2
 @pytest.mark.parametrize(
     "domain_web",
-    ["tutu.net:dimail"],
+    ["tutu.net,target.fr:dimail;other.org:ctx2"],
     indirect=True,
 )
 def test_with_webmail(
@@ -31,9 +33,9 @@ def test_with_webmail(
 ):
     token = normal_user["token"]
     virgin_token = virgin_user["token"]
-    admin = { "user": admin_token["user"], "password": admin_token["password"]}
     admin_token = admin_token["token"]
     domain_name = domain_web["name"]
+    other_domain_name = domain_web["all_domains"][1]
 
     # On obtient un 404 sur une mailbox qui n'existe pas
     response = client.get(
@@ -125,8 +127,8 @@ def test_with_webmail(
         "displayName": "Joli nom affichable",
     }
 
-    # Lorsque je modifie une webmail -> 200 OK
-    # Et seul, les clefs demandées sont modifiées
+    # Lorsque je modifie une mailbox (avec webmail) -> 200 OK
+    # Test uniquement sur displayName (les autres champs inchangés)
     response = client.patch(
         f"/domains/{domain_name}/mailboxes/address",
         json={
@@ -145,8 +147,8 @@ def test_with_webmail(
         "displayName": "Joli nom afficha",
     }
 
-    # Lorque je veux modifier le givenName d'une webmail -> 200 OK
-    # Et le seul le givenName se modifie
+    # Lorque je veux modifier le givenName d'une mailbox (avec webmail) -> 200 OK
+    # On ne change que le givenName
     response = client.patch(
         f"/domains/{domain_name}/mailboxes/address",
         json={
@@ -164,57 +166,34 @@ def test_with_webmail(
         "displayName": "Joli nom afficha",
     }
 
-    # Si on veut modifier le given name d'une mailbox ->
-    # Status OK
-    # Mais aucune modification ne sera faite
-
-    # Creer un domain mailbox pour le test
-    response = client.post(
-        "/domains/",
-        json={
-            "name": "new.com",
-            "features": ["mailbox"],
-            "context_name": None,
-        },
-        auth=(admin["user"], admin["password"])
-    )
-    assert response.status_code == fastapi.status.HTTP_201_CREATED
-
-    # Créer une mailbox pour le test
-    # FIXME parler avec Benjamin est ce que c'est logique de rendre les
-    # trois clefs obligatoires ? en sachant que les mailbox n'en ont pas
-    # besoin.
-    response = client.post(
-        "/domains/new.com/mailboxes/addr",
-        json={
-            "givenName": "",
-            "surName": "",
-            "displayName": "",
-        },
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
-    assert response.status_code == fastapi.status.HTTP_201_CREATED
-
-    # On modifie la mailbox
+    # Même chose avec le surName seul -> 200 OK
     response = client.patch(
-        "/domains/new.com/mailboxes/addr",
+        f"/domains/{domain_name}/mailboxes/address",
         json={
-            "givenName": "newGivenName",
+            "surName": "Le sur name",
         },
-        headers={"Authorization": f"Bearer {admin_token}"},
+        headers={"Authorization": f"Bearer {token}"},
     )
-
-    # on acquitte le status 200 et le fait que rien n'a été modifié
     assert response.status_code == fastapi.status.HTTP_200_OK
-    # FIXME: should be "ok" ? or "broken" ?
     assert response.json() == {
         "type": "mailbox",
-        "status": "broken",
-        "email": "addr@new.com",
-        "surName": None,
-        "givenName": None,
-        "displayName": None,
+        "status": "ok",
+        "email": f"address@{domain_name}",
+        "surName": "Le sur name",
+        "givenName": "Autre",
+        "displayName": "Joli nom afficha",
     }
+
+    # Si on essaye de modifier l'adresse mail -> Internal server error
+    # (No yet implemented)
+    response = client.patch(
+        f"/domains/{domain_name}/mailboxes/address",
+        json={
+            "user_name": "jean.dupont",
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == fastapi.status.HTTP_422_UNPROCESSABLE_ENTITY
 
     # Si on patch sur un domaine qui n'existe pas -> not found
     # Il faut être admin pour pouvoir essayer de toucher un domaine qui
@@ -234,6 +213,17 @@ def test_with_webmail(
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == fastapi.status.HTTP_403_FORBIDDEN
+
+    # Si on patch sur un domaine qui existe et où on a les droits
+    # -> 422 (not yet implemented)
+    response = client.patch(
+        f"/domains/{domain_name}/mailboxes/address",
+        json={
+            "domain": other_domain_name,
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == fastapi.status.HTTP_422_UNPROCESSABLE_ENTITY
 
     # Si on patch sur une mailbox qui n'existe pas -> not found
     response = client.patch(
@@ -300,7 +290,7 @@ def test_with_webmail(
 )
 @pytest.mark.parametrize(
     "domain_mail",
-    ["tutu.org"],
+    ["tutu.org,target.fr"],
     indirect=True,
 )
 def test_without_webmail(client, normal_user, virgin_user, domain_mail, db_dovecot_session):
@@ -381,4 +371,45 @@ def test_without_webmail(client, normal_user, virgin_user, domain_mail, db_dovec
     assert len(json) == 1
     assert json[0]["email"] == f"address@{domain_name}"
 
+    # On modifie la mailbox -> OK
+    # Rien ne sera modifié (le givenName, surName et displayName sont ignorés)
+    response = client.patch(
+        f"/domains/{domain_name}/mailboxes/address",
+        json={
+            "givenName": "newGivenName",
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
 
+    assert response.status_code == fastapi.status.HTTP_200_OK
+    assert response.json() == {
+        "type": "mailbox",
+        "status": "broken",
+        "email": f"address@{domain_name}",
+        "surName": None,
+        "givenName": None,
+        "displayName": None,
+    }
+
+
+@pytest.mark.parametrize(
+    "domain",
+    ["tutu.org"],
+    indirect=True,
+)
+def test_without_mail(client, admin_token, domain, db_dovecot_session):
+    # Le domaine de la fixture 'domain' n'a pas de feature, et n'a
+    # aucun user ajouté dans ses allows. Pour essayer de faire des
+    # modifs dessus, le plus simple est d'être admin.
+    admin_token = admin_token["token"]
+    domain_name = domain["name"]
+
+    # Si on demande a modifier une mailbox sur un domaine qui n'a pas
+    # la feature 'mailbox', on va recevoir une erreur parce que le
+    # domaine n'a pas la feature. -> 422
+    response = client.patch(
+        f"/domains/{domain_name}/mailboxes/toto",
+        json={},
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert response.status_code == fastapi.status.HTTP_422_UNPROCESSABLE_ENTITY

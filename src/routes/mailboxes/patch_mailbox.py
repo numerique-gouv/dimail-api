@@ -42,7 +42,7 @@ async def patch_mailbox(
             raise fastapi.HTTPException(status_code=404, detail="Target domain not found")
 
         log.error("Le deplacement d'une mailbox d'un domaine a l'autre n'est pas encore possible")
-        raise Exception("Not yet implemented")
+        raise fastapi.HTTPException(status_code=422, detail="Not yet implemented")
 
     if "mailbox" not in domain_db.features:
         log.info(f"Il n'y a pas la feature 'mailbox' sur le domain {domain_name}, update impossible")
@@ -55,7 +55,7 @@ async def patch_mailbox(
 
     if updates.user_name is not None:
         log.error("Le renommage d'une mailbox n'est pas encore possible")
-        raise Exception("Not yet implemented")
+        raise fastapi.HTTPException(status_code=422, detail="Not yet implemented")
 
     ox_user = None
     if "webmail" in domain_db.features:
