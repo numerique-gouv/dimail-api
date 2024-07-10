@@ -88,8 +88,8 @@ def test_alias__creates_and_fetch_an_alias(
     )
     assert response.status_code == fastapi.status.HTTP_403_FORBIDDEN
 
-    # One cannot GET an alias with detination and no user_name
-    # (that would mean listing all the aliases which contains "destination",
+    # One cannot GET an alias with destination and no user_name
+    # (that would mean listing all the aliases which contains "destination",
     # which is not a reasonable request)
     response = client.get(
         f"/domains/{domain_name}/aliases/",
@@ -173,7 +173,7 @@ def test_alias__creates_and_fetch_an_alias(
         assert item["username"] == "from"
         assert item["destination"] in ["anything@example.com", "other@example.com"]
 
-    # We remove a destination from an alias, first from an alias that
+    # We remove a destination from an alias, first from an alias that
     # does not exist
     response = client.delete(
         f"/domains/{domain_name}/aliases/pas-un-alias/destination",
