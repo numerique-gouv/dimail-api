@@ -457,7 +457,7 @@ def _change_user(
         command.extend(["--surname", surName])
     if displayName is not None:
         command.extend(["--displayname", displayName])
-    data = self.ctx.cluster.run_for_item(command)
+    _ = self.ctx.cluster.run_for_item(command)
 
 
 def _delete_user(
@@ -474,7 +474,7 @@ def _delete_user(
         "-u",
         self.username,
     ]
-    data = self.ctx.cluster.run_for_item(command)
+    _ = self.ctx.cluster.run_for_item(command)
 
 OxCluster.purge = _purge
 OxCluster.run_for_csv = _run_for_csv
