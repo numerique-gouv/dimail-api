@@ -16,3 +16,13 @@ def test_imap__create_and_get_a_user(db_dovecot_session):
     assert imap_user.username == "toto"
     assert imap_user.domain == "example.com"
     assert imap_user.check_password("secret")
+
+    # Quand on supprime le user, on le récupère tel qu'il était avant suppression
+    imap_user = sql_dovecot.delete_user(db_dovecot_session, "toto", "example.com")
+    assert isinstance(imap_user, sql_dovecot.ImapUser)
+    assert imap_user.username == "toto"
+    assert imap_user.domain == "example.com"
+
+    # Après qu'on l'a supprimé, le user n'existe plus.
+    imap_user = sql_dovecot.get_user(db_dovecot_session, "toto", "example.com")
+    assert imap_user is None

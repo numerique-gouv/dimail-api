@@ -31,3 +31,11 @@ def create_user(db: orm.Session, username: str, domain: str, password: str):
         return None
     db.refresh(imap_user)
     return imap_user
+
+
+def delete_user(db: orm.Session, username: str, domain: str):
+    user = get_user(db, username, domain)
+    if user is not None:
+        db.delete(user)
+        db.commit()
+    return user

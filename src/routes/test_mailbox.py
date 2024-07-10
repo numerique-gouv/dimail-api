@@ -276,6 +276,37 @@ def test_with_webmail(
     emails = [ json[0]["email"], json[1]["email"] ]
     assert f"address@{domain_name}" in emails
 
+    # On supprime une mailbox qui n'existe pas -> not found
+    response = client.delete(
+        f"/domains/{domain_name}/mailboxes/pas-une-boite",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == fastapi.status.HTTP_404_NOT_FOUND
+
+    # On supprime une mailbox sur un domaine qui n'existe pas (donc,
+    # je n'ai pas les droits) -> forbidden
+    response = client.delete(
+        "/domains/pas-un-domaine/mailboxes/coincoin",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == fastapi.status.HTTP_403_FORBIDDEN
+
+    # On supprime une mailbox sur un domaine qui n'existe pas (mais
+    # on a les droits, parce qu'on est admin) -> not found
+    response = client.delete(
+        "/domains/pas-un-domaine/mailboxes/coincoin",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert response.status_code == fastapi.status.HTTP_404_NOT_FOUND
+
+    # On supprime une mailbox qui existe, et on a les droits
+    # -> 204 not content
+    response = client.delete(
+        f"/domains/{domain_name}/mailboxes/address",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == fastapi.status.HTTP_204_NO_CONTENT
+
 
 
 @pytest.mark.parametrize(
@@ -391,6 +422,13 @@ def test_without_webmail(client, normal_user, virgin_user, domain_mail, db_dovec
         "displayName": None,
     }
 
+    # On supprime la mailbox -> no content
+    response = client.delete(
+        f"/domains/{domain_name}/mailboxes/address",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == fastapi.status.HTTP_204_NO_CONTENT
+
 
 @pytest.mark.parametrize(
     "domain",
@@ -413,3 +451,12 @@ def test_without_mail(client, admin_token, domain, db_dovecot_session):
         headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert response.status_code == fastapi.status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    # Si on demande a supprimer une mailbox sur un domaine qui n'a pas
+    # la feature 'mailbox' -> 422
+    response = client.delete(
+        f"/domains/{domain_name}/mailboxes/toto",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert response.status_code == fastapi.status.HTTP_422_UNPROCESSABLE_ENTITY
+
