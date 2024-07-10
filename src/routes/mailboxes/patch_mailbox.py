@@ -45,12 +45,15 @@ async def patch_mailbox(
         raise fastapi.HTTPException(status_code=422, detail="Not yet implemented")
 
     if "mailbox" not in domain_db.features:
-        log.info(f"Il n'y a pas la feature 'mailbox' sur le domain {domain_name}, update impossible")
-        raise fastapi.HTTPException(status_code=422, detail="Feature 'mailbox' not available on the domain")
+        log.info(f"Missing feature 'mailbox' on domain {domain_name}")
+        raise fastapi.HTTPException(
+            status_code=422,
+            detail="Feature 'mailbox' not available on the domain"
+        )
 
     db_user = sql_dovecot.get_user(imap, user_name, domain_name)
     if db_user is None:
-        log.info(f"La boite {user_name} n'existe pas dans la base imap pour le domain {domain_name}")
+        log.info(f"La boite {user_name} n'existe pas pour le domain {domain_name}")
         raise fastapi.HTTPException(status_code=404, detail="Mailbox not found")
 
     if updates.user_name is not None:
@@ -75,7 +78,7 @@ async def patch_mailbox(
         changes = {}
         if updates.givenName is not None:
             changes["givenName"] = updates.givenName
-    
+
         if updates.surName is not None:
             changes["surName"] = updates.surName
 
