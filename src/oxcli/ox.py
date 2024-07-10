@@ -434,7 +434,7 @@ def _get_user_by_email(self: OxContext, email: str) -> OxUser | None:
     return None
 
 
-def _change(
+def _change_user(
     self: OxUser,
     givenName: str | None = None,
     surName: str | None = None,
@@ -457,8 +457,24 @@ def _change(
         command.extend(["--surname", surName])
     if displayName is not None:
         command.extend(["--displayname", displayName])
-    data = self.ctx.cluster.run_for_csv(command)
+    data = self.ctx.cluster.run_for_item(command)
 
+
+def _delete_user(
+    self: OxUser
+) -> None:
+    command = [
+        "/opt/open-xchange/sbin/deleteuser",
+        "-A",
+        self.ctx.cluster.admin_username,
+        "-P",
+        self.ctx.cluster.admin_password,
+        "-c",
+        f"{self.ctx.cid}",
+        "-u",
+        self.username,
+    ]
+    data = self.ctx.cluster.run_for_item(command)
 
 OxCluster.purge = _purge
 OxCluster.run_for_csv = _run_for_csv
@@ -479,4 +495,5 @@ OxContext.search_user = _search_user
 OxContext.get_user_by_name = _get_user_by_name
 OxContext.get_user_by_email = _get_user_by_email
 
-OxUser.change = _change
+OxUser.change = _change_user
+OxUser.delete = _delete_user

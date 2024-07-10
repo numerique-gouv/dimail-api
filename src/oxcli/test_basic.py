@@ -117,3 +117,7 @@ def test_ox(ox_cluster):
     my_user = ctx.get_user_by_name("toto")
     assert my_user == modified_user
 
+    # On supprime l'utilisateur toto, donc il n'existe plus
+    my_user.delete()
+    my_user = ctx.get_user_by_name("toto")
+    assert my_user is None
