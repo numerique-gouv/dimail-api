@@ -88,5 +88,5 @@ async def patch_mailbox(
         ox_user.change(**changes)
         ox_user = ctx.get_user_by_email(email)
 
-    return web_models.Mailbox.from_both_users(ox_user, db_user)
+    return web_models.Mailbox.from_both_users(ox_user, db_user, "webmail" in domain_db.features)
 

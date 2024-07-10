@@ -384,7 +384,7 @@ def test_without_webmail(client, normal_user, virgin_user, domain_mail, db_dovec
     assert response.status_code == fastapi.status.HTTP_200_OK
     assert response.json() == {
         "type": "mailbox",
-        "status": "broken",
+        "status": "ok",
         "email": f"address@{domain_name}",
         "surName": None,
         "givenName": None,
@@ -415,7 +415,7 @@ def test_without_webmail(client, normal_user, virgin_user, domain_mail, db_dovec
     assert response.status_code == fastapi.status.HTTP_200_OK
     assert response.json() == {
         "type": "mailbox",
-        "status": "broken",
+        "status": "ok",
         "email": f"address@{domain_name}",
         "surName": None,
         "givenName": None,
