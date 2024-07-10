@@ -498,30 +498,66 @@ def domain(log, client, admin, request):
     yield {"name": name, "features": features}
     log.info(f"TEARDOWN domain {name}")
 
+# Syntaxe du param: les noms des domaines séparés par une virgule
+# Ex: toto.fr,machin.com,truc.net
 @pytest.fixture(scope="function")
 def domain_mail(log, client, admin, normal_user, request):
-    name = request.param
+    names = request.param.split(",")
     login = normal_user["user"]
     features = ["mailbox"]
 
-    log.info(f"SETUP domain {name}, allowed for user {login}, features: mailbox only")
-    _make_domain(log, client, admin, name, features, login)
+    if len(names) > 1:
+        log.info(f"SETUP domains {names}, allowed for user {login}, features: mailbox only")
+    else:
+        log.info(f"SETUP domain {names[0]}, allowed for user {login}, features: mailbox only")
+    for name in names:
+        _make_domain(log, client, admin, name, features, login)
 
-    yield {"name": name, "features": features}
-    log.info(f"TEARDOWN domain {name}")
+    yield {"name": names[0], "features": features, "all_domains": names}
+    if len(names) > 1:
+        log.info(f"TEARDOWN domain {names}")
+    else:
+        log.info(f"TEARDOWN domain {names[0]}")
 
+# Syntaxe du param: les noms de domaines séparés par une virgule, les
+# différents contextes séparés par un point-virgule.
+# Ex: toto.fr,toto.net:dimail;machin.com:ctx2
 @pytest.fixture(scope="function")
 def domain_web(log, client, admin, normal_user, ox_cluster, request):
-    name, context_name = request.param.split(":",1)
-    features = ["mailbox", "webmail"]
+    contexts = request.param.split(";")
     login = normal_user["user"]
+    features = ["mailbox", "webmail"]
 
-    log.info(f"SETUP domain {name}, allowed for user {login}, feature: mailbox and webmail")
-    _make_domain(log, client, admin, name, features, login, context_name)
-    log.info("- check the domain is declared in the context")
-    ctx = ox_cluster.get_context_by_name(context_name)
-    assert name in ctx.domains
+    all_domains = []
+    all_contexts = []
+    ctx_by_domain = {}
+    domains_by_ctx = {}
 
-    yield {"name": name, "features": features, "context_name": context_name}
-    log.info(f"TEARDOWN domain {name}")
+    log.info(f"SETUP webmail domains, allowed for user {login}, features {features}")
+    for ctx_info in contexts:
+        domains, context_name = ctx_info.split(":",1)
+        names = domains.split(",")
+
+        all_contexts.append(context_name)
+        domains_by_ctx[context_name] = []
+        for name in names:
+            log.info(f"- create domain {name}")
+            all_domains.append(name)
+            domains_by_ctx[context_name].append(name)
+            ctx_by_domain[name] = context_name
+            _make_domain(log, client, admin, name, features, login, context_name)
+            log.info(f"- check the domain {name} is declared in the context {context_name}")
+            ctx = ox_cluster.get_context_by_name(context_name)
+            assert name in ctx.domains
+
+    yield {
+        "name": all_domains[0],
+        "features": features,
+        "context_name": all_contexts[0],
+        "all_domains": all_domains,
+        "all_contexts": all_contexts,
+        "ctx_by_domain": ctx_by_domain,
+        "domains_by_ctx": domains_by_ctx,
+    }
+    log.info(f"TEARDOWN web domains {all_domains}")
 
