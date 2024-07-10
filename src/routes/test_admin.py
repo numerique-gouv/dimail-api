@@ -2,6 +2,7 @@ import fastapi.testclient
 
 from .. import sql_api
 
+
 def test_users__create(db_api, ox_cluster, client, log):
     # At the beginning of time, database is empty, random users are
     # accepted and are admins
@@ -64,7 +65,7 @@ def test_users__create(db_api, ox_cluster, client, log):
 
 
 def test__update_a_user(log, client, admin):
-    auth=(admin["user"], admin["password"])
+    auth = (admin["user"], admin["password"])
 
     # If patch a user without the correct creds -> forbidden
     response = client.patch(
@@ -152,10 +153,10 @@ def test__update_a_user(log, client, admin):
 def test_delete_user(db_api_session, log, client, admin):
     """Check that we can delete a user and that it will remove all the
     associated allows."""
-    auth=(admin["user"], admin["password"])
+    auth = (admin["user"], admin["password"])
 
     # FIXME fixture
-    # First, we create a normal user
+    # First, we create a normal user
     response = client.post(
         "/users/",
         json={
@@ -173,7 +174,7 @@ def test_delete_user(db_api_session, log, client, admin):
         "/domains/",
         json={
             "name": "domaine-1",
-            "features": [ "mailbox" ],
+            "features": ["mailbox"],
             "context_name": "useless",
         },
         auth=auth,
@@ -186,7 +187,7 @@ def test_delete_user(db_api_session, log, client, admin):
         "/domains/",
         json={
             "name": "domaine-2",
-            "features": [ "mailbox" ],
+            "features": ["mailbox"],
             "context_name": "useless",
         },
         auth=auth,
@@ -194,7 +195,7 @@ def test_delete_user(db_api_session, log, client, admin):
     assert response.status_code == fastapi.status.HTTP_201_CREATED
 
     # FIXME fixture
-    # Then we allow the user on two domains
+    # Then we allow the user on two domains
     response = client.post(
         "/allows/",
         json={
@@ -238,21 +239,21 @@ def test_delete_user(db_api_session, log, client, admin):
     )
     assert response.status_code == fastapi.status.HTTP_403_FORBIDDEN
 
-    # If we try to delete a user that does not exist -> not found
+    # If we try to delete a user that does not exist -> not found
     response = client.delete(
         "/users/not-a-user",
         auth=auth,
     )
     assert response.status_code == fastapi.status.HTTP_404_NOT_FOUND
 
-    # If we delete the user -> ok, no content
+    # If we delete the user -> ok, no content
     response = client.delete(
         "/users/normal",
         auth=auth,
     )
     assert response.status_code == fastapi.status.HTTP_204_NO_CONTENT
 
-    # And now, if we fetch the user -> not found
+    # And now, if we fetch the user -> not found
     response = client.get(
         "/users/normal",
         auth=auth,
@@ -333,7 +334,6 @@ def test_domains__create_successful(db_api_session, log, client, admin):
         auth=(admin["user"], admin["password"]),
     )
     assert response.status_code == fastapi.status.HTTP_201_CREATED
-
 
 
 def test_allows__create_allows(db_api_session, log, client):

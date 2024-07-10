@@ -199,3 +199,8 @@ def test_creds(db_api_session):
     sql_api.deny_domain_for_user(db_api_session, "toto", "example.com")
     creds = user_toto.get_creds()
     assert not creds.can_read("example.com")
+
+    # Si on rappelle une seconde fois deny_domain_for_user, ça ne plante pas
+    # Mais le domaine n'est pas trouvé dans la BDD
+    data = sql_api.deny_domain_for_user(db_api_session, "toto", "example.com")
+    assert data is None
