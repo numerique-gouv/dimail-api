@@ -31,6 +31,7 @@ def test_with_webmail(
 ):
     token = normal_user["token"]
     virgin_token = virgin_user["token"]
+    admin = { "user": admin_token["user"], "password": admin_token["password"]}
     admin_token = admin_token["token"]
     domain_name = domain_web["name"]
 
@@ -124,6 +125,8 @@ def test_with_webmail(
         "displayName": "Joli nom affichable",
     }
 
+    # Lorsque je modifie une webmail -> 200 OK
+    # Et seul, les clefs demandées sont modifiées
     response = client.patch(
         f"/domains/{domain_name}/mailboxes/address",
         json={
@@ -131,6 +134,7 @@ def test_with_webmail(
         },
         headers={"Authorization": f"Bearer {token}"},
     )
+
     assert response.status_code == fastapi.status.HTTP_200_OK
     assert response.json() == {
         "type": "mailbox",
@@ -141,6 +145,8 @@ def test_with_webmail(
         "displayName": "Joli nom afficha",
     }
 
+    # Lorque je veux modifier le givenName d'une webmail -> 200 OK
+    # Et le seul le givenName se modifie
     response = client.patch(
         f"/domains/{domain_name}/mailboxes/address",
         json={
@@ -158,8 +164,60 @@ def test_with_webmail(
         "displayName": "Joli nom afficha",
     }
 
+    # Si on veut modifier le given name d'une mailbox ->
+    # Status OK
+    # Mais aucune modification ne sera faite
+
+    # Creer un domain mailbox pour le test
+    response = client.post(
+        "/domains/",
+        json={
+            "name": "new.com",
+            "features": ["mailbox"],
+            "context_name": None,
+        },
+        auth=(admin["user"], admin["password"])
+    )
+    assert response.status_code == fastapi.status.HTTP_201_CREATED
+
+    # Créer une mailbox pour le test
+    # FIXME parler avec Benjamin est ce que c'est logique de rendre les
+    # trois clefs obligatoires ? en sachant que les mailbox n'en ont pas
+    # besoin.
+    response = client.post(
+        "/domains/new.com/mailboxes/addr",
+        json={
+            "givenName": "",
+            "surName": "",
+            "displayName": "",
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert response.status_code == fastapi.status.HTTP_201_CREATED
+
+    # On modifie la mailbox
+    response = client.patch(
+        "/domains/new.com/mailboxes/addr",
+        json={
+            "givenName": "newGivenName",
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+
+    # on acquitte le status 200 et le fait que rien n'a été modifié
+    assert response.status_code == fastapi.status.HTTP_200_OK
+    # FIXME: should be "ok" ? or "broken" ?
+    assert response.json() == {
+        "type": "mailbox",
+        "status": "broken",
+        "email": "addr@new.com",
+        "surName": None,
+        "givenName": None,
+        "displayName": None,
+    }
+
     # Si on patch sur un domaine qui n'existe pas -> not found
-    # Il faut etre admin pour pouvoir essayer de toucher un domaine qui
+    # Il faut être admin pour pouvoir essayer de toucher un domaine qui
     # n'existe pas, les gens normaux auront un permisison denied.
     response = client.patch(
         "/domains/pas-un-domaine/mailboxes/hop",
