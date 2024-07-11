@@ -1,6 +1,11 @@
 import pytest
 
-from .. import oxcli, sql_dovecot, web_models
+from .. import (
+    oxcli,
+    sql_dovecot,
+    sql_postfix,
+    web_models
+)
 
 def test_web_model_mailbox():
     with pytest.raises(Exception) as e:
@@ -39,7 +44,7 @@ def test_web_model_mailbox():
         assert user is None
     assert "the same" in str(e.value)
 
-    # Maintenant, nos deux users sont cohérents
+    # Maintenant, nos deux users sont cohérents
     db_user.domain = "domain.fr"
 
     # Si on dit qu'on a du webmail, le status est "ok"
@@ -57,4 +62,32 @@ def test_web_model_mailbox():
     # Si pas de webmail et pas de ox_user, "ok"
     user = web_models.Mailbox.from_both_users(None, db_user, False)
     assert user.status == "ok"
+
+def test_alias_webmodel():
+    username = "toto"
+    domain = "domain.com"
+    destination = "destination"
+
+    postfix_alias = sql_postfix.PostfixAlias(
+        alias=f"{username}@{domain}",
+        domain="domain",
+        destination=destination,
+    )
+
+    # On crée un alias à partir de la base de données
+    # On vérifie que l'alias n'as pas été créé
+    # Car le domaine est incorrect
+    with pytest.raises(Exception) as e:
+        web_models.Alias.from_db(postfix_alias)
+    assert "The alias in database" in str(e.value)
+
+    # On corrige le domaine
+    postfix_alias.domain = domain
+
+    # On crée l'alias
+    alias = web_models.Alias.from_db(postfix_alias)
+
+    assert alias.username == username
+    assert alias.domain == domain
+    assert alias.destination == destination
 
