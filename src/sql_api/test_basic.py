@@ -1,5 +1,20 @@
-from .. import sql_api
+import pytest
 
+from .. import sql_api
+from . import database
+
+
+
+def test_database():
+    database.maker = None
+    with pytest.raises(Exception) as e:
+        database.get_maker()
+    assert "You need to init the db by giving me a valid URL" in str(e.value)
+
+    database.init_db("sqlite:///:memory:")
+
+    maker = database.get_maker()
+    assert maker is not None
 
 def test_create_user(db_api_session):
     db_user = sql_api.create_user(
