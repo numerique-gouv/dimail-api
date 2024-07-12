@@ -1,5 +1,19 @@
+import pytest
+
+from . import database
 from .. import sql_postfix
 
+
+def test_database():
+    database.maker = None
+    with pytest.raises(Exception) as e:
+        database.get_maker()
+    assert "Please init the postfix database by giving me an url..." in str(e.value)
+
+    database.init_db("sqlite:///:memory:")
+
+    maker = database.get_maker()
+    assert maker is not None
 
 def test_alias__create_and_get_an_alias(db_postfix_session):
     """Proves that we can create an alias in postfix db, and fetch it."""
