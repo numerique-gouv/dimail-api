@@ -22,23 +22,17 @@ def test_create_user(db_api_session):
     )
     assert db_user == sql_api.DBUser(name="toto", is_admin=False)
 
-    class FakeDBAPI:
-        def add(self, db_user):
-            pass
+    # When trying to create a user that already exists -> fail
+    db_user = sql_api.create_user(db_api_session, name="toto", password="titi", is_admin=False)
+    assert db_user is None
 
-        def commit(self):
-            raise Exception("commit failed")
+    # When trying to create a user with an invalid password -> fail
+    db_user = sql_api.create_user(db_api_session, name="new", password=None, is_admin=True)
+    assert db_user is None
 
-        def rollback(self):
-            pass
-
-        def refresh(self, db_user):
-            pass
-
-    db_user = sql_api.create_user(FakeDBAPI(), name="toto", password="titi", is_admin=False)
-
-    # FIXME Voir avec benjamin le comportement attendu
-    # assert db_user is None
+    # When trying to create a user with an invalid is_admin -> fail
+    db_user = sql_api.create_user(db_api_session, name="test", password="test", is_admin="invalid")
+    assert db_user is None
 
 
 def test_delete_user(db_api_session, log):
@@ -54,6 +48,10 @@ def test_delete_user(db_api_session, log):
 
     # When trying to fetch it again, we fail
     user = sql_api.get_user(db_api_session, "toto")
+    assert user is None
+
+    # when trying to delete a user that does not exist -> fail
+    user = sql_api.delete_user(db_api_session, "tutu")
     assert user is None
 
 
@@ -127,6 +125,41 @@ def test_update_user(db_api_session):
     assert isinstance(db_user, sql_api.DBUser)
     assert db_user.verify_password("nouvo")
     assert not db_user.verify_password("toto")
+
+
+def test_update_user_errors(db_api_session):
+    db_user = sql_api.create_user(db_api_session, "toto", "titi", False)
+    assert db_user is not None
+
+    # Je change le flag is_admin sur mon user, ça se passe bien
+    db_user = sql_api.update_user_is_admin(db_api_session, "toto", True)
+    assert db_user.is_admin is True
+
+    # Je change le flag is_admin sur un user qui n'existe pas...
+    db_user = sql_api.update_user_is_admin(db_api_session, "tutu", True)
+    assert db_user is None
+
+    # Je change le flag is_admin sur mon user, avec une valeur idiote
+    # -> Objet inchangé, is_admin vaut toujours True (la valeur précédente)
+    db_user = sql_api.update_user_is_admin(db_api_session, "toto", "idiote")
+    assert db_user.is_admin is True
+
+    # Le même test, mais avec "False" comme valeur précédente
+    db_user = sql_api.update_user_is_admin(db_api_session, "toto", False)
+    assert db_user.is_admin is False
+    db_user = sql_api.update_user_is_admin(db_api_session, "toto", "idiote")
+    assert db_user.is_admin is False
+
+    # Je change le mot de passe d'un user qui n'existe pas -> echec
+    db_user = sql_api.update_user_password(db_api_session, "tutu", "mot de passe")
+    assert db_user is None
+
+    # Je remonte mon user toto, et je stock son ancien mot de passe (haché) pour
+    # vérifier que les updates échouent
+    db_user = sql_api.get_user(db_api_session, "toto")
+    previous = db_user.hashed_password
+    db_user = sql_api.update_user_password(db_api_session, "toto", None)
+    assert db_user.hashed_password == previous
 
 
 def test_allows(db_api_session):
@@ -237,3 +270,39 @@ def test_creds(db_api_session):
     # Mais le domaine n'est pas trouvé dans la BDD
     data = sql_api.deny_domain_for_user(db_api_session, "toto", "example.com")
     assert data is None
+
+
+def test_count_users(db_api_session):
+    # Au début, il n'y a aucun utilisateur
+    n = sql_api.count_users(db_api_session)
+    assert n == 0
+
+    l = sql_api.get_users(db_api_session)
+    assert len(l) == 0
+
+    # On crée un utilisateur
+    user = sql_api.create_user(db_api_session, "toto", "pass", False)
+    assert user is not None
+
+    # Maintenant on a 1 utilisateur
+    n = sql_api.count_users(db_api_session)
+    assert n == 1
+
+    l = sql_api.get_users(db_api_session)
+    assert len(l) == 1
+    assert l[0].name == "toto"
+
+    # On crée un deuxième utilisateur
+    user = sql_api.create_user(db_api_session, "toto2", "pass", False)
+    assert user is not None
+
+    # Maintenant on a 2 utilisateur
+    n = sql_api.count_users(db_api_session)
+    assert n == 2
+
+    l = sql_api.get_users(db_api_session)
+    assert len(l) == 2
+    assert l[0].name in [ "toto", "toto2" ]
+    assert l[1].name in [ "toto", "toto2" ]
+
+
