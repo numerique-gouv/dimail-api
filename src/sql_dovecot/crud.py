@@ -21,8 +21,8 @@ def create_user(db: orm.Session, username: str, domain: str, password: str):
         gid=0,
         home="",
     )
-    imap_user.set_password(password)
     try:
+        imap_user.set_password(password)
         db.add(imap_user)
         db.commit()
     except Exception as e:
