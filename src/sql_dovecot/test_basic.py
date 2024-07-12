@@ -1,7 +1,7 @@
 import pytest
 
 from .. import sql_dovecot
-from . import database
+from . import database, models
 
 
 def test_database():
@@ -88,3 +88,14 @@ def test_get_users(db_dovecot_session):
     # On teste la récupération des users du domaine
     users = sql_dovecot.get_users(db_dovecot_session, "example.com")
     assert len(users) == 2
+
+def test_imap__check_password():
+    imap_user = models.ImapUser()
+    imap_user.set_password("secret")
+    assert imap_user.check_password("secret")
+    assert not imap_user.check_password("wrong")
+
+    with pytest.raises(Exception) as e:
+        imap_user.password = "wrong"
+        imap_user.check_password("wrong")
+    assert "This password was not encoded by me, i can't check it" in str(e.value)
