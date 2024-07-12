@@ -8,6 +8,16 @@ def test_alias__create_and_get_an_alias(db_postfix_session):
     )
     assert alias is None
 
+    # On vérifie que si une valeur est idiote on ne peut pas creer d'alias
+    alias = sql_postfix.create_alias(db_postfix_session, None, "from", "to@example.com")
+    assert alias is None
+
+    alias = sql_postfix.create_alias(db_postfix_session, "example.com", None, "to@example.com")
+    assert alias is None
+
+    alias = sql_postfix.create_alias(db_postfix_session, None, "from", None)
+    assert alias is None
+
     alias = sql_postfix.create_alias(
         db_postfix_session, "example.com", "from", "to@example.com"
     )

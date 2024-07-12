@@ -21,13 +21,13 @@ def get_aliases_by_name(db: orm.Session, name: str):
 def create_alias(
     db: orm.Session, domain: str, username: str, destination: str
 ) -> models.PostfixAlias:
-    alias = username + "@" + domain
-    db_alias = models.PostfixAlias(
-        alias=alias,
-        domain=domain,
-        destination=destination,
-    )
     try:
+        alias = username + "@" + domain
+        db_alias = models.PostfixAlias(
+            alias=alias,
+            domain=domain,
+            destination=destination,
+        )
         db.add(db_alias)
         db.commit()
     except Exception:
