@@ -22,6 +22,24 @@ def test_create_user(db_api_session):
     )
     assert db_user == sql_api.DBUser(name="toto", is_admin=False)
 
+    class FakeDBAPI:
+        def add(self, db_user):
+            pass
+
+        def commit(self):
+            raise Exception("commit failed")
+
+        def rollback(self):
+            pass
+
+        def refresh(self, db_user):
+            pass
+
+    db_user = sql_api.create_user(FakeDBAPI(), name="toto", password="titi", is_admin=False)
+
+    # FIXME Voir avec benjamin le comportement attendu
+    # assert db_user is None
+
 
 def test_delete_user(db_api_session, log):
     # First, we create a user
