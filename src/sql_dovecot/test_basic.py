@@ -1,5 +1,19 @@
-from .. import sql_dovecot
+import pytest
 
+from .. import sql_dovecot
+from . import database
+
+
+def test_database():
+    database.maker = None
+    with pytest.raises(Exception) as e:
+        database.get_maker()
+    assert "Please init the database by giving me an url..." in str(e.value)
+
+    database.init_db("sqlite:///:memory:")
+
+    maker = database.get_maker()
+    assert maker is not None
 
 def test_imap__create_and_get_a_user(db_dovecot_session):
     """Proves that we can create a user in dovecot db, fetch it, and checks its password."""
