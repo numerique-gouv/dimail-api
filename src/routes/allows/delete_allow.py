@@ -43,7 +43,6 @@ async def delete_allow(
         sql_api.get_domain
         sql_api.get_user
     """
-
     user_db = sql_api.get_user(db, user_name)
     if user_db is None:
         raise fastapi.HTTPException(status_code=404, detail="User not found")
