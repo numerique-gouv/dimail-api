@@ -4,7 +4,13 @@ from ... import auth, oxcli, sql_api, web_models
 from .. import dependencies, routers
 
 
-@routers.domains.post("/", status_code=201)
+@routers.domains.post(
+    "/",
+    status_code=fastapi.status.HTTP_201_CREATED,
+    summary="Create a domain",
+    description="Create a new domain",
+    response_model=web_models.Domain,
+)
 async def post_domain(
     db: dependencies.DependsApiDb,
     user: auth.DependsBasicAdmin,

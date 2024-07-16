@@ -14,8 +14,41 @@ async def patch_mailbox(
     imap: dependencies.DependsDovecotDb,
     api: dependencies.DependsApiDb,
 ) -> web_models.Mailbox:
-    """Updates a mailbox. All the fields are optional and are the informations
-    to update on that mailbox. Some updates are not yet implemented."""
+    """Updates a mailbox. All the fields are optional and are the information
+    to update on that mailbox. Some updates are not yet implemented.
+
+    Args:
+        domain_name (str): Domain name
+        user_name (str): Mailbox username
+        updates (web_models.UpdateMailbox): Mailbox information to update
+        user (auth.DependsTokenUser): User credentials
+        imap (dependencies.DependsDovecotDb): Dovecot database session
+        api (dependencies.DependsApiDb): API database session
+
+    Returns:
+        web_models.Mailbox: Updated mailbox information
+
+    Raises:
+        fastapi.HTTPException: Permission denied
+        fastapi.HTTPException: Domain not found
+        fastapi.HTTPException: Feature 'mailbox' not available on the domain
+        fastapi.HTTPException: Mailbox not found
+        fastapi.HTTPException: Not yet implemented
+
+    See Also:
+        * https://fastapi.tiangolo.com/tutorial/path-params
+        * https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt
+        * https://fastapi.tiangolo.com/tutorial/security/simple-verify-token
+
+    Dependencies:
+        auth.DependsTokenUser
+        dependencies.DependsApiDb
+        dependencies.DependsDovecotDb
+        oxcli
+        sql_api.get_domain
+        sql_dovecot.get_user
+        web_models.Mailbox.from_both_users
+    """
     log = logging.getLogger(__name__)
     email = f"{user_name}@{domain_name}"
     log.info(f"Nous modifions {email}")

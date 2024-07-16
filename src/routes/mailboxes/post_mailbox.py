@@ -21,6 +21,48 @@ async def post_mailbox(
     user_name: str,
     domain_name: str,
 ) -> web_models.NewMailbox:
+    """Create a mailbox in dovecot and OX.
+
+    Args:
+        mailbox (web_models.CreateMailbox): Mailbox information
+        user (auth.DependsTokenUser): User credentials
+        db (dependencies.DependsDovecotDb): Dovecot database session
+        db_api (dependencies.DependsApiDb): API database session
+        user_name (str): User name
+        domain_name (str): Domain name
+
+    Returns:
+        web_models.NewMailbox: New mailbox information
+
+    Raises:
+        fastapi.HTTPException: Permission denied
+        Exception: Domain not found in OX
+
+    See Also:
+        * https://fastapi.tiangolo.com/tutorial/path-params
+        * https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt
+        * https://fastapi.tiangolo.com/tutorial/security/simple-verify-token
+
+    Dependencies:
+        auth.DependsTokenUser
+        dependencies.DependsApiDb
+        dependencies.DependsDovecotDb
+        oxcli
+        sql_api.get_domain
+        sql_dovecot.create_user
+        web_models.CreateMailbox
+        web_models.NewMailbox
+
+    Exemples:
+        * POST /domains/test.com/mailboxes/test.user
+        import client
+
+        client.post(
+        "domains/test.com/mailboxes/test.user",
+        json={"givenName": "Test", "surName": "User"},
+        headers={"Authorization: Bearer token"}
+        )
+    """
     log = logging.getLogger(__name__)
 
     perms = user.get_creds()

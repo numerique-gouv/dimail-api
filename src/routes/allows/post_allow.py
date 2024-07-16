@@ -10,7 +10,38 @@ async def post_allow(
     user: auth.DependsBasicAdmin,
     allow: web_models.Allowed,
 ) -> web_models.Allowed:
-    """Give ownership of a domain to a user."""
+    """Give ownership of a domain to a user.
+
+    To give ownership of a domain to a user, you must be an admin user.
+
+    Args:
+        db (dependencies.DependsApiDb): Database session
+        user (auth.DependsBasicAdmin): User credentials
+        allow (web_models.Allowed): Allow information
+
+    Returns:
+        web_models.Allowed: Allowed information
+
+    Raises:
+        fastapi.HTTPException: Domain not found
+        fastapi.HTTPException: User not found
+        fastapi.HTTPException: Domain already allowed for this user
+
+    See Also:
+        * https://fastapi.tiangolo.com/tutorial/path-params
+        * https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt
+        * https://fastapi.tiangolo.com/tutorial/security/simple-verify-token
+
+    Dependencies:
+        auth.DependsBasicAdmin
+        dependencies.DependsApiDb
+        routers
+        sql_api.allow_domain_for_user
+        sql_api.get_allowed
+        sql_api.get_domain
+        sql_api.get_user
+        web_models.Allowed.from_db
+    """
 
     user_db = sql_api.get_user(db, allow.user)
     if user_db is None:

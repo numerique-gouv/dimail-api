@@ -2,7 +2,12 @@ from ... import auth, sql_api, web_models
 from .. import dependencies, routers
 
 
-@routers.domains.get("/")
+@routers.domains.get(
+    "/",
+    response_model=list[web_models.Domain],
+    summary="Get all domains",
+    description="Get all domains",
+)
 async def get_domains(
     db: dependencies.DependsApiDb,
     user: auth.DependsBasicAdmin,

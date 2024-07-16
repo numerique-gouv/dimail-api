@@ -26,6 +26,38 @@ async def get_mailbox(
     api: dependencies.DependsApiDb,
     # alias_db: typing.Annotated[typing.Any, fastapi.Depends(sql_alias.get_alias_db)],
 ) -> web_models.Mailbox:
+    """Get a mailbox by email address.
+
+    Args:
+        user_name (str): User name
+        domain_name (str): Domain name
+        user (auth.DependsTokenUser): User credentials
+        imap (dependencies.DependsDovecotDb): Dovecot database session
+        api (dependencies.DependsApiDb): API database session
+
+    Returns:
+        web_models.Mailbox: Mailbox information
+
+    Raises:
+        fastapi.HTTPException: Permission denied
+        fastapi.HTTPException: Domain not found
+        fastapi.HTTPException: Mailbox not found
+        fastapi.HTTPException: Email address is not well formed
+
+    See Also:
+        * https://fastapi.tiangolo.com/tutorial/path-params
+        * https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt
+        * https://fastapi.tiangolo.com/tutorial/security/simple-verify-token
+
+    Dependencies:
+        auth.DependsTokenUser
+        dependencies.DependsApiDb
+        dependencies.DependsDovecotDb
+        oxcli
+        sql_api.get_domain
+        sql_dovecot.get_user
+        web_models.Mailbox.from
+    """
     log = logging.getLogger(__name__)
     email = f"{user_name}@{domain_name}"
     log.info(f"Nous cherchons qui est {email}")

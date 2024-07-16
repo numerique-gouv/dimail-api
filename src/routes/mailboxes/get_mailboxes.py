@@ -22,6 +22,35 @@ async def get_mailboxes(
     #  page_size: int = 20,
     #  page_number: int = 0,
 ):
+    """Get all mailboxes in a domain.
+
+    Args:
+        domain_name (str): Domain name
+        user (auth.DependsTokenUser): User credentials
+        imap (dependencies.DependsDovecotDb): Dovecot database session
+        api (dependencies.DependsApiDb): API database session
+
+    Returns:
+        list[web_models.Mailbox]: List of mailboxes
+
+    Raises:
+        fastapi.HTTPException: Permission denied
+        fastapi.HTTPException: Domain not found
+
+    See Also:
+        * https://fastapi.tiangolo.com/tutorial/path-params
+        * https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt
+        * https://fastapi.tiangolo.com/tutorial/security/simple-verify-token
+
+    Dependencies:
+        auth.DependsTokenUser
+        dependencies.DependsApiDb
+        dependencies.DependsDovecotDb
+        oxcli
+        sql_api.get_domain
+        sql_dovecot.get_users
+        web_models.Mailbox.from_both_users
+    """
     log = logging.getLogger(__name__)
     log.info(f"Searching mailboxes in domain {domain_name}\n")
 
