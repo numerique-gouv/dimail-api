@@ -6,13 +6,47 @@ from ... import auth, sql_postfix, web_models
 from .. import dependencies, routers
 
 
-@routers.aliases.post("/", description="Creates an alias in postfix")
+@routers.aliases.post(
+    "/",
+    description="Creates an alias in postfix",
+    status_code=fastapi.status.HTTP_201_CREATED,
+    response_model=web_models.Alias,
+)
 async def post_alias(
     alias: web_models.CreateAlias,
     user: auth.DependsTokenUser,
     db: dependencies.DependsPostfixDb,
     domain_name: str,
 ) -> web_models.Alias:
+    """Create an alias in postfix.
+
+    To create an alias, you must be an admin user.
+
+    Args:
+        alias (web_models.CreateAlias): Alias information
+        user (auth.DependsTokenUser): User credentials
+        db (dependencies.DependsPostfixDb): Database session
+        domain_name (str): Domain name
+
+    Returns:
+        web_models.Alias: Alias information
+
+    Raises:
+        fastapi.HTTPException: Alias already exists
+        fastapi.HTTPException: Permission denied
+
+    See Also:
+        * https://fastapi.tiangolo.com/tutorial/path-params
+        * https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt
+        * https://fastapi.tiangolo.com/tutorial/security/simple-verify-token
+
+    Dependencies:
+        auth.DependsTokenUser
+        dependencies.DependsPostfixDb
+        sql_postfix.create_alias
+        sql_postfix.get_alias
+        web_models.Alias.from_db
+    """
     log = logging.getLogger(__name__)
 
     perms = user.get_creds()

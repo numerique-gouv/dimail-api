@@ -17,6 +17,7 @@ from .. import dependencies, routers
         422: {"description": "Email address is not well formed"},
     },
     description="Fetch a mailbox <user_name> in domain <domain_name> (<user_name>@<domain_name>)",
+    response_model=web_models.Mailbox,
 )
 async def get_mailbox(
     user_name: str,

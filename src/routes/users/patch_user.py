@@ -4,7 +4,15 @@ from ... import auth, sql_api, web_models
 from .. import dependencies, routers
 
 
-@routers.users.patch("/{user}", status_code=200)
+@routers.users.patch(
+    "/{user}",
+    status_code=200,
+    response_model=web_models.User,
+    responses={
+        200: {"description": "User updated"},
+        404: {"description": "Not found"},
+    },
+)
 async def patch_user(
     user: str,
     db: dependencies.DependsApiDb,

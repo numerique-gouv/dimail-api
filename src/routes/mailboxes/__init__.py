@@ -3,6 +3,10 @@
 
 The mailboxes routes are used to manage mailboxes.
 
+Permitted roles:
+    * admin
+    * user if is admin of the domain or allowed to manage mailboxes
+
 The mailboxes routes are:
     * DELETE /domains/{domain_name}/mailboxes/{user_name}
     * GET /domains/{domain_name}/mailboxes/{user_name}

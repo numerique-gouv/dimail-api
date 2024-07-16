@@ -6,7 +6,12 @@ from ... import auth, sql_postfix, web_models
 from .. import dependencies, routers
 
 
-@routers.aliases.get("/", description="Gets an exact alias")
+@routers.aliases.get(
+    "/",
+    description="Gets an exact alias",
+    response_model=list[web_models.Alias],
+    status_code=fastapi.status.HTTP_200_OK,
+)
 async def get_alias(
     domain_name: str,
     user: auth.DependsTokenUser,
@@ -14,6 +19,37 @@ async def get_alias(
     user_name: str = "",
     destination: str = "",
 ) -> list[web_models.Alias]:
+    """Get an alias by name.
+
+    To get an alias, you must be an admin user.
+
+    Args:
+        domain_name (str): Domain name
+        user (auth.DependsTokenUser): User credentials
+        db (dependencies.DependsPostfixDb): Database session
+        user_name (str): User name
+        destination (str): Destination name
+
+    Returns:
+        list[web_models.Alias]: Alias information
+
+    Raises:
+        fastapi.HTTPException: Alias not found
+        fastapi.HTTPException: Permission denied
+
+    See Also:
+        * https://fastapi.tiangolo.com/tutorial/path-params
+        * https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt
+        * https://fastapi.tiangolo.com/tutorial/security/simple-verify-token
+
+    Dependencies:
+        auth.DependsTokenUser
+        dependencies.DependsPostfixDb
+        sql_postfix.get_alias
+        sql_postfix.get_aliases_by_domain
+        sql_postfix.get_aliases_by_name
+        web_models.Alias.from_db
+    """
     log = logging.getLogger(__name__)
 
     perms = user.get_creds()

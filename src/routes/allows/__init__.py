@@ -3,6 +3,9 @@
 
 The allows routes are used to manage allows.
 
+Permitted roles:
+    * admin
+
 The allows routes are:
     * DELETE /allows/{user_name}
     * GET /allows

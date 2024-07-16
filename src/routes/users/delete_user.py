@@ -4,7 +4,15 @@ from ... import auth, sql_api
 from .. import dependencies, routers
 
 
-@routers.users.delete("/{user_name}", status_code=fastapi.status.HTTP_204_NO_CONTENT)
+@routers.users.delete(
+    "/{user_name}",
+    status_code=fastapi.status.HTTP_204_NO_CONTENT,
+    responses={
+        204: {"description": "Deleted"},
+        404: {"description": "Not found"}
+    },
+    response_model=None,
+)
 async def delete_user(
     db: dependencies.DependsApiDb,
     user: auth.DependsBasicAdmin,
