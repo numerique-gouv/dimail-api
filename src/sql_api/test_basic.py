@@ -277,8 +277,8 @@ def test_count_users(db_api_session):
     n = sql_api.count_users(db_api_session)
     assert n == 0
 
-    l = sql_api.get_users(db_api_session)
-    assert len(l) == 0
+    li = sql_api.get_users(db_api_session)
+    assert len(li) == 0
 
     # On crée un utilisateur
     user = sql_api.create_user(db_api_session, "toto", "pass", False)
@@ -288,9 +288,9 @@ def test_count_users(db_api_session):
     n = sql_api.count_users(db_api_session)
     assert n == 1
 
-    l = sql_api.get_users(db_api_session)
-    assert len(l) == 1
-    assert l[0].name == "toto"
+    li = sql_api.get_users(db_api_session)
+    assert len(li) == 1
+    assert li[0].name == "toto"
 
     # On crée un deuxième utilisateur
     user = sql_api.create_user(db_api_session, "toto2", "pass", False)
@@ -300,9 +300,9 @@ def test_count_users(db_api_session):
     n = sql_api.count_users(db_api_session)
     assert n == 2
 
-    l = sql_api.get_users(db_api_session)
-    assert len(l) == 2
-    assert l[0].name in [ "toto", "toto2" ]
-    assert l[1].name in [ "toto", "toto2" ]
+    li = sql_api.get_users(db_api_session)
+    assert len(li) == 2
+    assert li[0].name in [ "toto", "toto2" ]
+    assert li[1].name in [ "toto", "toto2" ]
 
 
