@@ -9,6 +9,7 @@ from .basic_user import BasicUser
 
 
 class BasicAdmin(BasicUser):
+    """BasicAdmin is a child of BasicUser, but it will only allow users that are admins."""
     def __init__(self):
         super(BasicAdmin, self).__init__()
 

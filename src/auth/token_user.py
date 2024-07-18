@@ -58,6 +58,36 @@ class TokenUser(fastapi.security.HTTPBearer):
             session.close()
 
     def verify_jwt(self, log, jwtoken: str) -> dict:
+        """Verify the JWT signature, decode it, and return the decoded token.
+        Raises PermissionDenied if the token is invalid.
+
+        Args:
+            log: logger object
+            jwtoken: the JWT token to verify
+
+        Returns:
+            dict: the decoded token
+
+        Raises:
+            PermissionDenied: if the token is invalid
+
+        Example:
+            ```python
+
+            token = verify_jwt(log, "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
+            "eyJzdWIiOiJ1c2VyMSIsImV4cCI6MTYxNjMwNjIwMH0.12z3y4x5w6v7u8t9s0r")
+            ```
+
+        See also:
+            - https://pyjwt.readthedocs.io/en/stable/
+            - https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/
+
+        Dependencies:
+            - datetime
+            - logging
+            - PermissionDenied
+            - config
+        """
         secret = config.settings["JWT_SECRET"]
         algo = "HS256"
         log.info("Trying to decode the token...")
