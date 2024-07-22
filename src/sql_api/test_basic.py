@@ -16,6 +16,9 @@ def test_database():
     maker = database.get_maker()
     assert maker is not None
 
+    database.maker = None
+
+
 def test_create_user(db_api_session):
     db_user = sql_api.create_user(
         db_api_session, name="toto", password="titi", is_admin=False

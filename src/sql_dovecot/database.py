@@ -19,6 +19,7 @@ def init_db(config: str):
                              bind=engine,
                              info={},
                              close_resets_only=False)
+    return engine
 
 
 def get_maker() -> orm.sessionmaker:

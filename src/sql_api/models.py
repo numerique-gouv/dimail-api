@@ -18,7 +18,7 @@ class DBUser(Api):
     __table_args__ = (sa.UniqueConstraint("uuid", name="uuid_is_unique"),)
     name = sa.Column(sa.String(32), primary_key=True)
     uuid = sa.Column(sa.UUID, default=uuid.uuid4)
-    hashed_password = sa.Column(sa.String(128, collation="ascii_bin"), nullable=True)
+    hashed_password = sa.Column(sa.String(128), nullable=True)
     is_admin = sa.Column(sa.Boolean, default=False)
     fullname = sa.Column(sa.String(64), nullable=True)
     domains: orm.Mapped[list["DBDomain"]] = orm.relationship(
@@ -67,10 +67,10 @@ class DBUser(Api):
 
 class DBDomain(Api):
     __tablename__ = "domains"
-    name = sa.Column(sa.String(200, collation="ascii_bin"), primary_key=True)
+    name = sa.Column(sa.String(200), primary_key=True)
     features = sa.Column(sa.JSON(), nullable=False)
-    webmail_domain = sa.Column(sa.String(200, collation="ascii_bin"), nullable=True)
-    mailbox_domain = sa.Column(sa.String(200, collation="ascii_bin"), nullable=True)
+    webmail_domain = sa.Column(sa.String(200), nullable=True)
+    mailbox_domain = sa.Column(sa.String(200), nullable=True)
     imap_domains = sa.Column(sa.JSON(), nullable=True)
     smtp_domains = sa.Column(sa.JSON(), nullable=True)
     users: orm.Mapped[list["DBUser"]] = orm.relationship(
@@ -85,7 +85,7 @@ class DBAllowed(Api):
     __tablename__ = "allowed"
     user = sa.Column(sa.String(32), sa.ForeignKey("users.name"), primary_key=True)
     domain = sa.Column(
-        sa.String(200, collation="ascii_bin"),
+        sa.String(200),
         sa.ForeignKey("domains.name"),
         primary_key=True,
     )

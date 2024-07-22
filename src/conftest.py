@@ -1,5 +1,6 @@
 import logging
 import os
+import pathlib
 import subprocess
 import time
 import typing
@@ -20,6 +21,10 @@ from . import config, main, oxcli, sql_api, sql_dovecot, sql_postfix
 def make_db(name: str, conn: sa.Connection) -> str:
     """Utility function, for internal use. Ensure a database, named 'name'
     is created and empty. 'conn' is a mariadb/mysql connection as root user"""
+    if conn == "sqlite":
+        if pathlib.Path(f"/tmp/{name}.db").is_file():
+            pathlib.Path.unlink(f"/tmp/{name}.db")
+        return f"sqlite:////tmp/{name}.db"
     return make_db_with_user(name, "test", "toto", conn)
 
 
@@ -38,6 +43,9 @@ def make_db_with_user(name: str, user: str, password: str, conn: sa.Connection) 
 
 def drop_db(name: str, conn: sa.Connection):
     """Utility function, for internal use. Drops a database."""
+    if conn == "sqlite":
+        pathlib.Path.unlink(f"/tmp/{name}.db")
+        return
     conn.execute(sa.text(f"drop database if exists {name};"))
 
 
@@ -59,30 +67,45 @@ def fix_logger(scope="session") -> typing.Generator:
     logger.info("TEARDOWN logger")
 
 
+@pytest.fixture(scope="session", params=["sqlite", "mysql"])
+def db_type(log, request) -> typing.Generator:
+    db_type = request.param
+    log.info(f"SETUP testing with db_type={db_type}")
+    yield db_type
+    log.info(f"TEARDOWN testing with db_type={db_type}")
+
+
 @pytest.fixture(scope="session")
-def root_db(log, root_db_url, request) -> typing.Generator:
+def root_db(log, db_type, root_db_url, request) -> typing.Generator:
     """
     Fixtures that makes a connection to mariadb/mysql as root available.
     """
-    log.info(f"CONNECTING as mysql root to {root_db_url}")
-    root_db = sa.create_engine(root_db_url)
-    conn = root_db.connect()
-    yield conn
-    conn.close()
-    log.info(f"CLOSING root mysql connection to {root_db_url}")
+    if db_type == "mysql":
+        log.info(f"CONNECTING as mysql root to {root_db_url}")
+        root_db = sa.create_engine(root_db_url)
+        conn = root_db.connect()
+        yield conn
+        conn.close()
+        log.info(f"CLOSING root mysql connection to {root_db_url}")
+    else:
+        yield "sqlite"
 
 
 @pytest.fixture(scope="session")
-def alembic_config(log) -> typing.Generator:
+def alembic_config(db_type, log) -> typing.Generator:
     """Fixtures that makes available the alambic config, for future use. The
     list of databases is made empty. Alembic is told not to do anything to
     the logger, so that we can have logs where we want them."""
     log.info("SETUP alembic config")
     if not os.path.exists("alembic.ini"):
         raise Exception("Je veux tourner dans src, avec mon fichier alembic.ini")
-    cfg = alembic.config.Config("alembic.ini")
-    cfg.set_main_option("databases", "")
-    cfg.set_main_option("init_logger", "False")
+    cfg = None
+    if db_type == "sqlite":
+        cfg = {}
+    else:
+        cfg = alembic.config.Config("alembic.ini")
+        cfg.set_main_option("databases", "")
+        cfg.set_main_option("init_logger", "False")
     yield cfg
     log.info("TEARDOWN alembic config")
 
@@ -92,6 +115,9 @@ def add_db_in_alembic_config(alembic_config, db_name: str, db_url: str, log):
     adds a database, set the right url for this database. This makes sure the
     tests are run against databases which are not used by the server running
     outside on our systems."""
+    if isinstance(alembic_config, dict):
+        alembic_config[db_name]=db_url
+        return
     before = alembic_config.get_main_option("databases")
     db_list = before.split(",")
     if before == "":
@@ -112,6 +138,9 @@ def add_db_in_alembic_config(alembic_config, db_name: str, db_url: str, log):
 def remove_db_from_alembic_config(alembic_config, db_name: str, log):
     """Utility function, for internal use. Removes a database that was previously
     added into the alembic config."""
+    if isinstance(alembic_config, dict):
+        alembic_config.pop(db_name)
+        return
     before = alembic_config.get_main_option("databases")
     db_list = before.split(",")
     if before == "":
@@ -129,7 +158,7 @@ def remove_db_from_alembic_config(alembic_config, db_name: str, log):
 
 
 @pytest.fixture(scope="session")
-def db_api_url(root_db, alembic_config, log) -> typing.Generator:
+def db_api_url(db_type, root_db, alembic_config, log) -> typing.Generator:
     """Fixture that makes a database available as the API db for testing.
     Adds the database and the url in alembic config. Yields an url to
     connect to that db."""
@@ -143,7 +172,7 @@ def db_api_url(root_db, alembic_config, log) -> typing.Generator:
 
 
 @pytest.fixture(scope="session")
-def db_dovecot_url(root_db, alembic_config, log) -> typing.Generator:
+def db_dovecot_url(db_type, root_db, alembic_config, log) -> typing.Generator:
     """Fixture that makes a database available as the Dovecot db for testing.
     Adds the database and the url in alembic config. Yields an url to
     connect to that db."""
@@ -157,7 +186,7 @@ def db_dovecot_url(root_db, alembic_config, log) -> typing.Generator:
 
 
 @pytest.fixture(scope="session")
-def db_postfix_url(root_db, alembic_config, log) -> typing.Generator:
+def db_postfix_url(db_type, root_db, alembic_config, log) -> typing.Generator:
     """Fixtures that makes a database available as the Postfix db for testing.
     Adds the database and the url in alembic config. Yields an url to
     connect to that db."""
@@ -171,13 +200,14 @@ def db_postfix_url(root_db, alembic_config, log) -> typing.Generator:
 
 
 @pytest.fixture(scope="function")
-def alembic_run(alembic_config, log) -> typing.Generator:
+def alembic_run(db_type, alembic_config, log) -> typing.Generator:
     """Fixture that makes sure alembic has run on all the registered
     databases."""
     log.info("SETUP with alembic (upgrade)")
-    bases = alembic_config.get_main_option("databases")
-    log.info(f" - Here are the databases : {bases}")
-    alembic.command.upgrade(alembic_config, "head")
+    if db_type == "mysql":
+        bases = alembic_config.get_main_option("databases")
+        log.info(f" - Here are the databases : {bases}")
+        alembic.command.upgrade(alembic_config, "head")
     yield
     for sess in sa.orm.session._sessions.values():
         if sess._close_state != sa.orm.session._SessionCloseState.CLOSED:
@@ -186,37 +216,59 @@ def alembic_run(alembic_config, log) -> typing.Generator:
             log.error(f"We have an UNCLOSED session in the orm: {sess}")
             log.error(f"   caller: {caller} @ {file}")
             assert "" == f"WE LOST A SESSION created by {caller} @ {file}"
-    bases = alembic_config.get_main_option("databases")
-    alembic.command.downgrade(alembic_config, "base")
     log.info("TEARDOWN with alembic (downgrade)")
-    log.info(f" - Here are the databases : {bases}")
+    if db_type == "mysql":
+        bases = alembic_config.get_main_option("databases")
+        alembic.command.downgrade(alembic_config, "base")
+        log.info(f" - Here are the databases : {bases}")
 
 
 @pytest.fixture(scope="function")
-def db_api(alembic_run, db_api_url, log) -> typing.Generator:
+def db_api(db_type, alembic_run, db_api_url, log) -> typing.Generator:
     """Fixture that makes sure a database is registered and ready to
     be used as the API db during tests."""
-    log.info("SETUP sql_api to use the testing db")
-    sql_api.init_db(db_api_url)
+    log.info(f"SETUP sql_api to use the testing db (url={db_api_url})")
+    engine = sql_api.init_db(db_api_url)
+    if db_type == "sqlite":
+        log.info("- sqlite database, creating the tables")
+        sql_api.Api.metadata.create_all(engine)
     yield
+    log.info(f"TEARDOWN sql_api on testing db (url={db_api_url})")
+    if db_type == "sqlite":
+        log.info("- sqlite database, removing the tables")
+        sql_api.Api.metadata.drop_all(engine)
 
 
 @pytest.fixture(scope="function")
-def db_dovecot(alembic_run, db_dovecot_url, log) -> typing.Generator:
+def db_dovecot(db_type, alembic_run, db_dovecot_url, log) -> typing.Generator:
     """Fixture that makes sure a database is registered and ready to
     be used as the Dovecot db during tests."""
-    log.info("SETUP sql_dovecot to use the testing db")
-    sql_dovecot.init_db(db_dovecot_url)
+    log.info(f"SETUP sql_dovecot to use the testing db (url={db_dovecot_url})")
+    engine = sql_dovecot.init_db(db_dovecot_url)
+    if db_type == "sqlite":
+        log.info("- sqlite database, creating the tables")
+        sql_dovecot.Dovecot.metadata.create_all(engine)
     yield
+    log.info(f"TEARDOWN sql_dovecot on testing db (url={db_dovecot_url})")
+    if db_type == "sqlite":
+        log.info("- sqlite database, removing the tables")
+        sql_dovecot.Dovecot.metadata.drop_all(engine)
 
 
 @pytest.fixture(scope="function")
-def db_postfix(alembic_run, db_postfix_url, log) -> typing.Generator:
+def db_postfix(db_type, alembic_run, db_postfix_url, log) -> typing.Generator:
     """Fixture that makes sure a database is registered and ready to
     be used as the Dovecot db during tests."""
-    log.info("SETUP sql_postfix to use the testing db")
-    sql_postfix.init_db(db_postfix_url)
+    log.info(f"SETUP sql_postfix to use the testing db (url={db_postfix_url})")
+    engine = sql_postfix.init_db(db_postfix_url)
+    if db_type == "sqlite":
+        log.info("- sqlite database, creating the tables")
+        sql_postfix.Postfix.metadata.create_all(engine)
     yield
+    log.info(f"TEARDOWN sql_dovecot on testing db (url={db_postfix_url})")
+    if db_type == "sqlite":
+        log.info("- sqlite database, droping the tables")
+        sql_postfix.Postfix.metadata.drop_all(engine)
 
 
 @pytest.fixture(scope="function")
