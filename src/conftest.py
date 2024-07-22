@@ -352,11 +352,25 @@ def make_ox_container(log, network) -> tc_core.container.DockerContainer:
 
 
 @pytest.fixture(scope="session")
-def ox_name(log, dimail_test_network, root_db_url) -> typing.Generator:
+def ox_type(log, db_type) -> typing.Generator:
+    if db_type == "sqlite":
+        yield "fake"
+    else:
+        yield "real"
+
+
+@pytest.fixture(scope="session")
+def ox_name(log, ox_type, dimail_test_network, root_db_url) -> typing.Generator:
     """Fixture that yields the URL for ssh to connect to the OX cluster. Will
     make a new (virgin) OX container, or will connect to the already existing
     one in docker compose, according to the setting of
     `DIMAIL_TEST_CONTAINERS`."""
+    if ox_type == "fake":
+        log.info("SETUP using fake OX cluster")
+        oxcli.declare_cluster("FAKE", "FAKE", [])
+        yield "FAKE"
+        log.info("TEARDOWN using fake OX cluster")
+        return
     if not config.settings.test_containers:
         # We use the OX cluster as declared in main.py
         yield "default"
@@ -600,6 +614,8 @@ def domain_web(log, client, admin, normal_user, ox_cluster, request):
             _make_domain(log, client, admin, name, features, login, context_name)
             log.info(f"- check the domain {name} is declared in the context {context_name}")
             ctx = ox_cluster.get_context_by_name(context_name)
+            if ctx is None:
+                exit(1)
             assert name in ctx.domains
 
     yield {
