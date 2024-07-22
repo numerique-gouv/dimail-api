@@ -6,7 +6,7 @@ from .allow import (
     get_allows,
 )
 from .creds import Creds
-from .database import get_maker, init_db
+from .database import Api, get_maker, init_db
 from .domain import create_domain, get_domain, get_domains
 from .models import DBAllowed, DBDomain, DBUser
 from .user import (
@@ -21,6 +21,7 @@ from .user import (
 
 __all__ = [
     allow_domain_for_user,
+    Api,
     delete_allows_by_user,
     deny_domain_for_user,
     get_allowed,

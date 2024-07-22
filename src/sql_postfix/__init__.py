@@ -6,7 +6,7 @@ from .crud import (
     get_aliases_by_domain,
     get_aliases_by_name
 )
-from .database import get_maker, init_db
+from .database import get_maker, init_db, Postfix
 from .models import PostfixAlias
 
 __all__ = [
@@ -18,5 +18,6 @@ __all__ = [
     get_aliases_by_name,
     get_maker,
     init_db,
+    Postfix,
     PostfixAlias,
 ]
