@@ -7,6 +7,13 @@ import pydantic
 
 from .setup import get_cluster_info
 
+class Fake:
+    # For fake clusters
+    by_id: dict = {}
+    by_name: dict = {}
+    by_domain: dict = {}
+
+fake = None
 
 class OxCluster(pydantic.BaseModel):
     master_username: str = "master_user"
@@ -24,11 +31,29 @@ class OxCluster(pydantic.BaseModel):
         self,
         name: str | None = None,
     ):
+        global fake
         super().__init__()
         (name, ssh_url, ssh_args) = get_cluster_info(name)
         self.name = name
         self.ssh_url = ssh_url
         self.ssh_args = ssh_args
+        if ssh_url == "FAKE":
+            if fake is None:
+                fake = Fake()
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, OxCluster):
+            return False
+        if ( self.master_username == other.master_username and 
+             self.master_password == other.master_password and
+             self.name == self.name ):
+            return True
+        return False
+
+    def is_fake(self) -> bool:
+        if self.ssh_url == "FAKE":
+            return True
+        return False
 
 
 class OxContext(pydantic.BaseModel):
@@ -36,6 +61,19 @@ class OxContext(pydantic.BaseModel):
     name: str
     domains: set[str]
     cluster: OxCluster
+    # For fake contexts in fake clusters
+    next_uid: int = 1
+    by_id: dict = {}
+    by_email: dict = {}
+    by_username: dict = {}
+    by_displayname: dict = {}
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, OxContext):
+            return False
+        if other.name == self.name and other.domains == self.domains:
+            return True
+        return False
 
     @classmethod
     def read_from_csv(cls, cluster: OxCluster, line: dict):
@@ -47,6 +85,13 @@ class OxContext(pydantic.BaseModel):
             if key != cid and key != name:
                 domains.append(key)
         return cls(cid=cid, name=name, domains=domains, cluster=cluster)
+
+    def is_fake(self):
+        return self.cluster.is_fake()
+
+    def get_next_uid(self):
+        self.next_uid = self.next_uid + 1
+        return self.next_uid
 
 
 class OxUser(pydantic.BaseModel):
@@ -76,13 +121,21 @@ class OxUser(pydantic.BaseModel):
             ctx=ctx,
         )
 
+    def is_fake(self) -> bool:
+        return self.ctx.is_fake()
+
 
 log = logging.getLogger("oxcli")
 
 
 def _purge(self: OxCluster) -> None:
     log.info("Purge everything from the cluster")
-    self.run_for_item(["/root/purge.sh"])
+    if self.is_fake():
+        fake.by_id = {}
+        fake.by_name = {}
+        fake.by_domain = {}
+    else:
+        self.run_for_item(["/root/purge.sh"])
     log.info("Ox server is empty")
 
 
@@ -104,6 +157,8 @@ def __cmd(args: list[str]) -> str:
 def _run_for_csv(self: OxCluster, command: list[str]) -> list[str]:
     if self.ssh_url is None:
         raise Exception("Il faut configurer OxCluster")
+    if self.is_fake():
+        raise Exception("Il ne faut jamais appeler SSH sur un cluster FAKE")
     file = subprocess.Popen(
         ["ssh"] + self.ssh_args + [self.ssh_url, __cmd(command)],
         stdout=subprocess.PIPE,
@@ -128,6 +183,8 @@ def _run_for_csv(self: OxCluster, command: list[str]) -> list[str]:
 def _run_for_item(self: OxCluster, command: list[str]) -> str:
     if self.ssh_url is None:
         raise Exception("Il faut configurer OxCluster")
+    if self.is_fake():
+        raise Exception("Il ne faut jamais appeler SSH sur un cluster FAKE")
     file = subprocess.Popen(
         ["ssh"] + self.ssh_args + [self.ssh_url, __cmd(command)],
         stdout=subprocess.PIPE,
@@ -146,6 +203,8 @@ def _run_for_item(self: OxCluster, command: list[str]) -> str:
 
 
 def _list_contexts(self: OxCluster) -> [OxContext]:
+    if self.is_fake():
+        return list(fake.by_id.values())
     data = self.run_for_csv(
         [
             "/opt/open-xchange/sbin/listcontext",
@@ -165,6 +224,11 @@ def _list_contexts(self: OxCluster) -> [OxContext]:
 
 
 def _get_context(self: OxCluster, cid: int) -> OxContext | None:
+    if self.is_fake():
+        cid = f"{cid}"
+        if cid in fake.by_id:
+            return fake.by_id[cid]
+        return None
     all_contexts = self.list_contexts()
     for ctx in all_contexts:
         if ctx.cid == cid:
@@ -173,6 +237,10 @@ def _get_context(self: OxCluster, cid: int) -> OxContext | None:
 
 
 def _get_context_by_name(self: OxCluster, name: str) -> OxContext | None:
+    if self.is_fake():
+        if name in fake.by_name:
+            return fake.by_name[name]
+        return None
     all_contexts = self.list_contexts()
     for ctx in all_contexts:
         if ctx.name == name:
@@ -181,31 +249,44 @@ def _get_context_by_name(self: OxCluster, name: str) -> OxContext | None:
 
 
 def _get_context_by_domain(self: OxCluster, domain: str) -> OxContext | None:
+    if self.is_fake():
+        if domain in fake.by_domain:
+            return fake.by_domain[domain]
+        return None
     all_contexts = self.list_contexts()
     for ctx in all_contexts:
         if domain in ctx.domains:
             return ctx
     return None
 
-
-def _create_context(
-    self: OxCluster, cid: int | None, name: str, domain: str
-) -> OxContext:
-    all_contexts = self.list_contexts()
-    max_id = 0
-    for ctx in all_contexts:
-        if cid is not None and ctx.cid == cid:
-            raise Exception(f"Context id {cid} already exists")
-        if ctx.name == name:
-            raise Exception(f"Context name {name} already exists")
-        if domain in ctx.domains:
-            raise Exception(
-                f"Domain already {domain} " + f"mapped to context {ctx.ctx}"
-            )
-        if ctx.cid > max_id:
-            max_id = ctx.cid
-    if cid is None:
-        cid = max_id + 1
+def __cmd_create_context(
+    self: OxCluster,
+    cid: int,
+    name: str,
+    domain: str,
+) -> None:
+    if self.is_fake():
+        res = OxContext(
+            cid=cid,
+            name=name,
+            domains=[domain],
+            cluster=self,
+        )
+        fake.by_id[f"{cid}"] = res
+        fake.by_name[name] = res
+        fake.by_domain[domain] = res
+        res.create_user(
+            username="oxadmin",
+            givenName="Admin",
+            surName="Context",
+            displayName="Context Admin",
+            domain=domain,
+        )
+        user = res.by_username["oxadmin"]
+        user.username="admin_user"
+        res.by_username["admin_user"] = user
+        res.by_username.pop("oxadmin")
+        return
     self.run_for_item(
         [
             "/opt/open-xchange/sbin/createcontext",
@@ -237,6 +318,26 @@ def _create_context(
             f"oxadmin@{domain}",
         ]
     )
+
+def _create_context(
+    self: OxCluster, cid: int | None, name: str, domain: str
+) -> OxContext:
+    all_contexts = self.list_contexts()
+    max_id = 0
+    for ctx in all_contexts:
+        if cid is not None and ctx.cid == cid:
+            raise Exception(f"Context id {cid} already exists")
+        if ctx.name == name:
+            raise Exception(f"Context name {name} already exists")
+        if domain in ctx.domains:
+            raise Exception(
+                f"Domain already {domain} " + f"mapped to context {ctx.ctx}"
+            )
+        if ctx.cid > max_id:
+            max_id = ctx.cid
+    if cid is None:
+        cid = max_id + 1
+    __cmd_create_context(self, cid, name, domain)
     ctx = self.get_context(cid)
     if ctx is None:
         raise Exception(
@@ -267,6 +368,10 @@ def _add_mapping(self: OxCluster, cid: int, domain: str) -> OxContext:
 
 
 def __add_mapping(self: OxContext, domain: str) -> OxContext:
+    if self.cluster.is_fake():
+        fake.by_domain[domain] = self
+        self.domains.add(domain)
+        return self
     self.cluster.run_for_item(
         [
             "/opt/open-xchange/sbin/changecontext",
@@ -284,6 +389,10 @@ def __add_mapping(self: OxContext, domain: str) -> OxContext:
 
 
 def _username_exists(self: OxContext, username: str) -> bool:
+    if self.is_fake():
+        if username in self.by_username:
+            return True
+        return False
     res = self.cluster.run_for_item(
         [
             "/opt/open-xchange/sbin/existsuser",
@@ -303,6 +412,10 @@ def _username_exists(self: OxContext, username: str) -> bool:
 
 
 def _displayname_exists(self: OxContext, display_name: str) -> bool:
+    if self.is_fake():
+        if display_name in self.by_displayname:
+            return True
+        return False
     res = self.cluster.run_for_item(
         [
             "/opt/open-xchange/sbin/existsuser",
@@ -320,29 +433,30 @@ def _displayname_exists(self: OxContext, display_name: str) -> bool:
         return False
     return True
 
-
-def _create_user(
+def __cmd_create_user(
     self: OxContext,
-    surName: str,
+    username: str,
     givenName: str,
-    displayName: str | None = None,
-    email: str | None = None,
-    username: str | None = None,
-    domain: str | None = None,
-) -> OxUser:
-    if email is None and username is not None and domain is not None:
-        email = username + "@" + domain
-    elif username is None and domain is None and email is not None:
-        (username, domain) = email.split("@")
-    else:
-        raise Exception(
-            "Please provide either the 'email' or both 'username' and 'domain'"
+    surName: str,
+    displayName: str,
+    email: str,
+) -> None:
+    if self.is_fake():
+        uid = self.get_next_uid()
+        user = OxUser(
+            uid = uid,
+            username = username,
+            givenName = givenName,
+            surName = surName,
+            displayName = displayName,
+            email = email,
+            ctx = self,
         )
-    if displayName is None and givenName is not None and surName is not None:
-        displayName = " ".join([givenName, surName])
-    if displayName is None:
-        raise Exception("displayName is mandatory")
-
+        self.by_id[uid] = user
+        self.by_email[email] = user
+        self.by_username[username] = user
+        self.by_displayname[displayName] = user
+        return
     self.cluster.run_for_item(
         [
             "/opt/open-xchange/sbin/createuser",
@@ -370,6 +484,35 @@ def _create_user(
             "Europe/Paris",
         ]
     )
+
+def _create_user(
+    self: OxContext,
+    surName: str,
+    givenName: str,
+    displayName: str | None = None,
+    email: str | None = None,
+    username: str | None = None,
+    domain: str | None = None,
+) -> OxUser:
+    if email is None and username is not None and domain is not None:
+        email = username + "@" + domain
+    elif username is None and domain is None and email is not None:
+        (username, domain) = email.split("@")
+    else:
+        raise Exception(
+            "Please provide either the 'email' or both 'username' and 'domain'"
+        )
+    if displayName is None and givenName is not None and surName is not None:
+        displayName = " ".join([givenName, surName])
+    if displayName is None:
+        raise Exception("displayName is mandatory")
+    __cmd_create_user(self,
+        username=username,
+        givenName=givenName,
+        surName=surName,
+        displayName=displayName,
+        email=email
+    )
     user = self.get_user_by_name(username)
     if user is None:
         raise Exception("user seems created, but fail to get it")
@@ -377,6 +520,8 @@ def _create_user(
 
 
 def _list_users(self: OxContext) -> list[OxUser]:
+    if self.is_fake():
+        return list(self.by_id.values())
     data = self.cluster.run_for_csv(
         [
             "/opt/open-xchange/sbin/listuser",
@@ -397,6 +542,10 @@ def _list_users(self: OxContext) -> list[OxUser]:
 
 
 def _search_user(self: OxContext, username: str) -> list[OxUser]:
+    if self.is_fake():
+        if username in self.by_username:
+            return [ self.by_username[username] ]
+        return []
     data = self.cluster.run_for_csv(
         [
             "/opt/open-xchange/sbin/listuser",
@@ -419,6 +568,10 @@ def _search_user(self: OxContext, username: str) -> list[OxUser]:
 
 
 def _get_user_by_name(self: OxContext, username: str) -> OxUser | None:
+    if self.is_fake():
+        if username in self.by_username:
+            return self.by_username[username]
+        return None
     all_users = self.search_user(username)
     for user in all_users:
         if user.username == username:
@@ -427,6 +580,10 @@ def _get_user_by_name(self: OxContext, username: str) -> OxUser | None:
 
 
 def _get_user_by_email(self: OxContext, email: str) -> OxUser | None:
+    if self.is_fake():
+        if email in self.by_email:
+            return self.by_email[email]
+        return None
     all_users = self.list_users()
     for user in all_users:
         if user.email == email:
@@ -440,6 +597,16 @@ def _change_user(
     surName: str | None = None,
     displayName: str | None = None,
 ) -> None:
+    if self.is_fake():
+        if givenName is not None:
+            self.givenName = givenName
+        if surName is not None:
+            self.surName = surName
+        if displayName is not None:
+            self.ctx.by_displayname.pop(self.displayName)
+            self.displayName = displayName
+            self.ctx.by_displayname[displayName] = self
+        return
     command = [
         "/opt/open-xchange/sbin/changeuser",
         "-A",
@@ -463,6 +630,12 @@ def _change_user(
 def _delete_user(
     self: OxUser
 ) -> None:
+    if self.is_fake():
+        self.ctx.by_id.pop(self.uid)
+        self.ctx.by_username.pop(self.username)
+        self.ctx.by_displayname.pop(self.displayName)
+        self.ctx.by_email.pop(self.email)
+        return
     command = [
         "/opt/open-xchange/sbin/deleteuser",
         "-A",
