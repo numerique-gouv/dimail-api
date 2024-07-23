@@ -4,7 +4,18 @@ from ... import auth, sql_api, web_models
 from .. import dependencies, routers
 
 
-@routers.allows.post("/", status_code=201)
+@routers.allows.post(
+    "/",
+    status_code=201,
+    response_model=web_models.Allowed,
+    responses={
+        201: {"description": "Allow created"},
+        403: {"description": "Permission denied"},
+        404: {"description": "Domain not found"},
+        409: {"description": "Domain already allowed for this user"},
+    },
+    description="Give allows of a domain to a user",
+)
 async def post_allow(
     db: dependencies.DependsApiDb,
     user: auth.DependsBasicAdmin,

@@ -13,6 +13,7 @@ from .. import dependencies, routers
         403: {"description": "Permission denied, insuficient permissions to perform the request"},
         404: {"description": "No users matched the query"},
     },
+    description="Get all mailboxes in a domain",
 )
 async def get_mailboxes(
     imap: dependencies.DependsDovecotDb,

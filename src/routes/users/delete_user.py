@@ -9,9 +9,10 @@ from .. import dependencies, routers
     status_code=fastapi.status.HTTP_204_NO_CONTENT,
     responses={
         204: {"description": "Deleted"},
-        404: {"description": "Not found"}
+        404: {"description": "Not found"},
     },
     response_model=None,
+    description="Delete a user by name",
 )
 async def delete_user(
     db: dependencies.DependsApiDb,

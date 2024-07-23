@@ -12,6 +12,12 @@ from .. import dependencies, routers
     "/{user_name}",
     description="Create a mailbox in dovecot and OX",
     status_code=201,
+    response_model=web_models.NewMailbox,
+    responses={
+        201: {"description": "Mailbox created"},
+        403: {"description": "Permission denied"},
+        404: {"description": "Domain not found in OX"},
+    },
 )
 async def post_mailbox(
     mailbox: web_models.CreateMailbox,

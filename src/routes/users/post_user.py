@@ -12,6 +12,7 @@ from .. import dependencies, routers
         201: {"description": "Created"},
         409: {"description": "User already exists"},
     },
+    description="Create a user",
 )
 async def post_user(
     db: dependencies.DependsApiDb,

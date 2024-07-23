@@ -5,7 +5,18 @@ import fastapi
 from ... import auth, oxcli, sql_api, sql_dovecot, web_models
 from .. import dependencies, routers
 
-@routers.mailboxes.patch("/{user_name}", status_code=200)
+@routers.mailboxes.patch(
+    "/{user_name}",
+    status_code=200,
+    response_model=web_models.Mailbox,
+    responses={
+        200: {"description": "Mailbox updated"},
+        403: {"description": "Permission denied"},
+        404: {"description": "Domain not found"},
+        422: {"description": "Feature 'mailbox' not available on the domain"},
+    },
+    description="Update a mailbox",
+)
 async def patch_mailbox(
     domain_name: str,
     user_name: str,

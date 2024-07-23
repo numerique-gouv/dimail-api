@@ -2,7 +2,15 @@ from ... import auth, sql_api, web_models
 from .. import dependencies, routers
 
 
-@routers.allows.get("/")
+@routers.allows.get(
+    "/",
+    response_model=list[web_models.Allowed],
+    responses={
+        200: {"description": "Allows"},
+    },
+    status_code=200,
+    description="Get all allows",
+)
 async def get_allows(
     db: dependencies.DependsApiDb,
     user: auth.DependsBasicAdmin,

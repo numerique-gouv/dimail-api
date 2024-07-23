@@ -9,6 +9,7 @@ from .. import dependencies, routers
         200: {"description": "Users"},
     },
     status_code=200,
+    description="Get all users",
 )
 async def get_users(
     db: dependencies.DependsApiDb,

@@ -5,7 +5,18 @@ import fastapi
 from ... import auth, oxcli, sql_api, sql_dovecot
 from .. import dependencies, routers
 
-@routers.mailboxes.delete("/{user_name}", status_code=204)
+@routers.mailboxes.delete(
+    "/{user_name:str}",
+    status_code=204,
+    responses={
+        204: {"description": "Deleted"},
+        403: {"description": "Permission denied"},
+        404: {"description": "Domain not found or Feature "
+                             "'mailbox' not available on "
+                             "the domain or Mailbox not found"},
+    },
+    description="Delete a mailbox by name",
+)
 async def delete_mailbox(
     domain_name: str,
     user_name: str,

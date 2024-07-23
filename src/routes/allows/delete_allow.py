@@ -4,16 +4,25 @@ from ... import auth, sql_api
 from .. import dependencies, routers
 
 
-@routers.allows.delete("/{domain_name}/{user_name}", status_code=204)
+@routers.allows.delete(
+    "/{domain_name}/{user_name}",
+    status_code=204,
+    description="Remove user allows of a domain",
+    responses={
+        204: {"description": "Deleted"},
+        404: {"description": "Domain not found"
+                             "Queried user does not have permissions for this domain."},
+    },
+)
 async def delete_allow(
     db: dependencies.DependsApiDb,
     user: auth.DependsBasicAdmin,
     domain_name: str,
     user_name: str,
 ) -> None:
-    """Remove user ownership of a domain.
+    """Remove user allows of a domain.
 
-    To remove a user's ownership of a domain, you must be an admin user.
+    To remove a user's allows of a domain, you must be an admin user.
 
     Args:
         db (dependencies.DependsApiDb): Database session

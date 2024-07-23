@@ -18,6 +18,9 @@ app = fastapi.FastAPI(
         401: {"description": "Not authorized"},
         404: {"description": "Not found"},
     },
+    title="Dimail API",
+    description="Dimail API to manage mailboxes",
+    version="0.1.0",
 )
 
 app.add_middleware(

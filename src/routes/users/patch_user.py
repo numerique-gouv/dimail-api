@@ -12,6 +12,7 @@ from .. import dependencies, routers
         200: {"description": "User updated"},
         404: {"description": "Not found"},
     },
+    description="Updates a user",
 )
 async def patch_user(
     user: str,
