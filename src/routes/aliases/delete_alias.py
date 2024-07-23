@@ -10,7 +10,8 @@ from .. import dependencies, routers
     "/{user_name}/{destination}",
     description="Deletes an alias. "
         "When destination=all, will remove all the destinations.",
-    status_code=204
+    status_code=fastapi.status.HTTP_204_NO_CONTENT,
+    response_model=None,
 )
 async def delete_alias(
     domain_name: str,
@@ -19,6 +20,35 @@ async def delete_alias(
     user: auth.DependsTokenUser,
     db: dependencies.DependsPostfixDb,
 ) -> None:
+    """Delete an alias by name.
+
+    To delete an alias, you must be an admin user.
+
+    Args:
+        domain_name (str): Domain name
+        user_name (str): User name
+        destination (str): Destination name
+        user (auth.DependsTokenUser): User credentials
+        db (dependencies.DependsPostfixDb): Database session
+
+    Returns:
+        None: No content
+
+    Raises:
+        fastapi.HTTPException: Not found
+        fastapi.HTTPException: Permission denied
+
+    See Also:
+        * https://fastapi.tiangolo.com/tutorial/path-params
+        * https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt
+        * https://fastapi.tiangolo.com/tutorial/security/simple-verify-token
+
+    Dependencies:
+        auth.DependsTokenUser
+        dependencies.DependsPostfixDb
+        sql_postfix.delete_alias
+        sql_postfix.delete_aliases_by_name
+    """
     log = logging.getLogger(__name__)
 
     perms = user.get_creds()

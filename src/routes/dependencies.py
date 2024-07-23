@@ -1,3 +1,46 @@
+"""Dependencies for fastapi routes. These dependencies are used to create
+orm sessions for the routes. The sessions are closed at the end of the route.
+
+Example:
+
+    To use the dependencies, you need to import them in the endpoint's file and add
+    them to the endpoint's function as a parameter.
+
+    ```python
+
+    from fastapi import APIRouter, Depends
+    from src.routes import DependsApiDb
+    from src.models import User
+
+    router = APIRouter()
+
+    @router.get("/users/me")
+    async def read_users_me(user: User = Depends(DependsApiDb)):
+        return user
+    ```
+
+    In this example, the endpoint `/users/me` will return the user object if the
+    user is a basic user. If the user is not a basic user,
+    the endpoint will return a 403 Forbidden error.
+
+The export class are:
+    - DependsApiDb: checks if the user is an admin
+    - DependsDovecotDb: checks if the user is a basic user
+    - DependsPostfixDb: checks if the user has a valid JWT token
+
+Dependencies:
+    - fastapi
+    - sqlalchemy.orm
+    - sql_dovecot
+    - sql_postfix
+    - sql_api
+
+See also:
+    - https://fastapi.tiangolo.com/tutorial/dependencies
+    - https://fastapi.tiangolo.com/tutorial/sql-databases
+    - https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt
+    - https://fastapi.tiangolo.com/tutorial/security/simple-verify-token
+"""
 import typing
 
 from .. import sql_dovecot, sql_postfix, sql_api

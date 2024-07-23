@@ -4,7 +4,7 @@ clusters = {}
 old_default = None
 old_clusters = {}
 
-# Quand on veut tester les fonctions de ce fichier, il faut
+# Quand on veut tester les fonctions de ce fichier, il faut
 # que les variables globales soient "vierges", or pytest aura
 # déjà exécuté le code d'init de main.py. Alors on va faire
 # semblant.

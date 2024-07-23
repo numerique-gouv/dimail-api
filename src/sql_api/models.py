@@ -1,3 +1,10 @@
+"""This modules contains the models for the SQL database.
+
+Classes:
+    - DBUser: a user of the system
+    - DBDomain: a domain of the system
+    - DBAllowed: a many-to-many relationship between users and domains
+"""
 import datetime
 import uuid
 
@@ -14,6 +21,25 @@ from .database import Api
 
 
 class DBUser(Api):
+    """A user of the system.
+
+    This classes modelize a users table in the database.
+    Its attributes represent the different columns of the table it models
+
+    Attributes:
+        name: the username
+        uuid: a unique identifier
+        hashed_password: the password, hashed
+        is_admin: whether the user is an admin
+        fullname: the full name of the user
+        domains: the domains the user has access to
+
+    Functions:
+        set_password: set the password of the user
+        verify_password: verify a password against the user's password
+        create_token: create a JWT token for the user
+        get_creds: get the credentials
+    """
     __tablename__ = "users"
     __table_args__ = (sa.UniqueConstraint("uuid", name="uuid_is_unique"),)
     name = sa.Column(sa.String(32), primary_key=True)
@@ -36,13 +62,34 @@ class DBUser(Api):
             return True
         return False
 
-    def set_password(self, password: str):
+    def set_password(self, password: str) -> None:
+        """Set the password of the user.
+
+        Args:
+            password: the password to set
+
+        Returns:
+            None
+        """
         self.hashed_password = passlib.hash.argon2.hash(password)
 
-    def verify_password(self, password: str):
+    def verify_password(self, password: str)-> bool:
+        """Verify a password against the user's password.
+
+        Args:
+            password: the password to verify
+
+        Returns:
+            bool: whether the password is correct
+        """
         return passlib.hash.argon2.verify(password, self.hashed_password)
 
-    def create_token(self):
+    def create_token(self)-> str:
+        """Create a JWT token for the user.
+
+        Returns:
+            str: the JWT token
+        """
         now = datetime.datetime.now(datetime.timezone.utc)
         delta = datetime.timedelta(minutes=47)
         expire = now + delta
@@ -55,6 +102,11 @@ class DBUser(Api):
         return jwt.encode(data, secret, algo)
 
     def get_creds(self) -> Creds:
+        """Get the credentials.
+
+        Returns:
+            Creds: the credentials
+        """
         if self.is_admin:
             # log.info(f"The user {user_name} is an admin")
             return Creds(is_admin=True)
@@ -66,6 +118,22 @@ class DBUser(Api):
 
 
 class DBDomain(Api):
+    """A domain of the system.
+
+    This classes modelize a domains table in the database.
+
+    Attributes:
+        name: the domain name
+        features: the features of the domain
+        webmail_domain: the webmail domain
+        mailbox_domain: the mailbox domain
+        imap_domains: the IMAP domains
+        smtp_domains: the SMTP domains
+        users: the users that have access to the domain
+
+    Functions:
+        has_feature: check if the domain has a feature
+    """
     __tablename__ = "domains"
     name = sa.Column(sa.String(200, collation="ascii_bin"), primary_key=True)
     features = sa.Column(sa.JSON(), nullable=False)
@@ -78,10 +146,26 @@ class DBDomain(Api):
     )
 
     def has_feature(self, feature: str) -> bool:
+        """Check if the domain has a feature.
+
+        Args:
+            feature: the feature to check
+
+        Returns:
+            bool: whether the domain has the feature
+        """
         return feature in self.features
 
 
 class DBAllowed(Api):
+    """A many-to-many relationship between users and domains.
+
+    This classes modelize an allowed table in the database.
+
+    Attributes:
+        user: the user
+        domain: the domain
+    """
     __tablename__ = "allowed"
     user = sa.Column(sa.String(32), sa.ForeignKey("users.name"), primary_key=True)
     domain = sa.Column(

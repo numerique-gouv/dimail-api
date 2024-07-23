@@ -9,6 +9,36 @@ from .setup import get_cluster_info
 
 
 class OxCluster(pydantic.BaseModel):
+    """This class is used to interact with the OxCluster API.
+
+    The OxCluster class provides methods to interact with the OxCluster API.
+    The class provides methods to create clusters, users, and contexts for
+    testing purposes.
+
+    Example:
+
+        To use the OxCluster class, you need to import the class in the
+        endpoint's file.
+
+        ```python
+        from oxcli import OxCluster
+        ```
+
+        In this example, you can use the class to interact with the OxCluster API.
+
+    Dependencies:
+        - pydantic
+        - setup.get
+
+    Attributes:
+        master_username (str): The master username
+        master_password (str): The master password
+        admin_username (str): The admin username
+        admin_password (str): The admin password
+        name (str): The name of the cluster
+        ssh_url (str): The SSH URL
+        ssh_args (list[str]): The SSH arguments
+    """
     master_username: str = "master_user"
     master_password: str = "master_pass"
     admin_username: str = "admin_user"
@@ -17,7 +47,19 @@ class OxCluster(pydantic.BaseModel):
     ssh_url: str | None = None
     ssh_args: list[str] = []
 
-    def url(self):
+    def url(self) -> str:
+        """Return the SSH URL.
+
+        Returns:
+            str: The SSH URL
+
+        Example:
+            ```python
+
+            url = cluster.url()
+
+            ```
+        """
         return self.ssh_url
 
     def __init__(
@@ -32,6 +74,32 @@ class OxCluster(pydantic.BaseModel):
 
 
 class OxContext(pydantic.BaseModel):
+    """This class is used to interact with the OxContext API.
+
+    The OxContext class provides methods to interact with the OxContext API.
+    The class provides methods to create contexts, users, and mappings for
+    testing purposes.
+
+    Example:
+        To use the OxContext class, you need to import the class in the endpoint's file.
+
+        ```python
+
+        from oxcli import OxContext
+
+        ```
+
+        In this example, you can use the class to interact with the OxContext API.
+
+    Dependencies:
+        - pydantic
+
+    Attributes:
+        cid (int): The context ID
+        name (str): The name of the context
+        domains (set[str]): The domains
+        cluster (OxCluster): The OxCluster object
+    """
     cid: int
     name: str
     domains: set[str]
@@ -39,6 +107,24 @@ class OxContext(pydantic.BaseModel):
 
     @classmethod
     def read_from_csv(cls, cluster: OxCluster, line: dict):
+        """This method reads the context from a CSV file.
+
+        read_from_csv reads the context from a CSV file and returns the context object.
+
+        Args:
+            cluster (OxCluster): The OxCluster object
+            line (dict): The CSV line
+
+        Returns:
+            OxContext: The context object
+
+        Example:
+            ```python
+
+            ctx = OxContext.read_from_csv(cluster, line)
+
+            ```
+        """
         maps = line["lmappings"].split(",")
         cid = line["id"]
         name = line["name"]
@@ -50,6 +136,33 @@ class OxContext(pydantic.BaseModel):
 
 
 class OxUser(pydantic.BaseModel):
+    """This class is used to interact with the OxUser API.
+
+    The OxUser class provides methods to interact with the OxUser API.
+
+    Example:
+        To use the OxUser class, you need to import the class in the endpoint's file.
+
+        ```python
+
+        from oxcli import OxUser
+
+        ```
+
+        In this example, you can use the class to interact
+
+    Dependencies:
+        - pydantic
+
+    Attributes:
+        uid (int): The user ID
+        username (str): The username
+        givenName (str): The given name
+        surName (str): The surname
+        displayName (str): The display name
+        email (str): The email
+        ctx (OxContext): The OxContext object
+    """
     uid: int
     username: str
     givenName: str
@@ -60,6 +173,24 @@ class OxUser(pydantic.BaseModel):
 
     @classmethod
     def read_from_csv(cls, ctx: OxContext, line: dict):
+        """This method reads the user from a CSV file.
+
+        read_from_csv reads the user from a CSV file and returns the user object.
+
+        Args:
+            ctx (OxContext): The OxContext object
+            line (dict): The CSV line
+
+        Returns:
+            OxUser: The user object
+
+        Example:
+            ```python
+
+            user = OxUser.read_from_csv(ctx, line)
+
+            ```
+        """
         uid = line["Id"]
         username = line["Name"]
         email = line["PrimaryEmail"]

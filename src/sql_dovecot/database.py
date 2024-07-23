@@ -1,3 +1,15 @@
+"""This module is used to initialize the database and get the session maker.
+
+Classes:
+    - Dovecot: the base class for the database models
+
+Functions:
+    - init_db: initialize the database
+    - get_maker: get the session maker
+
+Variables:
+    - maker: the session maker
+"""
 import inspect
 
 import sqlalchemy as sa
@@ -9,6 +21,14 @@ Dovecot = orm.declarative_base()
 
 
 def init_db(config: str):
+    """Initialize the database.
+
+    Args:
+        config (str): the configuration of the database
+
+    Returns:
+        None
+    """
     # global url
     # global engine
     global maker
@@ -22,6 +42,14 @@ def init_db(config: str):
 
 
 def get_maker() -> orm.sessionmaker:
+    """Get the session maker.
+
+    Returns:
+        orm.sessionmaker: the session
+
+    Raises:
+        Exception: if the database is not initialized
+    """
     global maker
     if maker is None:
         raise Exception("Please init the database by giving me an url...")

@@ -32,6 +32,7 @@ def authenticate_user(db: orm.Session, user_name: str, password: str) -> sql_api
 
 
 class BasicUser(fastapi.security.HTTPBasic):
+    """BasicUser is a fastapi.security.HTTPBasic that will authenticate a user"""
     def __init__(self):
         super(BasicUser, self).__init__()
 
