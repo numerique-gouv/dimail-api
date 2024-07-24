@@ -44,7 +44,7 @@ class OxCluster(pydantic.BaseModel):
     def __eq__(self, other) -> bool:
         if not isinstance(other, OxCluster):
             return False
-        if ( self.master_username == other.master_username and 
+        if ( self.master_username == other.master_username and
              self.master_password == other.master_password and
              self.name == self.name ):
             return True
