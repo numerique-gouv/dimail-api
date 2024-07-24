@@ -5,7 +5,7 @@ from . import dkim
 from . import domain
 
 def test_dkim(log):
-    with pytest.raises(Exception) as e:
+    with pytest.raises(Exception):
         info = dkim.DkimInfo("\"coin=pan; v=DKIM1; h=toto\"")
 
     info = dkim.DkimInfo("\"v=DKIM1; h=sha256; k=rsa; p=coincoin\"")
@@ -21,19 +21,19 @@ def test_domain_check():
         features = [ "webmail", "mailbox" ],
     )
     domain.Domain(db_dom).check()
-    
+
     db_dom = sql_api.DBDomain(
         name = "coincoin",
         features=["webmail", "mailbox"],
     )
     domain.Domain(db_dom).check()
-    
+
     db_dom = sql_api.DBDomain(
         name = "La tête à l'envers",
         features = ["mailbox"],
     )
     domain.Domain(db_dom).check()
-    
+
     db_dom = sql_api.DBDomain(
         name="mail.numerique.gouv.fr",
         features=["webmail", "mailbox"],
@@ -42,7 +42,7 @@ def test_domain_check():
         smtp_domains=["smtp.numerique.gouv.fr"],
         mailbox_domain="mail.numerique.gouv.fr",
     )
-    
+
     domain.Domain(db_dom,
         dkim = """"v=DKIM1; h=sha256; k=rsa; "
                 "p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA2dg8Bt0+p4EEIGF3udBpR"
@@ -54,5 +54,5 @@ def test_domain_check():
                 "LwIDAQAB"
         """
     ).check()
-    
+
 
