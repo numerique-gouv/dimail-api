@@ -17,33 +17,49 @@ def test_dkim(log):
 
 def test_domain_check():
     db_dom = sql_api.DBDomain(
+        name = "La tête à l'envers",
+        features = ["mailbox"],
+    )
+    ck_dom = domain.Domain(db_dom)
+    ck_dom.check()
+    assert ck_dom.valid is False
+    assert len(ck_dom.errs) == 1
+    assert ck_dom.errs[0]["code"] == "must_exist"
+
+    db_dom = sql_api.DBDomain(
         name = "fdn.fr",
         features = [ "webmail", "mailbox" ],
     )
-    domain.Domain(db_dom).check()
+    ck_dom = domain.Domain(db_dom)
+    ck_dom.check()
+    assert ck_dom.valid is False
+    assert len(ck_dom.errs) == 6
+    codes = [ err["code"] for err in ck_dom.errs ]
+    assert "wrong_mx" in codes
+    assert "wrong_cname_webmail" in codes
+    assert "wrong_cname_imap" in codes
+    assert "no_cname_mailbox" in codes
+    assert "no_cname_smtp" in codes
+    assert "wrong_spf" in codes
 
     db_dom = sql_api.DBDomain(
         name = "coincoin",
         features=["webmail", "mailbox"],
     )
-    domain.Domain(db_dom).check()
+    ck_dom = domain.Domain(db_dom)
+    ck_dom.check()
+    assert ck_dom.valid is False
+    assert len(ck_dom.errs) == 1
+    codes = [ err["code"] for err in ck_dom.errs ]
+    assert "must_exist" in codes
 
     db_dom = sql_api.DBDomain(
-        name = "La tête à l'envers",
-        features = ["mailbox"],
-    )
-    domain.Domain(db_dom).check()
-
-    db_dom = sql_api.DBDomain(
-        name="mail.numerique.gouv.fr",
+        name="numerique.gouv.fr",
         features=["webmail", "mailbox"],
-        webmail_domain="webmail.numerique.gouv.fr",
-        imap_domains=["imap.numerique.gouv.fr"],
-        smtp_domains=["smtp.numerique.gouv.fr"],
         mailbox_domain="mail.numerique.gouv.fr",
     )
 
-    domain.Domain(db_dom,
+    ck_dom = domain.Domain(db_dom,
         dkim = """"v=DKIM1; h=sha256; k=rsa; "
                 "p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA2dg8Bt0+p4EEIGF3udBpR"
                 "psTd9B0UUzZPTJo64fwijJxFo8RgVUOe8vV6xzhGI22ldMAl6fYNsXih7p/AhEk+CpH"
@@ -52,7 +68,10 @@ def test_domain_check():
                 "GD4VoZMvLSa+u1fikagc5t3xg76P9twzBOjuFFqIFg+wPGzZZWpzSh/yfcMWHg+eLxk"
                 "sxcronXnNZNnfPppNdu2Id28amHB/WB/4vqmgeM3xYIZWETDvZZIjVOzlxGtfgLuNlV"
                 "LwIDAQAB"
-        """
-    ).check()
+        """,
+        selector = "mecol",
+    )
+    ck_dom.check()
+    assert ck_dom.valid is True
 
 

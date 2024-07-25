@@ -1,3 +1,5 @@
+import datetime
+
 import sqlalchemy.orm as orm
 
 from . import models
@@ -33,4 +35,46 @@ def create_domain(
     db.add(db_domain)
     db.commit()
     db.refresh(db_domain)
+    return db_domain
+
+
+def update_domain_state(db: orm.Session, name: str, state: str) -> models.DBDomain:
+    db_domain = get_domain(db, name)
+    if db_domain is None:
+        return None
+    try:
+        db_domain.state = state
+        db.flush()
+        db.commit()
+    except Exception:
+        db.rollback()
+        return None
+    db.refresh(db_domain)
+    return db_domain
+
+
+def update_domain_dtaction(
+    db: orm.Session, name: str, dtaction: datetime.datetime
+) -> models.DBDomain:
+    db_domain = get_domain(db, name)
+    if db_domain is None:
+        return None
+    try:
+        db_domain.dtaction = dtaction
+        db.flush()
+        db.commit()
+    except Exception:
+        db.rollback()
+        return None
+    db.refresh(db_domain)
+    return db_domain
+
+
+def first_domain_need_action(db: orm.Session) -> models.DBDomain:
+    db_domain = ( db.query(models.DBDomain).
+        filter(models.DBDomain.dtaction != None).
+        order_by(models.DBDomain.dtaction.asc()).
+        with_for_update(skip_locked=True).
+        first()
+    )
     return db_domain

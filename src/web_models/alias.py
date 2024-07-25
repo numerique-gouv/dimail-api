@@ -9,7 +9,7 @@ class Alias(pydantic.BaseModel):
     destination: str
 
     @classmethod
-    def from_db(cls, dbAlias: sql_postfix.PostfixAlias):
+    def from_db(cls, dbAlias: sql_postfix.Alias):
         (username, domain) = utils.split_email(dbAlias.alias)
         if domain != dbAlias.domain:
             raise Exception(

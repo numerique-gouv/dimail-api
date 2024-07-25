@@ -7,7 +7,13 @@ from .allow import (
 )
 from .creds import Creds
 from .database import Api, get_maker, init_db
-from .domain import create_domain, get_domain, get_domains
+from .domain import (
+    create_domain,
+    first_domain_need_action,
+    get_domain,
+    get_domains,
+    update_domain_dtaction,
+)
 from .models import DBAllowed, DBDomain, DBUser
 from .user import (
     count_users,

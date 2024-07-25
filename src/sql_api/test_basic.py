@@ -58,7 +58,19 @@ def test_delete_user(db_api_session, log):
     assert user is None
 
 
+import datetime
+min_eq = datetime.timedelta(seconds=-1)
+max_eq = datetime.timedelta(seconds=1)
+def date_eq(a: datetime.datetime, b: datetime.datetime) -> bool:
+    a = a.replace(tzinfo=None)
+    b = b.replace(tzinfo=None)
+    delta = a - b
+    if delta > min_eq and delta < max_eq:
+        return True
+    return False
+
 def test_create_domain(db_api_session, log):
+    now = datetime.datetime.now(datetime.timezone.utc)
     db_dom = sql_api.create_domain(
         db_api_session,
         name="example.com",
@@ -71,6 +83,23 @@ def test_create_domain(db_api_session, log):
     assert db_dom.mailbox_domain is None
     assert db_dom.imap_domains is None
     assert db_dom.smtp_domains is None
+    assert db_dom.state == "new"
+    assert db_dom.dtaction is None
+    assert date_eq(db_dom.dtcreated, now)
+    assert date_eq(db_dom.dtupdated, now)
+
+    # Aucun domaine n'a besoin d'action
+    db_dom = sql_api.first_domain_need_action(db_api_session)
+    assert db_dom is None
+
+    before = now + datetime.timedelta(seconds=-30)
+    db_dom = sql_api.update_domain_dtaction(db_api_session, "example.com", before)
+    assert date_eq(db_dom.dtaction, before)
+
+    # Maintenant, le domain "example.com" a besoin d'action
+    db_dom = sql_api.first_domain_need_action(db_api_session)
+    assert isinstance(db_dom, sql_api.DBDomain)
+    assert db_dom.name == "example.com"
 
     db_dom = sql_api.create_domain(
         db_api_session,
@@ -88,6 +117,20 @@ def test_create_domain(db_api_session, log):
     assert db_dom.mailbox_domain == "mailbox_domain"
     assert db_dom.imap_domains == ["imap1", "imap2"]
     assert db_dom.smtp_domains == ["smtp1", "smtp2"]
+
+    # C'est toujours "example.com" qui a besoin d'action
+    db_dom = sql_api.first_domain_need_action(db_api_session)
+    assert isinstance(db_dom, sql_api.DBDomain)
+    assert db_dom.name == "example.com"
+
+    before = now + datetime.timedelta(seconds=-31)
+    db_dom = sql_api.update_domain_dtaction(db_api_session, "domain_name", before)
+    assert db_dom.name == "domain_name"
+
+    # Maintenant, c'est "domain_name" qui a besoin d'action en premier
+    db_dom = sql_api.first_domain_need_action(db_api_session)
+    assert isinstance(db_dom, sql_api.DBDomain)
+    assert db_dom.name == "domain_name"
 
 
 def test_create_user_bis(db_api_session):
