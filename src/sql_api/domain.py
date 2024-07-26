@@ -70,6 +70,32 @@ def update_domain_errors(
     return db_domain
 
 
+def update_domain_dtchecked(
+    db: orm.Session, name: str, dtchecked: datetime.datetime | str | None = None
+) -> models.DBDomain:
+    if dtchecked is None:
+        dtchecked = datetime.datetime.now(datetime.timezone.utc)
+    if isinstance(dtchecked, str):
+        if dtchecked == "now":
+            dtchecked = datetime.datetime.now(datetime.timezone.utc)
+        else:
+            raise Exception("La seule chaine possible ici est 'now'")
+    if not isinstance(dtchecked, datetime.datetime):
+        raise Exception(f"Je ne peux pas mettre '{dtchecked}' comme date de dernier controle du domaine")
+    db_domain = get_domain(db, name)
+    if db_domain is None:
+        return None
+    try:
+        db_domain.dtchecked = dtchecked
+        db.flush()
+        db.commit()
+    except Exception:
+        db.rollback()
+        return None
+    db.refresh(db_domain)
+    return db_domain
+
+
 def update_domain_dtaction(
     db: orm.Session, name: str, dtaction: datetime.datetime
 ) -> models.DBDomain:

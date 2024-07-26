@@ -31,13 +31,13 @@ def test_domains__get_domain_allowed_user(db_api, db_dovecot, log, client, norma
         "imap_domains": None,
         "smtp_domains": None,
         "context_name": None,
-        "domain_exist": {"ok": True, "errors": []},
-        "mx": {"ok": True, "errors": []},
-        "cname_imap": {"ok": True, "errors": []},
-        "cname_smtp": {"ok": True, "errors": []},
-        "cname_webmail": {"ok": True, "errors": []},
-        "spf": {"ok": True, "errors": []},
-        "dkim": {"ok": True, "errors": []},
+        "domain_exist": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
+        "mx": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
+        "cname_imap": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
+        "cname_smtp": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
+        "cname_webmail": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
+        "spf": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
+        "dkim": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
     }
 
 
@@ -90,13 +90,13 @@ def test_domains__get_domain_admin_always_authorized(db_api_session, domain, adm
         "imap_domains": None,
         "smtp_domains": None,
         "context_name": None,
-        "domain_exist": {"ok": True, "errors": []},
-        "mx": {"ok": True, "errors": []},
-        "cname_imap": {"ok": True, "errors": []},
-        "cname_smtp": {"ok": True, "errors": []},
-        "cname_webmail": {"ok": True, "errors": []},
-        "spf": {"ok": True, "errors": []},
-        "dkim": {"ok": True, "errors": []},
+        "domain_exist": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
+        "mx": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
+        "cname_imap": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
+        "cname_smtp": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
+        "cname_webmail": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
+        "spf": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
+        "dkim": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
     }
 
     # If the domain does not exist -> not found

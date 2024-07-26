@@ -262,6 +262,7 @@ def foreground_check_domain(db: orm.Session, db_dom: sql_api.DBDomain) -> sql_ap
     name = db_dom.name
     ck_dom = Domain(db_dom)
     ck_dom.check()
+    sql_api.update_domain_dtchecked(db, name, "now")
     if ck_dom.valid:
         sql_api.update_domain_state(db, name, "ok")
         db_dom = sql_api.update_domain_errors(db, name, None)

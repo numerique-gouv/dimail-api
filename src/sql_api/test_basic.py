@@ -85,9 +85,32 @@ def test_create_domain(db_api_session, log):
     assert db_dom.smtp_domains is None
     assert db_dom.state == "new"
     assert db_dom.dtaction is None
+    assert db_dom.dtchecked is None
     assert db_dom.errors is None
     assert date_eq(db_dom.dtcreated, now)
     assert date_eq(db_dom.dtupdated, now)
+
+    # On peut mettre dtchecked
+    before = now + datetime.timedelta(minutes=-30)
+    db_dom = sql_api.update_domain_dtchecked(db_api_session, "example.com", before)
+    assert isinstance(db_dom, sql_api.DBDomain)
+    assert date_eq(db_dom.dtchecked, before)
+
+    # Si on set dtchecked avec None, ca met now
+    now = datetime.datetime.now(datetime.timezone.utc)
+    db_dom = sql_api.update_domain_dtchecked(db_api_session, "example.com", None)
+    assert isinstance(db_dom, sql_api.DBDomain)
+    assert date_eq(db_dom.dtchecked, now)
+
+    # On remet before
+    db_dom = sql_api.update_domain_dtchecked(db_api_session, "example.com", before)
+    assert isinstance(db_dom, sql_api.DBDomain)
+    assert date_eq(db_dom.dtchecked, before)
+
+    # Si on met le texte 'now', ca met now
+    db_dom = sql_api.update_domain_dtchecked(db_api_session, "example.com", "now")
+    assert isinstance(db_dom, sql_api.DBDomain)
+    assert date_eq(db_dom.dtchecked, now)
 
     # Aucun domaine n'a besoin d'action
     db_dom = sql_api.first_domain_need_action(db_api_session)

@@ -77,6 +77,7 @@ class DBDomain(Api):
     errors = sa.Column(sa.JSON(), nullable=True)
     dtcreated = sa.Column(sa.DateTime(), nullable=False, server_default=sa.sql.func.now())
     dtupdated = sa.Column(sa.DateTime(), nullable=False, server_default=sa.sql.func.now(), onupdate=sa.sql.func.now())
+    dtchecked = sa.Column(sa.DateTime(), nullable=True)
     dtaction = sa.Column(sa.DateTime(), nullable=True, index=True)
     users: orm.Mapped[list["DBUser"]] = orm.relationship(
         secondary="allowed", back_populates="domains"

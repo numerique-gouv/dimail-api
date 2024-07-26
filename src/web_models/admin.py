@@ -92,7 +92,7 @@ class Domain(pydantic.BaseModel):
 
     @classmethod
     def from_db(cls, in_db: sql_api.DBDomain, ctx_name: str | None = None):
-        res = cls(
+        self = cls(
             name=in_db.name,
             state=in_db.state,
             features=in_db.features,
@@ -103,10 +103,13 @@ class Domain(pydantic.BaseModel):
             context_name=ctx_name,
         )
         if in_db.state == "new":
-            res.valid = False
+            self.valid = False
+        if in_db.dtchecked is None:
+            for test in [ "domain_exist", "mx", "cname_imap", "cname_smtp", "cname_webmail", "spf", "dkim" ]:
+                getattr(self, test).add_err({"code": "no_test", "detail": "Did not check yet"})
         if in_db.errors is not None:
-            res.add_errors(in_db.errors)
-        return res
+            self.add_errors(in_db.errors)
+        return self
 
 
 class Allowed(pydantic.BaseModel):

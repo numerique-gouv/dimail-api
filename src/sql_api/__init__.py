@@ -13,6 +13,7 @@ from .domain import (
     get_domain,
     get_domains,
     update_domain_dtaction,
+    update_domain_dtchecked,
     update_domain_errors,
     update_domain_state,
 )
@@ -49,6 +50,7 @@ __all__ = [
     get_user,
     get_users,
     update_domain_dtaction,
+    update_domain_dtchecked,
     update_domain_errors,
     update_domain_state,
     update_user_password,
