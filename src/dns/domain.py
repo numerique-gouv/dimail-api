@@ -1,3 +1,5 @@
+import logging
+
 import dns.name
 import dns.resolver
 import sqlalchemy.orm as orm
@@ -23,7 +25,7 @@ required_spf = "include:_spf.ox.numerique.gouv.fr"
 targets = {
     "webmail": "webmail.ox.numerique.gouv.fr.",
     "imap": "imap.ox.numerique.gouv.fr.",
-    "mailbox": "mail.ox.numerique.gouv.fr.",
+    "mail": "mail.ox.numerique.gouv.fr.",
     "smtp": "smtp.ox.numerique.gouv.fr.",
 }
 #required_mx = "mx.fdn.fr."
@@ -48,8 +50,8 @@ class Domain:
 
         self.dkim = dkim
 
-    def add_err(self, err: str, detail: str = ""):
-        self.errs.append({"code": err, "detail": detail})
+    def add_err(self, test: str, err: str, detail: str = ""):
+        self.errs.append({"test": test, "code": err, "detail": detail})
         self.valid = False
 
     def get_auth_resolver(self, domain: str, insist: bool = False) -> dns.resolver.Resolver:
@@ -64,7 +66,7 @@ class Domain:
     def check_exists(self):
         resolver = self.get_auth_resolver(self.domain.name)
         if resolver is None:
-            self.add_err("must_exist", f"Le domaine {self.domain.name} n'existe pas")
+            self.add_err("domain_exist", "must_exist", f"Le domaine {self.domain.name} n'existe pas")
             return
 
     def try_cname_for_mx(self):
@@ -75,10 +77,11 @@ class Domain:
             print(f"Je trouve un CNAME vers {self.dest_domain}, je le prend comme dest_domain")
             self.dest_name = dns.name.from_text(self.dest_domain)
             return self.check_mx()
-        except dns.resolver.NXDOMAIN:
-            self.add_err("no_mx", "Il n'y a pas d'enregistrement MX ou CNAME sur le domaine")
+        except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+            self.add_err("mx", "no_mx", "Il n'y a pas d'enregistrement MX ou CNAME sur le domaine")
             return
-        except Exception:
+        except Exception as e:
+            print(f"Unexpected exception while searching for a CNAME for a MX : {e}")
             raise
 
     def check_mx(self):
@@ -87,20 +90,23 @@ class Domain:
             print(f"Je cherche un MX pour {self.dest_domain}")
             answer = resolver.resolve(self.dest_name, rdtype = "MX")
         except dns.resolver.NXDOMAIN:
-            self.add_err("no_mx", "Il n'y a pas d'enregistrement MX sur le domaine")
+            print("NXDOMAIN")
+            self.add_err("mx", "no_mx", "Il n'y a pas d'enregistrement MX sur le domaine")
             return
         except dns.resolver.NoAnswer:
             return self.try_cname_for_mx()
-        except Exception:
+        except Exception as e:
+            print(f"Unexpected exception while searching for MX {e}")
             raise
 
         nb_mx = len(answer)
         if nb_mx != 1 and False:
-            self.add_err("one_mx", f"Je veux un seul MX, et j'en trouve {nb_mx}")
+            self.add_err("mx", "one_mx", f"Je veux un seul MX, et j'en trouve {nb_mx}")
             return
         mx = str(answer[0].exchange)
         if not mx == required_mx:
             self.add_err(
+                "mx",
                 "wrong_mx", 
                 f"Je veux que le MX du domaine soit {required_mx}, "
                 f"or je trouve {mx}"
@@ -124,18 +130,20 @@ class Domain:
         for origin in origins:
             resolver = self.get_auth_resolver(origin)
             if resolver is None:
-                self.add_err(f"no_cname_{name}", f"Il faut un CNAME {origin} qui renvoie vers {target}")
+                self.add_err(f"cname_{name}", f"no_cname_{name}", f"Il faut un CNAME {origin} qui renvoie vers {target}")
                 continue
             try:
                 answer = resolver.resolve(origin, rdtype = "CNAME")
             except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
-                self.add_err(f"no_cname_{name}", f"Il n'y a pas de CNAME {origin} -> {target}")
+                self.add_err(f"cname_{name}", f"no_cname_{name}", f"Il n'y a pas de CNAME {origin} -> {target}")
                 continue
-            except Exception:
+            except Exception as e:
+                print(f"Unexpected exception when searching for a CNAME : {e}")
                 raise
             got_target = str(answer[0].target)
             if not got_target == target:
                 self.add_err(
+                    f"cname_{name}",
                     f"wrong_cname_{name}",
                     f"Le CNAME pour {origin} n'est pas bon, "
                     f"il renvoie vers {got_target} et je veux {target}"
@@ -147,7 +155,8 @@ class Domain:
             answer = resolver.resolve(self.dest_name, rdtype="TXT")
         except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
             answer = []
-        except Exception:
+        except Exception as e:
+            print(f"Unexpected exception when searching for the SPF record : {e}")
             raise
         found_spf = False
         valid_spf = False
@@ -159,10 +168,10 @@ class Domain:
                     valid_spf = True
                     return
         if not found_spf:
-            self.add_err("no_spf", f"Il faut un SPF record, et il doit contenir {required_spf}")
+            self.add_err("spf", "no_spf", f"Il faut un SPF record, et il doit contenir {required_spf}")
             return
         if not valid_spf:
-            self.add_err("wrong_spf", f"Le SPF record ne contient pas {required_spf}")
+            self.add_err("spf", "wrong_spf", f"Le SPF record ne contient pas {required_spf}")
             return
 
     def check_dkim(self):
@@ -174,7 +183,8 @@ class Domain:
             answer = resolver.resolve(self.dkim_name, rdtype="TXT")
         except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
             answer = []
-        except Exception:
+        except Exception as e:
+            print(f"Unexpected exception when searching for the DKIM record : {e}")
             raise
         found_dkim = False
         valid_dkim = False
@@ -188,10 +198,10 @@ class Domain:
                     valid_dkim = True
                     return
         if not found_dkim:
-            self.add_err("no_dkim", "Il faut un DKIM record, et il doit contenir la bonne clef")
+            self.add_err("dkim", "no_dkim", "Il faut un DKIM record, et il doit contenir la bonne clef")
             return
         if not valid_dkim:
-            self.add_err("wrong_dkim", "Le DKIM record n'est pas valide (il ne contient pas la bonne clef)")
+            self.add_err("dkim", "wrong_dkim", "Le DKIM record n'est pas valide (il ne contient pas la bonne clef)")
             return
 
     def _check_domain(self) -> bool:
@@ -205,7 +215,6 @@ class Domain:
             self.check_cname("webmail")
         if self.domain.has_feature("mailbox"):
             self.check_cname("imap")
-        self.check_cname("mailbox")
         self.check_cname("smtp")
         self.check_spf()
         self.check_dkim()
@@ -247,3 +256,28 @@ class Domain:
                     dom = None
             if dom is None:
                 dom = sql_postfix.create_alias_domain(db, self.domain.name, self.domain.get_alias_domain())
+
+
+def foreground_check_domain(db: orm.Session, db_dom: sql_api.DBDomain) -> sql_api.DBDomain:
+    name = db_dom.name
+    ck_dom = Domain(db_dom)
+    ck_dom.check()
+    if ck_dom.valid:
+        sql_api.update_domain_state(db, name, "ok")
+        db_dom = sql_api.update_domain_errors(db, name, None)
+    else:
+        sql_api.update_domain_state(db, name, "broken")
+        db_dom = sql_api.update_domain_errors(db, name, ck_dom.errs)
+    return db_dom
+
+def background_check_new_domain(name: str):
+    log = logging.getLogger(__name__)
+    maker = sql_api.get_maker()
+    db = maker()
+    db_dom = sql_api.get_domain(db, name)
+    if db_dom is None:
+        log.error("Je ne sais pas vérifier un domaine qui n'existe pas en base")
+        db.close()
+        return
+    db_dom = foreground_check_domain(db, db_dom)
+    db.close()

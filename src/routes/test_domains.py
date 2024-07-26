@@ -23,12 +23,21 @@ def test_domains__get_domain_allowed_user(db_api, db_dovecot, log, client, norma
     assert response.status_code == fastapi.status.HTTP_200_OK
     assert response.json() == {
         "name": domain_name,
+        "valid": False,
+        "state": "new",
         "features": ["mailbox", "webmail"],
         "mailbox_domain": None,
         "webmail_domain": None,
         "imap_domains": None,
         "smtp_domains": None,
         "context_name": None,
+        "domain_exist": {"ok": True, "errors": []},
+        "mx": {"ok": True, "errors": []},
+        "cname_imap": {"ok": True, "errors": []},
+        "cname_smtp": {"ok": True, "errors": []},
+        "cname_webmail": {"ok": True, "errors": []},
+        "spf": {"ok": True, "errors": []},
+        "dkim": {"ok": True, "errors": []},
     }
 
 
@@ -73,12 +82,21 @@ def test_domains__get_domain_admin_always_authorized(db_api_session, domain, adm
     assert response.status_code == fastapi.status.HTTP_200_OK
     assert response.json() == {
         "name": domain_name,
+        "valid": False,
+        "state": "new",
         "features": domain_features,
         "mailbox_domain": None,
         "webmail_domain": None,
         "imap_domains": None,
         "smtp_domains": None,
         "context_name": None,
+        "domain_exist": {"ok": True, "errors": []},
+        "mx": {"ok": True, "errors": []},
+        "cname_imap": {"ok": True, "errors": []},
+        "cname_smtp": {"ok": True, "errors": []},
+        "cname_webmail": {"ok": True, "errors": []},
+        "spf": {"ok": True, "errors": []},
+        "dkim": {"ok": True, "errors": []},
     }
 
     # If the domain does not exist -> not found
@@ -111,4 +129,52 @@ def test_domains_create_failed(db_api_session, admin, log, client, domain):
                 auth=auth
            )
     assert response.status_code == fastapi.status.HTTP_409_CONFLICT
+
+@pytest.mark.parametrize(
+    "normal_user",
+    ["bidibule:toto"],
+    indirect=True,
+)
+@pytest.mark.parametrize(
+    "domain_web",
+    ["example.com:dimail"],
+    indirect=True
+)
+def test_domains_check_domain(db_api_session, admin, log, client, normal_user, domain_web):
+    auth=(admin["user"], admin["password"])
+
+    domain_name = domain_web["name"]
+    response = client.get(f"/domains/{domain_name}/check", auth=auth)
+    assert response.status_code == fastapi.status.HTTP_200_OK
+    infos = response.json()
+    assert infos["name"] == "example.com"
+    assert infos["state"] == "broken"
+    assert infos["valid"] == False
+    for key in [ "domain_exist", "mx", "cname_imap", "cname_smtp", "cname_webmail", "spf", "dkim" ]:
+        assert key in infos
+        assert "ok" in infos[key]
+        assert "errors" in infos[key]
+        if infos[key]["ok"]:
+            assert len(infos[key]["errors"]) == 0
+        else:
+            assert len(infos[key]["errors"]) > 0
+    assert infos["domain_exist"]["ok"] is True
+    assert infos["mx"]["ok"] is False
+    assert len(infos["mx"]["errors"]) == 1
+    assert infos["mx"]["errors"][0]["code"] == "wrong_mx"
+
+    assert infos["cname_imap"]["ok"] is False
+    assert len(infos["cname_imap"]["errors"]) == 1
+    assert infos["cname_imap"]["errors"][0]["code"] == "no_cname_imap"
+
+    assert infos["cname_smtp"]["ok"] is False
+    assert len(infos["cname_smtp"]["errors"]) == 1
+    assert infos["cname_smtp"]["errors"][0]["code"] == "no_cname_smtp"
+
+    assert infos["cname_webmail"]["ok"] is False
+    assert len(infos["cname_webmail"]["errors"]) == 1
+    assert infos["cname_webmail"]["errors"][0]["code"] == "no_cname_webmail"
+
+    assert infos["spf"]["ok"] is False
+    assert infos["dkim"]["ok"] is True
 

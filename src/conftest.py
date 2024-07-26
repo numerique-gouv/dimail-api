@@ -536,6 +536,9 @@ def _make_domain(
     log.info("- creating the domain")
     res = client.post(
         "/domains/",
+        params = {
+            "no_check": "true",
+        },
         json = {
             "name": name,
             "features": features,

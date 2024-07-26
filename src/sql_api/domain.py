@@ -53,6 +53,23 @@ def update_domain_state(db: orm.Session, name: str, state: str) -> models.DBDoma
     return db_domain
 
 
+def update_domain_errors(
+    db: orm.Session, name: str, errors: list[str] | None
+) -> models.DBDomain:
+    db_domain = get_domain(db, name)
+    if db_domain is None:
+        return None
+    try:
+        db_domain.errors = errors
+        db.flush()
+        db.commit()
+    except Exception:
+        db.rollback()
+        return None
+    db.refresh(db_domain)
+    return db_domain
+
+
 def update_domain_dtaction(
     db: orm.Session, name: str, dtaction: datetime.datetime
 ) -> models.DBDomain:

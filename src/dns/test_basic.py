@@ -33,12 +33,11 @@ def test_domain_check():
     ck_dom = domain.Domain(db_dom)
     ck_dom.check()
     assert ck_dom.valid is False
-    assert len(ck_dom.errs) == 6
+    assert len(ck_dom.errs) == 5
     codes = [ err["code"] for err in ck_dom.errs ]
     assert "wrong_mx" in codes
     assert "wrong_cname_webmail" in codes
     assert "wrong_cname_imap" in codes
-    assert "no_cname_mailbox" in codes
     assert "no_cname_smtp" in codes
     assert "wrong_spf" in codes
 

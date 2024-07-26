@@ -13,6 +13,8 @@ from .domain import (
     get_domain,
     get_domains,
     update_domain_dtaction,
+    update_domain_errors,
+    update_domain_state,
 )
 from .models import DBAllowed, DBDomain, DBUser
 from .user import (
@@ -46,6 +48,9 @@ __all__ = [
     delete_user,
     get_user,
     get_users,
+    update_domain_dtaction,
+    update_domain_errors,
+    update_domain_state,
     update_user_password,
     update_user_is_admin,
 ]

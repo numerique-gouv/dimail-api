@@ -1,6 +1,6 @@
 import fastapi
 
-from ... import auth, oxcli, sql_api, web_models
+from ... import auth, dns, oxcli, sql_api, web_models
 from .. import dependencies, routers
 
 
@@ -8,7 +8,9 @@ from .. import dependencies, routers
 async def post_domain(
     db: dependencies.DependsApiDb,
     user: auth.DependsBasicAdmin,
-    domain: web_models.Domain,
+    domain: web_models.CreateDomain,
+    bg: fastapi.BackgroundTasks,
+    no_check: str = "false",
 ) -> web_models.Domain:
     if "webmail" in domain.features and domain.context_name is None:
         raise fastapi.HTTPException(
@@ -44,7 +46,8 @@ async def post_domain(
         imap_domains=domain.imap_domains,
         smtp_domains=domain.smtp_domains,
     )
-
+    if no_check == "false":
+        bg.add_task(dns.background_check_new_domain, domain.name)
     if "webmail" in domain.features:
         return web_models.Domain.from_db(domain_db, domain.context_name)
     else:

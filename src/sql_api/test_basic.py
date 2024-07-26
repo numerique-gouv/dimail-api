@@ -85,6 +85,7 @@ def test_create_domain(db_api_session, log):
     assert db_dom.smtp_domains is None
     assert db_dom.state == "new"
     assert db_dom.dtaction is None
+    assert db_dom.errors is None
     assert date_eq(db_dom.dtcreated, now)
     assert date_eq(db_dom.dtupdated, now)
 
@@ -132,6 +133,14 @@ def test_create_domain(db_api_session, log):
     assert isinstance(db_dom, sql_api.DBDomain)
     assert db_dom.name == "domain_name"
 
+    db_dom = sql_api.update_domain_state(db_api_session, "domain_name", "broken")
+    assert isinstance(db_dom, sql_api.DBDomain)
+    assert db_dom.name == "domain_name"
+    assert db_dom.state == "broken"
+
+    db_dom = sql_api.update_domain_errors(db_api_session, "domain_name", [ "coin", "pan", "kaï" ])
+    assert isinstance(db_dom, sql_api.DBDomain)
+    assert db_dom.errors == [ "coin", "pan", "kaï" ]
 
 def test_create_user_bis(db_api_session):
     db_user = sql_api.create_user(
