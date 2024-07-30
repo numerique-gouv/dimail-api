@@ -1,3 +1,4 @@
+# ruff: noqa: E712
 import fastapi.testclient
 import pytest
 
@@ -21,6 +22,7 @@ def test_domains__get_domain_allowed_user(db_api, db_dovecot, log, client, norma
     response = client.get(f"/domains/{domain_name}/", headers={"Authorization": f"Bearer {token}"})
 
     assert response.status_code == fastapi.status.HTTP_200_OK
+    no_test = {"code": "no_test", "detail": "Did not check yet"}
     assert response.json() == {
         "name": domain_name,
         "valid": False,
@@ -31,13 +33,13 @@ def test_domains__get_domain_allowed_user(db_api, db_dovecot, log, client, norma
         "imap_domains": None,
         "smtp_domains": None,
         "context_name": None,
-        "domain_exist": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
-        "mx": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
-        "cname_imap": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
-        "cname_smtp": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
-        "cname_webmail": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
-        "spf": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
-        "dkim": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
+        "domain_exist": {"ok": False, "errors": [no_test]},
+        "mx": {"ok": False, "errors": [no_test]},
+        "cname_imap": {"ok": False, "errors": [no_test]},
+        "cname_smtp": {"ok": False, "errors": [no_test]},
+        "cname_webmail": {"ok": False, "errors": [no_test]},
+        "spf": {"ok": False, "errors": [no_test]},
+        "dkim": {"ok": False, "errors": [no_test]},
     }
 
 
@@ -80,6 +82,7 @@ def test_domains__get_domain_admin_always_authorized(db_api_session, domain, adm
     # access to the details of the domain
     response = client.get(f"/domains/{domain_name}/", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == fastapi.status.HTTP_200_OK
+    no_test = {"code": "no_test", "detail": "Did not check yet"}
     assert response.json() == {
         "name": domain_name,
         "valid": False,
@@ -90,13 +93,13 @@ def test_domains__get_domain_admin_always_authorized(db_api_session, domain, adm
         "imap_domains": None,
         "smtp_domains": None,
         "context_name": None,
-        "domain_exist": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
-        "mx": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
-        "cname_imap": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
-        "cname_smtp": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
-        "cname_webmail": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
-        "spf": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
-        "dkim": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
+        "domain_exist": {"ok": False, "errors": [no_test]},
+        "mx": {"ok": False, "errors": [no_test]},
+        "cname_imap": {"ok": False, "errors": [no_test]},
+        "cname_smtp": {"ok": False, "errors": [no_test]},
+        "cname_webmail": {"ok": False, "errors": [no_test]},
+        "spf": {"ok": False, "errors": [no_test]},
+        "dkim": {"ok": False, "errors": [no_test]},
     }
 
     # If the domain does not exist -> not found

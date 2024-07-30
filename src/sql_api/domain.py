@@ -1,3 +1,4 @@
+# ruff: noqa: E711
 import datetime
 
 import sqlalchemy.orm as orm
@@ -90,7 +91,10 @@ def update_domain_dtchecked(
         else:
             raise Exception("La seule chaine possible ici est 'now'")
     if not isinstance(dtchecked, datetime.datetime):
-        raise Exception(f"Je ne peux pas mettre '{dtchecked}' comme date de dernier controle du domaine")
+        raise Exception(
+            f"Je ne peux pas mettre '{dtchecked}' comme date de dernier " +
+            "controle du domaine"
+        )
     db_domain = get_domain(db, name)
     if db_domain is None:
         return None

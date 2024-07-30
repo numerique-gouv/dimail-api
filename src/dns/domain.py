@@ -60,9 +60,10 @@ class Domain:
         return self.resolvers[domain]
 
     def check_exists(self):
-        resolver = self.get_auth_resolver(self.domain.name)
+        domain_name = self.domain.name
+        resolver = self.get_auth_resolver(domain_name)
         if resolver is None:
-            self.add_err("domain_exist", "must_exist", f"Le domaine {self.domain.name} n'existe pas")
+            self.add_err("domain_exist", "must_exist", f"Le domaine {domain_name} n'existe pas")
             return
 
     def try_cname_for_mx(self):
@@ -103,7 +104,7 @@ class Domain:
         if not mx == required_mx:
             self.add_err(
                 "mx",
-                "wrong_mx", 
+                "wrong_mx",
                 f"Je veux que le MX du domaine soit {required_mx}, "
                 f"or je trouve {mx}"
             )
@@ -124,26 +125,26 @@ class Domain:
 
         target = targets[name]
         for origin in origins:
+            need_cname = f"Il faut un CNAME '{origin}' qui renvoie vers '{target}'"
             resolver = self.get_auth_resolver(origin)
             if resolver is None:
-                self.add_err(f"cname_{name}", f"no_cname_{name}", f"Il faut un CNAME {origin} qui renvoie vers {target}")
+                self.add_err(f"cname_{name}", f"no_cname_{name}", need_cname)
                 continue
             try:
                 answer = resolver.resolve(origin, rdtype = "CNAME")
             except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
-                self.add_err(f"cname_{name}", f"no_cname_{name}", f"Il n'y a pas de CNAME {origin} -> {target}")
+                self.add_err(f"cname_{name}", f"no_cname_{name}", need_cname)
                 continue
             except Exception as e:
                 print(f"Unexpected exception when searching for a CNAME : {e}")
                 raise
             got_target = str(answer[0].target)
             if not got_target == target:
-                self.add_err(
-                    f"cname_{name}",
-                    f"wrong_cname_{name}",
-                    f"Le CNAME pour {origin} n'est pas bon, "
-                    f"il renvoie vers {got_target} et je veux {target}"
+                wrong_cname = (
+                    f"Le CNAME pour '{origin}' n'est pas bon, " +
+                    f"il renvoie vers '{got_target}' et je veux '{target}'"
                 )
+                self.add_err(f"cname_{name}", f"wrong_cname_{name}", wrong_cname)
 
     def check_spf(self):
         resolver = self.get_auth_resolver(self.dest_domain)
@@ -164,7 +165,8 @@ class Domain:
                     valid_spf = True
                     return
         if not found_spf:
-            self.add_err("spf", "no_spf", f"Il faut un SPF record, et il doit contenir {required_spf}")
+            need_spf = f"Il faut un SPF record, et il doit contenir {required_spf}"
+            self.add_err("spf", "no_spf", need_spf)
             return
         if not valid_spf:
             self.add_err("spf", "wrong_spf", f"Le SPF record ne contient pas {required_spf}")
@@ -194,10 +196,10 @@ class Domain:
                     valid_dkim = True
                     return
         if not found_dkim:
-            self.add_err("dkim", "no_dkim", "Il faut un DKIM record, et il doit contenir la bonne clef")
+            self.add_err("dkim", "no_dkim", "Il faut un DKIM record, avec la bonne clef")
             return
         if not valid_dkim:
-            self.add_err("dkim", "wrong_dkim", "Le DKIM record n'est pas valide (il ne contient pas la bonne clef)")
+            self.add_err("dkim", "wrong_dkim", "Le DKIM record ne contient pas la bonne clef")
             return
 
     def _check_domain(self) -> bool:
@@ -234,7 +236,11 @@ class Domain:
                     sql_postfix.delete_mailbox_domain(db, self.domain.name)
                     dom = None
             if dom is None:
-                dom = sql_postfix.create_mailbox_domain(db, self.domain.name, self.domain.get_mailbox_domain())
+                dom = sql_postfix.create_mailbox_domain(
+                    db,
+                    self.domain.name,
+                    self.domain.get_mailbox_domain()
+                )
             # Je veux être absent dans alias_domain
             dom = sql_postfix.get_alias_domain(db, self.domain.name)
             if dom is not None:
@@ -251,7 +257,11 @@ class Domain:
                     sql_postfix.delete_alias_domain(db, self.domain.name)
                     dom = None
             if dom is None:
-                dom = sql_postfix.create_alias_domain(db, self.domain.name, self.domain.get_alias_domain())
+                dom = sql_postfix.create_alias_domain(
+                    db,
+                    self.domain.name,
+                    self.domain.get_alias_domain()
+                )
 
 
 def foreground_check_domain(db: orm.Session, db_dom: sql_api.DBDomain) -> sql_api.DBDomain:

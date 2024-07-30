@@ -334,7 +334,7 @@ def make_image(log, name: str) -> str:
 
 
 def create_ssh_key(name: str):
-    return_code = subprocess.call(["/bin/sh", f"../ssh_docker/add_ssh_key.sh", name])
+    return_code = subprocess.call(["/bin/sh", "../ssh_docker/add_ssh_key.sh", name])
     if return_code != 0:
         raise Exception("Impossible to create ssh key")
 
@@ -394,7 +394,7 @@ def dk_manager(log, ox_type, dk_container) -> typing.Generator:
     delay = tc_core.waiting_utils.wait_for_logs(dk_container, "Starting ssh daemon")
     log.info(f"dk started in -> {delay}s")
     time.sleep(1)  # pour être sûr que le service ssh est up
-    
+
     dk_ssh_url = f"ssh://root@{dk_container.get_container_host_ip()}:{dk_container.get_exposed_port(22)}"
     dk_ssh_args = [
         "-o",

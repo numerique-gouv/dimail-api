@@ -1,3 +1,4 @@
+import datetime
 import pytest
 
 from .. import sql_api
@@ -58,7 +59,6 @@ def test_delete_user(db_api_session, log):
     assert user is None
 
 
-import datetime
 min_eq = datetime.timedelta(seconds=-1)
 max_eq = datetime.timedelta(seconds=1)
 def date_eq(a: datetime.datetime, b: datetime.datetime) -> bool:

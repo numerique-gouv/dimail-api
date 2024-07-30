@@ -78,7 +78,7 @@ def delete_mailbox_domain(db: orm.Session, domain: str) -> int:
         db.commit()
         return 1
     return 0
- 
+
 
 def get_alias_domain(db: orm.Session, domain: str) -> models.AliasDomain:
     return db.get(models.AliasDomain, {"domain": domain})

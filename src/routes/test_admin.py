@@ -311,6 +311,7 @@ def test_domains__create_successful(db_api_session, log, client, admin):
         auth=(admin["user"], admin["password"]),
     )
     assert response.status_code == fastapi.status.HTTP_201_CREATED
+    no_test = {"code": "no_test", "detail": "Did not check yet"}
     assert response.json() == {
         "name": "domain",
         "valid": False,
@@ -321,13 +322,13 @@ def test_domains__create_successful(db_api_session, log, client, admin):
         "imap_domains": None,
         "smtp_domains": None,
         "context_name": "context",
-        "domain_exist": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
-        "mx": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
-        "cname_imap": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
-        "cname_smtp": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
-        "cname_webmail": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
-        "spf": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
-        "dkim": {"ok": False, "errors": [{"code": "no_test", "detail": "Did not check yet"}]},
+        "domain_exist": {"ok": False, "errors": [no_test]},
+        "mx": {"ok": False, "errors": [no_test]},
+        "cname_imap": {"ok": False, "errors": [no_test]},
+        "cname_smtp": {"ok": False, "errors": [no_test]},
+        "cname_webmail": {"ok": False, "errors": [no_test]},
+        "spf": {"ok": False, "errors": [no_test]},
+        "dkim": {"ok": False, "errors": [no_test]},
     }
 
     # La creation d'un deuxieme domaine par un admin, dans le même contexte

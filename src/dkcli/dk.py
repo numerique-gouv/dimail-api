@@ -1,3 +1,4 @@
+import logging
 import re
 import subprocess
 
@@ -13,6 +14,7 @@ def init_dkim_manager(url, args):
 
 def make_dkim_key(selector: str, domain: str) -> (str, str):
     # opendkim-genkey -v -h sha256 -b 4096  --append-domain -s <selector> -d <domain>
+    log = logging.getLogger(__name__)
 
     if ssh_url == "FAKE":
         pub_key = f"{selector}._domainkey.{domain}. IN TXT (" + """"v=DKIM1; h=sha256; k=rsa; "
@@ -42,7 +44,8 @@ def make_dkim_key(selector: str, domain: str) -> (str, str):
         raise Exception("Failed to run ssh command")
 
     in_file = False
-    file_name = ""
+    file_name = None
+    content = None
     files = {}
     for line in file.stdout:
         if in_file:
@@ -62,4 +65,4 @@ def make_dkim_key(selector: str, domain: str) -> (str, str):
 
     return (files[f"{selector}.private"], files[f"{selector}.txt"])
 
-    
+

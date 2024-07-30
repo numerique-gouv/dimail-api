@@ -57,7 +57,8 @@ def test_domain_check():
         features=["webmail", "mailbox"],
         mailbox_domain="mail.numerique.gouv.fr",
         dkim_selector = "mecol",
-        dkim_public = "mecol._domainkey.mail.numerique.gouv.fr IN TXT (" + """"v=DKIM1; h=sha256; k=rsa; "
+        dkim_public = ("mecol._domainkey.mail.numerique.gouv.fr IN TXT (" +
+        """"v=DKIM1; h=sha256; k=rsa; "
                 "p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA2dg8Bt0+p4EEIGF3udBpR"
                 "psTd9B0UUzZPTJo64fwijJxFo8RgVUOe8vV6xzhGI22ldMAl6fYNsXih7p/AhEk+CpH"
                 "QBFuittufD6Q8XyNrYMblHHfUKlkdy63Bi9v784qc1bWVI+/YRuFzEVnxQkNlbNyKFr"
@@ -65,7 +66,7 @@ def test_domain_check():
                 "GD4VoZMvLSa+u1fikagc5t3xg76P9twzBOjuFFqIFg+wPGzZZWpzSh/yfcMWHg+eLxk"
                 "sxcronXnNZNnfPppNdu2Id28amHB/WB/4vqmgeM3xYIZWETDvZZIjVOzlxGtfgLuNlV"
                 "LwIDAQAB") ; -- This is a real from production domain
-        """,
+        """),
         dkim_private = "Coin coin très secret",
     )
 

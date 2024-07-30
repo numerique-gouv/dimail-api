@@ -33,6 +33,7 @@ __all__ = [
     Api,
     delete_allows_by_user,
     deny_domain_for_user,
+    first_domain_need_action,
     get_allowed,
     get_allows,
     Creds,

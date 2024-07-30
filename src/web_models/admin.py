@@ -63,6 +63,7 @@ class CreateDomain(pydantic.BaseModel):
     smtp_domains: list[str] | None = None
     context_name: str | None
 
+all_tests = [ "domain_exist", "mx", "cname_imap", "cname_smtp", "cname_webmail", "spf", "dkim" ]
 class Domain(pydantic.BaseModel):
     name: str
     state: str
@@ -105,7 +106,7 @@ class Domain(pydantic.BaseModel):
         if in_db.state == "new":
             self.valid = False
         if in_db.dtchecked is None:
-            for test in [ "domain_exist", "mx", "cname_imap", "cname_smtp", "cname_webmail", "spf", "dkim" ]:
+            for test in all_tests:
                 getattr(self, test).add_err({"code": "no_test", "detail": "Did not check yet"})
         if in_db.errors is not None:
             self.add_errors(in_db.errors)
