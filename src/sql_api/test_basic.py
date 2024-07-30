@@ -75,6 +75,9 @@ def test_create_domain(db_api_session, log):
         db_api_session,
         name="example.com",
         features=["webmail", "mailbox"],
+        dkim_selector="dimail",
+        dkim_public="public key",
+        dkim_private="private key",
     )
     assert isinstance(db_dom, sql_api.DBDomain)
     assert db_dom.name == "example.com"
@@ -89,6 +92,9 @@ def test_create_domain(db_api_session, log):
     assert db_dom.errors is None
     assert date_eq(db_dom.dtcreated, now)
     assert date_eq(db_dom.dtupdated, now)
+    assert db_dom.dkim_selector == "dimail"
+    assert db_dom.dkim_private == "private key"
+    assert db_dom.dkim_public == "public key"
 
     # On peut mettre dtchecked
     before = now + datetime.timedelta(minutes=-30)
