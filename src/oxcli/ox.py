@@ -6,6 +6,7 @@ import subprocess
 import pydantic
 
 from .setup import get_cluster_info
+from .. import utils
 
 class Fake:
     # For fake clusters
@@ -139,28 +140,13 @@ def _purge(self: OxCluster) -> None:
     log.info("Ox server is empty")
 
 
-clean_text = re.compile("^[a-zA-Z0-9/.=_-]+$")
-
-
-def __cmd(args: list[str]) -> str:
-    clean = []
-    for item in args:
-        if clean_text.match(item) is not None:
-            clean.append(item)
-            continue
-        text = "'" + item.replace("'", "\\'") + "'"
-        clean.append(text)
-    full = " ".join(clean)
-    return full
-
-
 def _run_for_csv(self: OxCluster, command: list[str]) -> list[str]:
     if self.ssh_url is None:
         raise Exception("Il faut configurer OxCluster")
     if self.is_fake():
         raise Exception("Il ne faut jamais appeler SSH sur un cluster FAKE")
     file = subprocess.Popen(
-        ["ssh"] + self.ssh_args + [self.ssh_url, __cmd(command)],
+        ["ssh"] + self.ssh_args + [self.ssh_url, utils.make_protected_cli(command)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
@@ -186,7 +172,7 @@ def _run_for_item(self: OxCluster, command: list[str]) -> str:
     if self.is_fake():
         raise Exception("Il ne faut jamais appeler SSH sur un cluster FAKE")
     file = subprocess.Popen(
-        ["ssh"] + self.ssh_args + [self.ssh_url, __cmd(command)],
+        ["ssh"] + self.ssh_args + [self.ssh_url, utils.make_protected_cli(command)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
