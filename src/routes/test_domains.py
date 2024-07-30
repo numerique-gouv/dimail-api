@@ -176,5 +176,7 @@ def test_domains_check_domain(db_api_session, admin, log, client, normal_user, d
     assert infos["cname_webmail"]["errors"][0]["code"] == "no_cname_webmail"
 
     assert infos["spf"]["ok"] is False
-    assert infos["dkim"]["ok"] is True
+    assert infos["dkim"]["ok"] is False
+    assert len(infos["dkim"]["errors"]) == 1
+    assert infos["dkim"]["errors"][0]["code"] == "no_dkim"
 

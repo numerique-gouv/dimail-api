@@ -56,20 +56,20 @@ def test_domain_check():
         name="numerique.gouv.fr",
         features=["webmail", "mailbox"],
         mailbox_domain="mail.numerique.gouv.fr",
-    )
-
-    ck_dom = domain.Domain(db_dom,
-        dkim = """"v=DKIM1; h=sha256; k=rsa; "
+        dkim_selector = "mecol",
+        dkim_public = "mecol._domainkey.mail.numerique.gouv.fr IN TXT (" + """"v=DKIM1; h=sha256; k=rsa; "
                 "p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA2dg8Bt0+p4EEIGF3udBpR"
                 "psTd9B0UUzZPTJo64fwijJxFo8RgVUOe8vV6xzhGI22ldMAl6fYNsXih7p/AhEk+CpH"
                 "QBFuittufD6Q8XyNrYMblHHfUKlkdy63Bi9v784qc1bWVI+/YRuFzEVnxQkNlbNyKFr"
                 "ulZ6J/f7LR1sreSZakMHgy3ePp0QS9oUxs8tYxzWTSfnTS/VAv7"
                 "GD4VoZMvLSa+u1fikagc5t3xg76P9twzBOjuFFqIFg+wPGzZZWpzSh/yfcMWHg+eLxk"
                 "sxcronXnNZNnfPppNdu2Id28amHB/WB/4vqmgeM3xYIZWETDvZZIjVOzlxGtfgLuNlV"
-                "LwIDAQAB"
+                "LwIDAQAB") ; -- This is a real from production domain
         """,
-        selector = "mecol",
+        dkim_private = "Coin coin très secret",
     )
+
+    ck_dom = domain.Domain(db_dom)
     ck_dom.check()
     assert ck_dom.valid is True
 

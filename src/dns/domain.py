@@ -35,8 +35,6 @@ class Domain:
     def __init__(
         self,
         domain: sql_api.DBDomain,
-        selector: str = "mecol",
-        dkim: str = "",
     ):
         self.domain = domain
         self.dest_domain = domain.get_mailbox_domain()
@@ -44,11 +42,9 @@ class Domain:
         self.valid = None
         self.errs = []
         self.resolvers = {}
-        self.selector = selector
-        self.dkim_domain = self.selector + "._domainkey." + self.dest_domain
-        self.dkim_name = dns.name.from_text(self.dkim_domain)
-
-        self.dkim = dkim
+        if domain.dkim_selector is not None:
+            self.dkim_domain = domain.dkim_selector + "._domainkey." + self.dest_domain
+            self.dkim_name = dns.name.from_text(self.dkim_domain)
 
     def add_err(self, test: str, err: str, detail: str = ""):
         self.errs.append({"test": test, "code": err, "detail": detail})
@@ -175,7 +171,7 @@ class Domain:
             return
 
     def check_dkim(self):
-        if self.dkim == "":
+        if self.domain.dkim_selector is None:
             print("Je ne peux pas controler la clef DKIM du domaine.")
             return
         resolver = self.get_auth_resolver(self.dkim_domain, True)
@@ -188,7 +184,7 @@ class Domain:
             raise
         found_dkim = False
         valid_dkim = False
-        want_dkim = dkim.DkimInfo(self.dkim)
+        want_dkim = dkim.DkimInfo(self.domain.dkim_public)
         for item in answer:
             txt = str(item)
             if txt.startswith("\"v=DKIM1; "):
