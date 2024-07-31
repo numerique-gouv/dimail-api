@@ -26,12 +26,6 @@ def get_dkim_dict(text: str) -> dict:
     for item in items:
         res[item[0]] = item[1]
     return res
-    items = text.split(";")
-    for item in items:
-        print(f"Je regarde l'item {item}")
-        (key, val) = item.split("=", 1)
-        print(f"key = '{key}' et val = '{val}'")
-        setattr(self, key, val)
 
 
 def __get_colon_modifier(mech: str, modifier: str) -> str:
@@ -45,7 +39,7 @@ def __get_colon_modifier(mech: str, modifier: str) -> str:
         )
 
 def get_spf_records(text: str) -> list[dict]:
-    text = re.sub("^v=spf1\s+", "", text)
+    text = re.sub(r"^v=spf1\s+", "", text)
     items = re.findall(r"(\+|-|~|\?|)(\w+)(\S*)?", text)
     res = []
     for item in items:
@@ -72,10 +66,10 @@ def get_spf_records(text: str) -> list[dict]:
         if mechanism == "all":
             # Ignore anything after 'all'
             break
-    
+
     return res
 
-# Those functions are used to do some basci DNS server high level manipulation    
+# Those functions are used to do some basci DNS server high level manipulation
 
 def get_ip_address(domain: str) -> str:
     answer = dns.resolver.resolve(domain)

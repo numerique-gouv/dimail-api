@@ -43,31 +43,31 @@ def test_utils():
     ]
 
     with pytest.raises(Exception) as e:
-        info = utils.get_spf_records("v=spf1 pabo:plop all -mx")
+        _ = utils.get_spf_records("v=spf1 pabo:plop all -mx")
     assert "Invalid mechanism 'pabo'" in str(e.value)
 
     with pytest.raises(Exception):
-        info = utils.get_spf_records("not an spf record")
+        _ = utils.get_spf_records("not an spf record")
 
     with pytest.raises(Exception):
-        info = utils.get_spf_records("v=spf1 mx ip4 all")
+        _ = utils.get_spf_records("v=spf1 mx ip4 all")
 
     with pytest.raises(Exception):
-        info = utils.get_spf_records("v=spf1 mx ip6 all")
+        _ = utils.get_spf_records("v=spf1 mx ip6 all")
 
     with pytest.raises(Exception):
-        info = utils.get_spf_records("v=spf1 include all")
+        _ = utils.get_spf_records("v=spf1 include all")
 
     with pytest.raises(Exception) as e:
-        info = utils.get_spf_records("v=spf1 all:something")
+        _ = utils.get_spf_records("v=spf1 all:something")
     assert "Weird 'all'" in str(e.value)
 
     with pytest.raises(Exception):
-        info = utils.get_spf_records("v=spf1 include.broken -all")
+        _ = utils.get_spf_records("v=spf1 include.broken -all")
 
     with pytest.raises(Exception):
-        info = utils.get_spf_records("v=spf1 exists all")
- 
+        _ = utils.get_spf_records("v=spf1 exists all")
+
 def test_spf():
     with pytest.raises(Exception) as e:
         info = spf.SpfInfo("\"Ceci n'est pas un SPF\"")
@@ -77,13 +77,17 @@ def test_spf():
         info = spf.SpfInfo("\"v=spf1 mx ip4:1.2.3.4/32 include:toto.fr\"")
     assert "end with 'all'" in str(e.value)
 
-    info = spf.SpfInfo("\"v=spf1 mx ip4:1.2.3.4/32 include:_spf.toto.fr -include:caca.toto.fr -all\"")
+    info = spf.SpfInfo(
+        "\"v=spf1 mx ip4:1.2.3.4/32 include:_spf.toto.fr -include:caca.toto.fr -all\""
+    )
     assert isinstance(info, spf.SpfInfo)
     assert info.does_include("_spf.toto.fr")
     assert not info.does_include("pala.toto.fr")
     assert not info.does_include("caca.toto.fr")
 
-    info = spf.SpfInfo("\"v=spf1 mx include:spf.fdn.fr ip4:80.67.169.19 ip6:2001:910:800::19 ~all\"")
+    info = spf.SpfInfo(
+        "\"v=spf1 mx include:spf.fdn.fr ip4:80.67.169.19 ip6:2001:910:800::19 ~all\""
+    )
     assert isinstance(info, spf.SpfInfo)
 
 def test_dkim():

@@ -174,7 +174,8 @@ class Domain:
             self.add_err("spf", "invalid_spf", invalid_spf)
             return
         if not got_spf.does_include(required_spf):
-            self.add_err("spf", "wrong_spf", f"Le SPF record ne contient pas include:{required_spf}")
+            wrong_spf = f"Le SPF record ne contient pas include:{required_spf}"
+            self.add_err("spf", "wrong_spf", wrong_spf)
             return
 
     def check_dkim(self):
