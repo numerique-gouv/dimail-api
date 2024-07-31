@@ -5,7 +5,7 @@ import dns.resolver
 import sqlalchemy.orm as orm
 
 from .. import sql_api, sql_postfix
-from . import dkim, utils
+from . import dkim, spf, utils
 
 # Ce qu'on cherche à valider sur un domaine :
 # - est-ce que c'est vraiment un nom de domaine (i.e. pas le nom de ma belle mère)
@@ -20,7 +20,7 @@ from . import dkim, utils
 # x produire des messages d'erreur explicites sur ce qui ne va pas et ce qu'il
 #   faut corriger
 required_mx = "mx.ox.numerique.gouv.fr."
-required_spf = "include:_spf.ox.numerique.gouv.fr"
+required_spf = "_spf.ox.numerique.gouv.fr"
 
 targets = {
     "webmail": "webmail.ox.numerique.gouv.fr.",
@@ -156,20 +156,25 @@ class Domain:
             print(f"Unexpected exception when searching for the SPF record : {e}")
             raise
         found_spf = False
-        valid_spf = False
+        got_spf = None
         for item in answer:
             txt = str(item)
             if txt.startswith("\"v=spf1 "):
                 found_spf = True
-                if required_spf in txt:
-                    valid_spf = True
-                    return
+                try:
+                    got_spf = spf.SpfInfo(txt)
+                except Exception:
+                    raise
         if not found_spf:
-            need_spf = f"Il faut un SPF record, et il doit contenir {required_spf}"
+            need_spf = f"Il faut un SPF record, et il doit contenir include:{required_spf}"
             self.add_err("spf", "no_spf", need_spf)
             return
-        if not valid_spf:
-            self.add_err("spf", "wrong_spf", f"Le SPF record ne contient pas {required_spf}")
+        if got_spf is None:
+            invalid_spf = "Le SPF record n'est pas valide (pas réussi à le lire)"
+            self.add_err("spf", "invalid_spf", invalid_spf)
+            return
+        if not got_spf.does_include(required_spf):
+            self.add_err("spf", "wrong_spf", f"Le SPF record ne contient pas include:{required_spf}")
             return
 
     def check_dkim(self):
