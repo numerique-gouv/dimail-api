@@ -6,7 +6,7 @@ PyMySQL==1.1.1
 pytest==8.3.1
 dynaconf==3.2.6
 ruff==0.5.5
-pre-commit==3.7.1
+pre-commit==3.8.0
 passlib==1.7.4
 argon2-cffi==23.1.0
 python-multipart==0.0.9
