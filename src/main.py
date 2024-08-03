@@ -3,7 +3,7 @@ import pathlib
 import fastapi
 from fastapi.middleware.cors import CORSMiddleware
 
-from . import config, oxcli, routes, sql_api, sql_dovecot, sql_postfix
+from . import config, dkcli, oxcli, routes, sql_api, sql_dovecot, sql_postfix
 
 if config.settings.mode == "FAKE":
     print("Running in FAKE mode")
@@ -19,8 +19,10 @@ engine_api = sql_api.init_db(config.settings.api_db_url)
 engine_dovecot = sql_dovecot.init_db(config.settings.imap_db_url)
 engine_postfix = sql_postfix.init_db(config.settings.postfix_db_url)
 
-oxcli.declare_cluster("default", config.settings.ox_ssh_url, [])
+oxcli.declare_cluster("default", config.settings.ox_ssh_url, config.settings.ox_ssh_args)
 oxcli.set_default_cluster("default")
+
+dkcli.init_dkim_manager(config.settings.dk_ssh_url, config.settings.dk_ssh_args)
 
 if config.settings.mode == "FAKE":
     print("Creating the tables in the databases")

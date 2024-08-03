@@ -34,3 +34,13 @@ services:
         condition: service_healthy
     ports:
       - "2222:22"
+
+  dktest:
+    build:
+      context: ./dktest
+    restart: always
+    stop_grace_period: 1s
+    cap_add:
+      - NET_RAW
+    ports:
+      - "2223:22"
