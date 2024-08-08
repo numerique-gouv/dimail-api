@@ -5,7 +5,7 @@ SQLAlchemy==2.0.31
 PyMySQL==1.1.1
 pytest==8.3.2
 dynaconf==3.2.6
-ruff==0.5.6
+ruff==0.5.7
 pre-commit==3.8.0
 passlib==1.7.4
 argon2-cffi==23.1.0
