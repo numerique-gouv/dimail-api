@@ -1,6 +1,6 @@
 import fastapi
 
-from ... import auth, oxcli, sql_api, web_models
+from ... import auth, dkcli, dns, oxcli, sql_api, web_models
 from .. import dependencies, routers
 
 
@@ -8,7 +8,9 @@ from .. import dependencies, routers
 async def post_domain(
     db: dependencies.DependsApiDb,
     user: auth.DependsBasicAdmin,
-    domain: web_models.Domain,
+    domain: web_models.CreateDomain,
+    bg: fastapi.BackgroundTasks,
+    no_check: str = "false",
 ) -> web_models.Domain:
     if "webmail" in domain.features and domain.context_name is None:
         raise fastapi.HTTPException(
@@ -35,6 +37,7 @@ async def post_domain(
             else:
                 ctx.add_mapping(domain.name)
 
+    (dkim_private, dkim_public) = dkcli.make_dkim_key("dimail", domain.name)
     domain_db = sql_api.create_domain(
         db,
         name=domain.name,
@@ -43,8 +46,12 @@ async def post_domain(
         mailbox_domain=domain.mailbox_domain,
         imap_domains=domain.imap_domains,
         smtp_domains=domain.smtp_domains,
+        dkim_private=dkim_private,
+        dkim_public=dkim_public,
+        dkim_selector="mecol",
     )
-
+    if no_check == "false":
+        bg.add_task(dns.background_check_new_domain, domain.name)
     if "webmail" in domain.features:
         return web_models.Domain.from_db(domain_db, domain.context_name)
     else:

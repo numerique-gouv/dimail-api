@@ -1,3 +1,4 @@
+import datetime
 import pytest
 
 from .. import sql_api
@@ -58,11 +59,25 @@ def test_delete_user(db_api_session, log):
     assert user is None
 
 
+min_eq = datetime.timedelta(seconds=-1)
+max_eq = datetime.timedelta(seconds=1)
+def date_eq(a: datetime.datetime, b: datetime.datetime) -> bool:
+    a = a.replace(tzinfo=None)
+    b = b.replace(tzinfo=None)
+    delta = a - b
+    if delta > min_eq and delta < max_eq:
+        return True
+    return False
+
 def test_create_domain(db_api_session, log):
+    now = datetime.datetime.now(datetime.timezone.utc)
     db_dom = sql_api.create_domain(
         db_api_session,
         name="example.com",
         features=["webmail", "mailbox"],
+        dkim_selector="dimail",
+        dkim_public="public key",
+        dkim_private="private key",
     )
     assert isinstance(db_dom, sql_api.DBDomain)
     assert db_dom.name == "example.com"
@@ -71,6 +86,50 @@ def test_create_domain(db_api_session, log):
     assert db_dom.mailbox_domain is None
     assert db_dom.imap_domains is None
     assert db_dom.smtp_domains is None
+    assert db_dom.state == "new"
+    assert db_dom.dtaction is None
+    assert db_dom.dtchecked is None
+    assert db_dom.errors is None
+    assert date_eq(db_dom.dtcreated, now)
+    assert date_eq(db_dom.dtupdated, now)
+    assert db_dom.dkim_selector == "dimail"
+    assert db_dom.dkim_private == "private key"
+    assert db_dom.dkim_public == "public key"
+
+    # On peut mettre dtchecked
+    before = now + datetime.timedelta(minutes=-30)
+    db_dom = sql_api.update_domain_dtchecked(db_api_session, "example.com", before)
+    assert isinstance(db_dom, sql_api.DBDomain)
+    assert date_eq(db_dom.dtchecked, before)
+
+    # Si on set dtchecked avec None, ca met now
+    now = datetime.datetime.now(datetime.timezone.utc)
+    db_dom = sql_api.update_domain_dtchecked(db_api_session, "example.com", None)
+    assert isinstance(db_dom, sql_api.DBDomain)
+    assert date_eq(db_dom.dtchecked, now)
+
+    # On remet before
+    db_dom = sql_api.update_domain_dtchecked(db_api_session, "example.com", before)
+    assert isinstance(db_dom, sql_api.DBDomain)
+    assert date_eq(db_dom.dtchecked, before)
+
+    # Si on met le texte 'now', ca met now
+    db_dom = sql_api.update_domain_dtchecked(db_api_session, "example.com", "now")
+    assert isinstance(db_dom, sql_api.DBDomain)
+    assert date_eq(db_dom.dtchecked, now)
+
+    # Aucun domaine n'a besoin d'action
+    db_dom = sql_api.first_domain_need_action(db_api_session)
+    assert db_dom is None
+
+    before = now + datetime.timedelta(seconds=-30)
+    db_dom = sql_api.update_domain_dtaction(db_api_session, "example.com", before)
+    assert date_eq(db_dom.dtaction, before)
+
+    # Maintenant, le domain "example.com" a besoin d'action
+    db_dom = sql_api.first_domain_need_action(db_api_session)
+    assert isinstance(db_dom, sql_api.DBDomain)
+    assert db_dom.name == "example.com"
 
     db_dom = sql_api.create_domain(
         db_api_session,
@@ -89,6 +148,28 @@ def test_create_domain(db_api_session, log):
     assert db_dom.imap_domains == ["imap1", "imap2"]
     assert db_dom.smtp_domains == ["smtp1", "smtp2"]
 
+    # C'est toujours "example.com" qui a besoin d'action
+    db_dom = sql_api.first_domain_need_action(db_api_session)
+    assert isinstance(db_dom, sql_api.DBDomain)
+    assert db_dom.name == "example.com"
+
+    before = now + datetime.timedelta(seconds=-31)
+    db_dom = sql_api.update_domain_dtaction(db_api_session, "domain_name", before)
+    assert db_dom.name == "domain_name"
+
+    # Maintenant, c'est "domain_name" qui a besoin d'action en premier
+    db_dom = sql_api.first_domain_need_action(db_api_session)
+    assert isinstance(db_dom, sql_api.DBDomain)
+    assert db_dom.name == "domain_name"
+
+    db_dom = sql_api.update_domain_state(db_api_session, "domain_name", "broken")
+    assert isinstance(db_dom, sql_api.DBDomain)
+    assert db_dom.name == "domain_name"
+    assert db_dom.state == "broken"
+
+    db_dom = sql_api.update_domain_errors(db_api_session, "domain_name", [ "coin", "pan", "kaï" ])
+    assert isinstance(db_dom, sql_api.DBDomain)
+    assert db_dom.errors == [ "coin", "pan", "kaï" ]
 
 def test_create_user_bis(db_api_session):
     db_user = sql_api.create_user(

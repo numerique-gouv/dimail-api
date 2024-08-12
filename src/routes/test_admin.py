@@ -311,14 +311,24 @@ def test_domains__create_successful(db_api_session, log, client, admin):
         auth=(admin["user"], admin["password"]),
     )
     assert response.status_code == fastapi.status.HTTP_201_CREATED
+    no_test = {"code": "no_test", "detail": "Did not check yet"}
     assert response.json() == {
         "name": "domain",
+        "valid": False,
+        "state": "new",
         "features": ["mailbox", "webmail", "alias"],
         "mailbox_domain": None,
         "webmail_domain": None,
         "imap_domains": None,
         "smtp_domains": None,
         "context_name": "context",
+        "domain_exist": {"ok": False, "errors": [no_test]},
+        "mx": {"ok": False, "errors": [no_test]},
+        "cname_imap": {"ok": False, "errors": [no_test]},
+        "cname_smtp": {"ok": False, "errors": [no_test]},
+        "cname_webmail": {"ok": False, "errors": [no_test]},
+        "spf": {"ok": False, "errors": [no_test]},
+        "dkim": {"ok": False, "errors": [no_test]},
     }
 
     # La creation d'un deuxieme domaine par un admin, dans le même contexte
@@ -359,15 +369,9 @@ def test_allows__create_allows(db_api_session, log, client):
     # If we GET all the domains, we get the one newly created
     response = client.get("/domains/", auth=("admin", "admin_password"))
     assert response.status_code == fastapi.status.HTTP_200_OK
-    assert response.json() == [{
-        'name': 'domain',
-        'features': [],
-        'mailbox_domain': None,
-        'webmail_domain': None,
-        'imap_domains': None,
-        'smtp_domains': None,
-        'context_name': None,
-    }]
+    infos = response.json()
+    assert len(infos) == 1
+    assert infos[0]["name"] == "domain"
 
     # Create allows for this user on this domain
     response = client.post(

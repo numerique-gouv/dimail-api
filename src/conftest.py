@@ -16,7 +16,7 @@ import testcontainers.mysql as tc_mysql
 import alembic.command
 import alembic.config
 
-from . import config, main, oxcli, sql_api, sql_dovecot, sql_postfix
+from . import config, dkcli, main, oxcli, sql_api, sql_dovecot, sql_postfix
 
 def make_db(name: str, conn: sa.Connection) -> str:
     """Utility function, for internal use. Ensure a database, named 'name'
@@ -323,33 +323,52 @@ def ox_cluster(log, ox_name) -> typing.Generator:
     ox_cluster.purge()
 
 
-def make_ox_image(log) -> str:
+def make_image(log, name: str) -> str:
     pyw = pyow.DockerClient(log_level="WARN")
-    tag = "dimail-oxtest"
+    tag = f"dimail-{name}"
     log.info(f"[START] construction de l'image -> {tag}")
-    pyw.build("../oxtest/", tags=tag)
+    pyw.build(f"../{name}/", tags=tag)
     time.sleep(2)  # pour être sûr que le tag soit bien arrivé dans le registry
     log.info(f"[END] construction de l'image -> {tag}")
     return tag
 
 
-def create_ssh_key():
-    return_code = subprocess.call(["/bin/sh", "../oxtest/add_ssh_key.sh"])
+def create_ssh_key(name: str):
+    return_code = subprocess.call(["/bin/sh", "../ssh_docker/add_ssh_key.sh", name])
     if return_code != 0:
         raise Exception("Impossible to create ssh key")
 
+@pytest.fixture(scope="session")
+def ox_container(log, dimail_test_network) -> tc_core.container.DockerContainer:
+    if not config.settings.test_containers:
+        yield None
+        return
 
-def make_ox_container(log, network) -> tc_core.container.DockerContainer:
-    create_ssh_key()
-    image = make_ox_image(log)
+    create_ssh_key("oxtest")
+    image = make_image(log,"oxtest")
     ox = (
         tc_core.container.DockerContainer(image)
-        .with_network(network)
+        .with_network(dimail_test_network)
         .with_network_aliases("dimail_ox")
         .with_bind_ports(22)
     )
-    return ox
+    yield ox
 
+@pytest.fixture(scope="session")
+def dk_container(log, dimail_test_network) -> tc_core.container.DockerContainer:
+    if not config.settings.test_containers:
+        yield None
+        return
+
+    create_ssh_key("dktest")
+    image = make_image(log,"dktest")
+    dk = (
+        tc_core.container.DockerContainer(image)
+        .with_network(dimail_test_network)
+        .with_network_aliases("dimail_dk")
+        .with_bind_ports(22)
+    )
+    yield dk
 
 @pytest.fixture(scope="session")
 def ox_type(log, db_type) -> typing.Generator:
@@ -358,9 +377,42 @@ def ox_type(log, db_type) -> typing.Generator:
     else:
         yield "real"
 
+@pytest.fixture(scope="session")
+def dk_manager(log, ox_type, dk_container) -> typing.Generator:
+    if ox_type == "fake":
+        log.info("SETUP using fake DK manager")
+        dkcli.init_dkim_manager("FAKE", [])
+        yield "FAKE"
+        log.info("TEARDOWN using fake DK manager")
+        return
+    if not config.settings.test_containers:
+        # We user the DK manager as declared in main.py
+        yield ""
+        return
+
+    dk_container.start()
+    delay = tc_core.waiting_utils.wait_for_logs(dk_container, "Starting ssh daemon")
+    log.info(f"dk started in -> {delay}s")
+    time.sleep(1)  # pour être sûr que le service ssh est up
+
+    dk_ssh_url = f"ssh://root@{dk_container.get_container_host_ip()}:{dk_container.get_exposed_port(22)}"
+    dk_ssh_args = [
+        "-o",
+        "StrictHostKeyChecking=no",
+        "-o",
+        "UserKnownHostsFile=/dev/null",
+        "-i",
+        "/tmp/dimail_dktest_id_rsa",
+    ]
+    log.info(f"url de connexion ssh vers le manager DK -> {dk_ssh_url}")
+    dkcli.init_dkim_manager(dk_ssh_url, dk_ssh_args)
+    yield ""
+    log.info("TEARDOWN DK CONTAINER")
+    dk_container.stop()
+
 
 @pytest.fixture(scope="session")
-def ox_name(log, ox_type, dimail_test_network, root_db_url) -> typing.Generator:
+def ox_name(log, ox_type, ox_container, root_db_url) -> typing.Generator:
     """Fixture that yields the URL for ssh to connect to the OX cluster. Will
     make a new (virgin) OX container, or will connect to the already existing
     one in docker compose, according to the setting of
@@ -378,14 +430,12 @@ def ox_name(log, ox_type, dimail_test_network, root_db_url) -> typing.Generator:
         return
 
     log.info("SETUP OX CONTAINER")
-    ox = make_ox_container(log, dimail_test_network)
-
-    ox.start()
-    delay = tc_core.waiting_utils.wait_for_logs(ox, "Starting ssh daemon")
+    ox_container.start()
+    delay = tc_core.waiting_utils.wait_for_logs(ox_container, "Starting ssh daemon")
     log.info(f"ox started in -> {delay}s")
     time.sleep(1)  # pour être sûr que le service ssh est up
 
-    ox_ssh_url = f"ssh://root@{ox.get_container_host_ip()}:{ox.get_exposed_port(22)}"
+    ox_ssh_url = f"ssh://root@{ox_container.get_container_host_ip()}:{ox_container.get_exposed_port(22)}"
     # on ne veut pas vérifier la clé sur chaque port randon du conteneur
     # et utilisation de la clé ssh générée par le script
     ox_ssh_args = [
@@ -394,7 +444,7 @@ def ox_name(log, ox_type, dimail_test_network, root_db_url) -> typing.Generator:
         "-o",
         "UserKnownHostsFile=/dev/null",
         "-i",
-        "/tmp/dimail_api_test_id_rsa",
+        "/tmp/dimail_oxtest_id_rsa",
     ]
     log.info(f"url de connexion ssh vers le cluster OX -> {ox_ssh_url}")
 
@@ -402,7 +452,7 @@ def ox_name(log, ox_type, dimail_test_network, root_db_url) -> typing.Generator:
     yield "testing"
 
     log.info("TEARDOWN OX CONTAINER")
-    ox.stop()
+    ox_container.stop()
 
 
 @pytest.fixture(scope="session")
@@ -536,6 +586,9 @@ def _make_domain(
     log.info("- creating the domain")
     res = client.post(
         "/domains/",
+        params = {
+            "no_check": "true",
+        },
         json = {
             "name": name,
             "features": features,

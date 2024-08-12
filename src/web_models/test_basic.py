@@ -68,7 +68,7 @@ def test_alias_webmodel():
     domain = "domain.com"
     destination = "destination"
 
-    postfix_alias = sql_postfix.PostfixAlias(
+    postfix_alias = sql_postfix.Alias(
         alias=f"{username}@{domain}",
         domain="domain",
         destination=destination,
