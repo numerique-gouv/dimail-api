@@ -1,4 +1,4 @@
-fastapi==0.112.0
+fastapi==0.114.1
 uvicorn==0.30.5
 alembic==1.13.2
 SQLAlchemy==2.0.32
